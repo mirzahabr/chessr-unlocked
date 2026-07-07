@@ -53109,73 +53109,19 @@ var Pp = Zi((_0x36f028) => ({
   inGuild: null,
   loading: false,
   fetchStatus: async (_0x165f78) => {
-    _0x36f028({
-      loading: true,
-    });
-    try {
-      let _0x5d6d8c = await (
-        await fetch(cu + "/discord/status?userId=" + _0x165f78)
-      ).json();
-      _0x36f028({
-        linked: _0x5d6d8c.linked,
-        username: _0x5d6d8c.username,
-        avatar: _0x5d6d8c.avatar,
-        loading: false,
-      });
-    } catch {
-      _0x36f028({
-        loading: false,
-      });
-    }
+    _0x36f028({ linked: false, username: null, avatar: null, loading: false });
+    return Promise.resolve();
   },
   fetchMembership: async (_0x1ea0eb) => {
-    try {
-      let _0x54d128 = await (
-        await fetch(cu + "/discord/membership-status?userId=" + _0x1ea0eb)
-      ).json();
-      _0x36f028({
-        inGuild:
-          typeof _0x54d128.inGuild == "boolean" ? _0x54d128.inGuild : null,
-      });
-    } catch {
-      _0x36f028({
-        inGuild: null,
-      });
-    }
+    _0x36f028({ inGuild: false });
+    return Promise.resolve();
   },
   initLink: (_0x459bd7) => {
-    fetch(
-      cu +
-        "/discord/link?userId=" +
-        _0x459bd7 +
-        "&returnUrl=" +
-        encodeURIComponent(window.location.href),
-    )
-      .then((_0x341fb0) => _0x341fb0.json())
-      .then((_0x39efa9) => {
-        if (_0x39efa9.url) {
-          window.location.href = _0x39efa9.url;
-        }
-      })
-      .catch(() => {});
+    return Promise.resolve();
   },
   unlink: async (_0x55800c) => {
-    try {
-      await fetch(cu + "/discord/unlink", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: _0x55800c,
-        }),
-      });
-      _0x36f028({
-        linked: false,
-        username: null,
-        avatar: null,
-      });
-    } catch {}
+    _0x36f028({ linked: false, username: null, avatar: null });
+    return Promise.resolve();
   },
 }));
 var Fp = Zi((_0x28eebd, _0x446a04) => ({
@@ -53456,110 +53402,14 @@ var Up = Zi((_0x5a3c85) => ({
   needsLinking: false,
   pendingProfile: null,
   fetchAccounts: async (_0x493fa5) => {
-    _0x5a3c85({
-      loading: true,
-    });
-    try {
-      let {
-        data: { session: _0x4b5386 },
-      } = await B.auth.getSession();
-      if (!_0x4b5386) {
-        _0x5a3c85({
-          loading: false,
-        });
-        return;
-      }
-      let { data: _0x408f96 } = await B.from("linked_accounts")
-        .select("id, platform, platform_username, avatar_url")
-        .eq("user_id", _0x493fa5)
-        .is("unlinked_at", null);
-      _0x5a3c85({
-        accounts: (_0x408f96 || []).map((_0x2b096e) => ({
-          id: _0x2b096e.id,
-          platform: _0x2b096e.platform,
-          username: _0x2b096e.platform_username,
-          avatar: _0x2b096e.avatar_url,
-        })),
-        loading: false,
-      });
-    } catch {
-      _0x5a3c85({
-        loading: false,
-      });
-    }
+    _0x5a3c85({ loading: false, accounts: [] });
+    return Promise.resolve();
   },
   linkAccount: async (_0x59ea0a, _0x49f34a) => {
-    try {
-      let _0x5b0aa1 = await fetch(cu + "/accounts/link", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: _0x59ea0a,
-          platform: _0x49f34a.platform,
-          username: _0x49f34a.username,
-          avatarUrl: _0x49f34a.avatarUrl,
-          ratingBullet: _0x49f34a.ratings.bullet,
-          ratingBlitz: _0x49f34a.ratings.blitz,
-          ratingRapid: _0x49f34a.ratings.rapid,
-        }),
-      });
-      let _0x5e0d9f = await _0x5b0aa1.json();
-      if (_0x5b0aa1.ok) {
-        _0x5a3c85((_0x4f25e6) => ({
-          accounts: [
-            ..._0x4f25e6.accounts,
-            {
-              id: _0x5e0d9f.account.id,
-              platform: _0x5e0d9f.account.platform,
-              username: _0x5e0d9f.account.platform_username,
-              avatar: _0x5e0d9f.account.avatar_url,
-            },
-          ],
-          needsLinking: false,
-          pendingProfile: null,
-        }));
-        return {
-          success: true,
-        };
-      } else {
-        return {
-          success: false,
-          error: _0x5e0d9f.error,
-        };
-      }
-    } catch {
-      return {
-        success: false,
-        error: "Failed to link",
-      };
-    }
+    return { success: true };
   },
   unlinkAccount: async (_0x82991c, _0x736af5) => {
-    try {
-      if (
-        !(
-          await fetch(cu + "/accounts/unlink", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              userId: _0x736af5,
-              accountId: _0x82991c,
-            }),
-          })
-        ).ok
-      ) {
-        return;
-      }
-      _0x5a3c85((_0x117e97) => ({
-        accounts: _0x117e97.accounts.filter(
-          (_0x21b75a) => _0x21b75a.id !== _0x82991c,
-        ),
-      }));
-    } catch {}
+    return Promise.resolve();
   },
   setNeedsLinking: (_0x5ad5a8, _0xb3b995 = null) => {
     _0x5a3c85({

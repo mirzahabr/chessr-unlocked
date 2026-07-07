@@ -54931,75 +54931,19 @@ var content = (function () {
     inGuild: null,
     loading: false,
     fetchStatus: async (_0x38ae96) => {
-      _0x5da14e({
-        loading: true,
-      });
-      try {
-        let _0x209d95 = await (
-          await fetch(_0x1b7188 + "/discord/status?userId=" + _0x38ae96)
-        ).json();
-        _0x5da14e({
-          linked: _0x209d95.linked,
-          username: _0x209d95.username,
-          avatar: _0x209d95.avatar,
-          loading: false,
-        });
-      } catch {
-        _0x5da14e({
-          loading: false,
-        });
-      }
+      _0x5da14e({ linked: false, username: null, avatar: null, loading: false });
+      return Promise.resolve();
     },
     fetchMembership: async (_0x111e5c) => {
-      try {
-        let _0x371444 = await (
-          await fetch(
-            _0x1b7188 + "/discord/membership-status?userId=" + _0x111e5c,
-          )
-        ).json();
-        _0x5da14e({
-          inGuild:
-            typeof _0x371444.inGuild == "boolean" ? _0x371444.inGuild : null,
-        });
-      } catch {
-        _0x5da14e({
-          inGuild: null,
-        });
-      }
+      _0x5da14e({ inGuild: false });
+      return Promise.resolve();
     },
     initLink: (_0x414ec5) => {
-      fetch(
-        _0x1b7188 +
-          "/discord/link?userId=" +
-          _0x414ec5 +
-          "&returnUrl=" +
-          encodeURIComponent(window.location.href),
-      )
-        .then((_0x53ae38) => _0x53ae38.json())
-        .then((_0x25a034) => {
-          if (_0x25a034.url) {
-            window.location.href = _0x25a034.url;
-          }
-        })
-        .catch(() => {});
+      return Promise.resolve();
     },
     unlink: async (_0x30bdfc) => {
-      try {
-        await fetch(_0x1b7188 + "/discord/unlink", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId: _0x30bdfc,
-          }),
-        });
-        _0x5da14e({
-          linked: false,
-          username: null,
-          avatar: null,
-        });
-      } catch {}
+      _0x5da14e({ linked: false, username: null, avatar: null });
+      return Promise.resolve();
     },
   }));
   var _0x331b12 = _0x55c5bc((_0x57f11e, _0x3ee95a) => ({
@@ -55280,111 +55224,14 @@ var content = (function () {
     needsLinking: false,
     pendingProfile: null,
     fetchAccounts: async (_0x262604) => {
-      _0x23e489({
-        loading: true,
-      });
-      try {
-        let {
-          data: { session: _0x45facf },
-        } = await _0x546ce5.auth.getSession();
-        if (!_0x45facf) {
-          _0x23e489({
-            loading: false,
-          });
-          return;
-        }
-        let { data: _0x3cb957 } = await _0x546ce5
-          .from("linked_accounts")
-          .select("id, platform, platform_username, avatar_url")
-          .eq("user_id", _0x262604)
-          .is("unlinked_at", null);
-        _0x23e489({
-          accounts: (_0x3cb957 || []).map((_0x7f8ee3) => ({
-            id: _0x7f8ee3.id,
-            platform: _0x7f8ee3.platform,
-            username: _0x7f8ee3.platform_username,
-            avatar: _0x7f8ee3.avatar_url,
-          })),
-          loading: false,
-        });
-      } catch {
-        _0x23e489({
-          loading: false,
-        });
-      }
+      _0x23e489({ loading: false, accounts: [] });
+      return Promise.resolve();
     },
     linkAccount: async (_0x448a0b, _0x37267f) => {
-      try {
-        let _0x3f8002 = await fetch(_0x1b7188 + "/accounts/link", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId: _0x448a0b,
-            platform: _0x37267f.platform,
-            username: _0x37267f.username,
-            avatarUrl: _0x37267f.avatarUrl,
-            ratingBullet: _0x37267f.ratings.bullet,
-            ratingBlitz: _0x37267f.ratings.blitz,
-            ratingRapid: _0x37267f.ratings.rapid,
-          }),
-        });
-        let _0x43593a = await _0x3f8002.json();
-        if (_0x3f8002.ok) {
-          _0x23e489((_0xdf9361) => ({
-            accounts: [
-              ..._0xdf9361.accounts,
-              {
-                id: _0x43593a.account.id,
-                platform: _0x43593a.account.platform,
-                username: _0x43593a.account.platform_username,
-                avatar: _0x43593a.account.avatar_url,
-              },
-            ],
-            needsLinking: false,
-            pendingProfile: null,
-          }));
-          return {
-            success: true,
-          };
-        } else {
-          return {
-            success: false,
-            error: _0x43593a.error,
-          };
-        }
-      } catch {
-        return {
-          success: false,
-          error: "Failed to link",
-        };
-      }
+      return { success: true };
     },
     unlinkAccount: async (_0x58734f, _0x319bfb) => {
-      try {
-        if (
-          !(
-            await fetch(_0x1b7188 + "/accounts/unlink", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                userId: _0x319bfb,
-                accountId: _0x58734f,
-              }),
-            })
-          ).ok
-        ) {
-          return;
-        }
-        _0x23e489((_0x469b08) => ({
-          accounts: _0x469b08.accounts.filter(
-            (_0x51aff4) => _0x51aff4.id !== _0x58734f,
-          ),
-        }));
-      } catch {}
+      return Promise.resolve();
     },
     setNeedsLinking: (_0x2873c2, _0x353439 = null) => {
       _0x23e489({
