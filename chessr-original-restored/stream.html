@@ -1,0 +1,36 @@
+<!--
+  Chessr "Stream Mode" host page.
+  Opened as its own extension tab by background.js in response to the
+  "open_stream" runtime message (sent from the React overlay in
+  content-scripts/content.js, typically via a button in the injected UI).
+  It boots the Stream Mode React app (chunks/stream-Cq9Ik-VD.js) styled by
+  assets/stream-DMcmulGQ.css. See project-documentation/PROJECT_REPORT.md
+  for how this page fits into the extension's architecture.
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chessr.io · Stream Mode</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root { color-scheme: dark; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #0a0a0f;
+        color: #e4e4e7;
+        font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        min-height: 100vh;
+      }
+    </style>
+    <script type="module" crossorigin src="/chunks/stream-Cq9Ik-VD.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/stream-DMcmulGQ.css">
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>
