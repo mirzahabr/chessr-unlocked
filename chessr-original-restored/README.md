@@ -6,7 +6,7 @@ documented) with **no functional changes** to behavior.
 
 - This copy was created as an exact snapshot at the point the restoration
   work was considered complete.
-- **All future development happens in the sibling `chessr-build-b/` folder,
+- **All future development happens in the sibling `chessr-unlocked-all-features/` folder,
   not here.**
 - If you need to compare current work against the known-good restored
   baseline, or recover something that was accidentally broken during later
@@ -16,4 +16,4 @@ documented) with **no functional changes** to behavior.
 
 Do not edit files in this folder. If it ever needs to be updated, that should
 be a deliberate, separate decision — not an incidental side effect of normal
-development in `chessr-build-b/`.
+development in `chessr-unlocked-all-features/`.
