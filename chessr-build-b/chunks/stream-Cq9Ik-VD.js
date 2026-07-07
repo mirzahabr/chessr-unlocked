@@ -52606,15 +52606,15 @@ function Ap() {
   );
 }
 var jp = Zi((_0x7ac172, _0x550020) => ({
-  user: { id: "anon", email: "anonymous@chessr.local" },
-  session: { access_token: "anon-token", user: { id: "anon" } },
-  plan: "premium",
+  user: null,
+  session: null,
+  plan: "free",
   planExpiry: null,
   freetrialEndedAt: null,
-  guidelinesAcceptedAt: new Date(),
+  guidelinesAcceptedAt: null,
   freetrialUsed: false,
-  planLoading: false,
-  initializing: false,
+  planLoading: true,
+  initializing: true,
   loading: false,
   error: null,
   bannedReason: null,
@@ -52626,28 +52626,424 @@ var jp = Zi((_0x7ac172, _0x550020) => ({
       error: null,
     }),
   initialize: async () => {
-    return Promise.resolve();
+    try {
+      await new Promise((_0x2b8aa7) => setTimeout(_0x2b8aa7, 100));
+      B.auth.onAuthStateChange((_0x4cc868, _0x170a50) => {
+        _0x7ac172({
+          session: _0x170a50,
+          user: _0x170a50?.user ?? null,
+        });
+      });
+      let {
+        data: { session: _0x444e99 },
+        error: _0x27c24b,
+      } = await B.auth.getSession();
+      if (_0x27c24b) {
+        throw _0x27c24b;
+      }
+      if (!_0x444e99) {
+        let _0x5212ef = (await chrome.storage.local.get("chessr-auth"))[
+          "chessr-auth"
+        ];
+        if (_0x5212ef) {
+          try {
+            let _0x382f5e = JSON.parse(_0x5212ef);
+            if (_0x382f5e?.access_token && _0x382f5e?.refresh_token) {
+              let { data: _0x2d6529 } = await B.auth.setSession({
+                access_token: _0x382f5e.access_token,
+                refresh_token: _0x382f5e.refresh_token,
+              });
+              if (_0x2d6529.session) {
+                await _0x550020().fetchPlan(_0x2d6529.session.user.id);
+                _0x7ac172({
+                  session: _0x2d6529.session,
+                  user: _0x2d6529.session.user,
+                  initializing: false,
+                });
+                return;
+              }
+            }
+          } catch {}
+        }
+      }
+      if (_0x444e99?.user) {
+        await _0x550020().fetchPlan(_0x444e99.user.id);
+      }
+      _0x7ac172({
+        session: _0x444e99,
+        user: _0x444e99?.user ?? null,
+        initializing: false,
+      });
+    } catch {
+      _0x7ac172({
+        initializing: false,
+        error: "Failed to initialize auth",
+      });
+    }
   },
   fetchPlan: async (_0x13c5be) => {
-    return Promise.resolve();
+    _0x7ac172({
+      planLoading: true,
+    });
+    try {
+      let { data: _0x238cfe, error: _0x4cd3ff } = await B.from("user_settings")
+        .select(
+          "plan, plan_expiry, freetrial_used, freetrial_ended_at, guidelines_accepted_at",
+        )
+        .eq("user_id", _0x13c5be)
+        .single();
+      if (_0x4cd3ff) {
+        _0x7ac172({
+          plan: "free",
+          planExpiry: null,
+          freetrialEndedAt: null,
+          freetrialUsed: false,
+          planLoading: false,
+        });
+        return;
+      }
+      let _0x237f9f = _0x238cfe?.plan ?? "free";
+      let _0x3e40b1 = _0x238cfe?.plan_expiry
+        ? new Date(_0x238cfe.plan_expiry)
+        : null;
+      let _0x473896 =
+        _0x237f9f === "freetrial" &&
+        _0x3e40b1 &&
+        _0x3e40b1.getTime() <= Date.now()
+          ? "free"
+          : _0x237f9f;
+      _0x7ac172({
+        plan: _0x473896,
+        planExpiry: _0x473896 === _0x237f9f ? _0x3e40b1 : null,
+        freetrialEndedAt: _0x238cfe?.freetrial_ended_at
+          ? new Date(_0x238cfe.freetrial_ended_at)
+          : null,
+        guidelinesAcceptedAt: _0x238cfe?.guidelines_accepted_at
+          ? new Date(_0x238cfe.guidelines_accepted_at)
+          : null,
+        freetrialUsed: !!_0x238cfe?.freetrial_used,
+        planLoading: false,
+      });
+    } catch {
+      _0x7ac172({
+        plan: "free",
+        planExpiry: null,
+        freetrialEndedAt: null,
+        freetrialUsed: false,
+        planLoading: false,
+      });
+    }
   },
   signUp: async (_0x1ff78a, _0x156a16) => {
-    return { success: true };
+    _0x7ac172({
+      loading: true,
+      error: null,
+      bannedReason: null,
+      appealUrl: null,
+    });
+    let _0x538018 = await Ap();
+    try {
+      let _0xe40ca8 = await fetch(cu + "/check-signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fingerprint: _0x538018,
+          email: _0x1ff78a,
+        }),
+      });
+      if (_0xe40ca8.ok) {
+        let _0x19ef81 = await _0xe40ca8.json();
+        if (!_0x19ef81.allowed) {
+          if (_0x19ef81.reason === "banned") {
+            let _0x32b509 = _0x19ef81.banReason || "This account is banned.";
+            _0x7ac172({
+              loading: false,
+              bannedReason: _0x32b509,
+              appealUrl: _0x19ef81.appealUrl ?? null,
+              error: _0x32b509,
+            });
+            return {
+              success: false,
+              error: _0x32b509,
+            };
+          }
+          let _0x33e5e0 =
+            _0x19ef81.message ||
+            (_0x19ef81.reason === "disposable"
+              ? "Disposable email addresses are not allowed. Please use a permanent email address."
+              : "Sign up not allowed.");
+          _0x7ac172({
+            loading: false,
+            error: _0x33e5e0,
+            appealUrl: _0x19ef81.appealUrl ?? null,
+          });
+          return {
+            success: false,
+            error: _0x33e5e0,
+          };
+        }
+      }
+    } catch {}
+    try {
+      let { data: _0x1d5404, error: _0x24ab38 } = await B.auth.signUp({
+        email: _0x1ff78a,
+        password: _0x156a16,
+        options: {
+          emailRedirectTo: "https://chessr.io/email-confirmed",
+        },
+      });
+      if (_0x24ab38) {
+        throw _0x24ab38;
+      }
+      if (_0x1d5404.user && (_0x1d5404.user.identities?.length ?? 0) === 0) {
+        _0x7ac172({
+          loading: false,
+        });
+        return {
+          success: false,
+          alreadyRegistered: true,
+        };
+      } else {
+        if (_0x1d5404.user?.id) {
+          fetch(cu + "/report-signup", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userId: _0x1d5404.user.id,
+              email: _0x1ff78a,
+              fingerprint: _0x538018,
+              kind: "signup",
+            }),
+          }).catch(() => {});
+        }
+        _0x7ac172({
+          loading: false,
+        });
+        return {
+          success: true,
+        };
+      }
+    } catch (_0x477bdc) {
+      let _0x250e86 =
+        _0x477bdc instanceof Error ? _0x477bdc.message : "Sign up failed";
+      _0x7ac172({
+        loading: false,
+        error: _0x250e86,
+      });
+      return {
+        success: false,
+        error: _0x250e86,
+      };
+    }
   },
   signIn: async (_0x2afad6, _0x16e8b5) => {
-    return { success: true };
+    _0x7ac172({
+      loading: true,
+      error: null,
+      bannedReason: null,
+      appealUrl: null,
+    });
+    try {
+      let { data: _0x1dc798, error: _0x31590f } =
+        await B.auth.signInWithPassword({
+          email: _0x2afad6,
+          password: _0x16e8b5,
+        });
+      if (_0x31590f) {
+        throw _0x31590f;
+      }
+      let { data: _0x50be4 } = await B.from("user_settings")
+        .select("banned, ban_reason")
+        .eq("user_id", _0x1dc798.user.id)
+        .single();
+      if (_0x50be4?.banned) {
+        let _0x5ddb13 = _0x50be4.ban_reason || "This account is banned.";
+        let _0x5bc981 = _0x1dc798.user.id;
+        await B.auth.signOut();
+        let _0x4031ab = await Ap().catch(() => null);
+        fetch(cu + "/report-banned-login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: _0x5bc981,
+            email: _0x2afad6,
+            banReason: _0x5ddb13,
+            fingerprint: _0x4031ab,
+          }),
+        }).catch(() => {});
+        _0x7ac172({
+          loading: false,
+          bannedReason: _0x5ddb13,
+          appealUrl: "https://discord.gg/72j4dUadTu",
+          error: _0x5ddb13,
+          user: null,
+          session: null,
+        });
+        return {
+          success: false,
+          banned: true,
+          error: _0x5ddb13,
+        };
+      }
+      await _0x550020().fetchPlan(_0x1dc798.user.id);
+      v.storage.local.remove("chessr-pending-confirm-email").catch(() => {});
+      try {
+        sessionStorage.removeItem(
+          "chessr:login-trigger-fired:" + _0x1dc798.user.id,
+        );
+      } catch {}
+      let _0x29f8f1 = await Ap().catch(() => null);
+      fetch(cu + "/report-signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: _0x1dc798.user.id,
+          email: _0x2afad6,
+          fingerprint: _0x29f8f1,
+          kind: "login",
+        }),
+      }).catch(() => {});
+      _0x7ac172({
+        user: _0x1dc798.user,
+        session: _0x1dc798.session,
+        loading: false,
+      });
+      return {
+        success: true,
+      };
+    } catch (_0xc599b4) {
+      let _0x56b5f9 =
+        _0xc599b4 instanceof Error ? _0xc599b4.message : "Sign in failed";
+      if (
+        _0xc599b4?.code === "email_not_confirmed" ||
+        /email not confirmed/i.test(_0x56b5f9)
+      ) {
+        _0x7ac172({
+          loading: false,
+          error: null,
+        });
+        return {
+          success: false,
+          emailNotConfirmed: true,
+        };
+      } else {
+        _0x7ac172({
+          loading: false,
+          error: _0x56b5f9,
+        });
+        return {
+          success: false,
+          error: _0x56b5f9,
+        };
+      }
+    }
   },
   signOut: async () => {
-    return Promise.resolve();
+    _0x7ac172({
+      loading: true,
+    });
+    try {
+      await B.auth.signOut();
+      _0x7ac172({
+        user: null,
+        session: null,
+        plan: "free",
+        planExpiry: null,
+        freetrialEndedAt: null,
+        guidelinesAcceptedAt: null,
+        freetrialUsed: false,
+        loading: false,
+      });
+    } catch (_0x25a079) {
+      _0x7ac172({
+        loading: false,
+        error:
+          _0x25a079 instanceof Error ? _0x25a079.message : "Sign out failed",
+      });
+    }
   },
   changePassword: async (_0x483dec, _0x4fea25) => {
-    return { success: true };
+    try {
+      let { user: _0x54b2cf } = _0x550020();
+      if (!_0x54b2cf?.email) {
+        throw Error("No user logged in");
+      }
+      let { error: _0x5a1bb7 } = await B.auth.signInWithPassword({
+        email: _0x54b2cf.email,
+        password: _0x483dec,
+      });
+      if (_0x5a1bb7) {
+        throw Error("Current password is incorrect");
+      }
+      let { error: _0x3660fc } = await B.auth.updateUser({
+        password: _0x4fea25,
+      });
+      if (_0x3660fc) {
+        throw _0x3660fc;
+      }
+      return {
+        success: true,
+      };
+    } catch (_0x4a9eb4) {
+      return {
+        success: false,
+        error:
+          _0x4a9eb4 instanceof Error
+            ? _0x4a9eb4.message
+            : "Password change failed",
+      };
+    }
   },
   resendConfirmation: async (_0x3160fb) => {
-    return { success: true };
+    try {
+      let { error: _0x34758e } = await B.auth.resend({
+        type: "signup",
+        email: _0x3160fb,
+        options: {
+          emailRedirectTo: "https://chessr.io/email-confirmed",
+        },
+      });
+      if (_0x34758e) {
+        throw _0x34758e;
+      }
+      return {
+        success: true,
+      };
+    } catch (_0x56325d) {
+      return {
+        success: false,
+        error: _0x56325d instanceof Error ? _0x56325d.message : "Resend failed",
+      };
+    }
   },
   resetPassword: async (_0x43397e) => {
-    return { success: true };
+    try {
+      let { error: _0x587ced } = await B.auth.resetPasswordForEmail(_0x43397e, {
+        redirectTo: "https://chessr.io/reset-password",
+      });
+      if (_0x587ced) {
+        throw _0x587ced;
+      }
+      return {
+        success: true,
+      };
+    } catch (_0x412ac8) {
+      return {
+        success: false,
+        error:
+          _0x412ac8 instanceof Error
+            ? _0x412ac8.message
+            : "Password reset failed",
+      };
+    }
   },
   clearError: () =>
     _0x7ac172({

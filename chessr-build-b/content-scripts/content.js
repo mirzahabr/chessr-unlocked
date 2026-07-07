@@ -54417,15 +54417,15 @@ var content = (function () {
   }
   _0x342e70();
   var _0x4714a5 = _0x55c5bc((_0x6d05d9, _0x415f7f) => ({
-    user: { id: "anon", email: "anonymous@chessr.local" },
-    session: { access_token: "anon-token", user: { id: "anon" } },
-    plan: "premium",
+    user: null,
+    session: null,
+    plan: "free",
     planExpiry: null,
     freetrialEndedAt: null,
-    guidelinesAcceptedAt: new Date(),
+    guidelinesAcceptedAt: null,
     freetrialUsed: false,
-    planLoading: false,
-    initializing: false,
+    planLoading: true,
+    initializing: true,
     loading: false,
     error: null,
     bannedReason: null,
@@ -54437,28 +54437,434 @@ var content = (function () {
         error: null,
       }),
     initialize: async () => {
-      return Promise.resolve();
+      try {
+        await new Promise((_0x7ff46d) => setTimeout(_0x7ff46d, 100));
+        _0x546ce5.auth.onAuthStateChange((_0x7974d7, _0x1e6e41) => {
+          _0x6d05d9({
+            session: _0x1e6e41,
+            user: _0x1e6e41?.user ?? null,
+          });
+        });
+        let {
+          data: { session: _0x1e56c7 },
+          error: _0x502e64,
+        } = await _0x546ce5.auth.getSession();
+        if (_0x502e64) {
+          throw _0x502e64;
+        }
+        if (!_0x1e56c7) {
+          let _0x14f36b = (await chrome.storage.local.get("chessr-auth"))[
+            "chessr-auth"
+          ];
+          if (_0x14f36b) {
+            try {
+              let _0x1cc688 = JSON.parse(_0x14f36b);
+              if (_0x1cc688?.access_token && _0x1cc688?.refresh_token) {
+                let { data: _0x1431f6 } = await _0x546ce5.auth.setSession({
+                  access_token: _0x1cc688.access_token,
+                  refresh_token: _0x1cc688.refresh_token,
+                });
+                if (_0x1431f6.session) {
+                  await _0x415f7f().fetchPlan(_0x1431f6.session.user.id);
+                  _0x6d05d9({
+                    session: _0x1431f6.session,
+                    user: _0x1431f6.session.user,
+                    initializing: false,
+                  });
+                  return;
+                }
+              }
+            } catch {}
+          }
+        }
+        if (_0x1e56c7?.user) {
+          await _0x415f7f().fetchPlan(_0x1e56c7.user.id);
+        }
+        _0x6d05d9({
+          session: _0x1e56c7,
+          user: _0x1e56c7?.user ?? null,
+          initializing: false,
+        });
+      } catch {
+        _0x6d05d9({
+          initializing: false,
+          error: "Failed to initialize auth",
+        });
+      }
     },
     fetchPlan: async (_0x507c3d) => {
-      return Promise.resolve();
+      _0x6d05d9({
+        planLoading: true,
+      });
+      try {
+        let { data: _0x2c70ac, error: _0x429d93 } = await _0x546ce5
+          .from("user_settings")
+          .select(
+            "plan, plan_expiry, freetrial_used, freetrial_ended_at, guidelines_accepted_at",
+          )
+          .eq("user_id", _0x507c3d)
+          .single();
+        if (_0x429d93) {
+          _0x6d05d9({
+            plan: "free",
+            planExpiry: null,
+            freetrialEndedAt: null,
+            freetrialUsed: false,
+            planLoading: false,
+          });
+          return;
+        }
+        let _0x46a9c5 = _0x2c70ac?.plan ?? "free";
+        let _0x2525a3 = _0x2c70ac?.plan_expiry
+          ? new Date(_0x2c70ac.plan_expiry)
+          : null;
+        let _0x304089 =
+          _0x46a9c5 === "freetrial" &&
+          _0x2525a3 &&
+          _0x2525a3.getTime() <= Date.now()
+            ? "free"
+            : _0x46a9c5;
+        _0x6d05d9({
+          plan: _0x304089,
+          planExpiry: _0x304089 === _0x46a9c5 ? _0x2525a3 : null,
+          freetrialEndedAt: _0x2c70ac?.freetrial_ended_at
+            ? new Date(_0x2c70ac.freetrial_ended_at)
+            : null,
+          guidelinesAcceptedAt: _0x2c70ac?.guidelines_accepted_at
+            ? new Date(_0x2c70ac.guidelines_accepted_at)
+            : null,
+          freetrialUsed: !!_0x2c70ac?.freetrial_used,
+          planLoading: false,
+        });
+      } catch {
+        _0x6d05d9({
+          plan: "free",
+          planExpiry: null,
+          freetrialEndedAt: null,
+          freetrialUsed: false,
+          planLoading: false,
+        });
+      }
     },
     signUp: async (_0x53c6f3, _0x1f6131) => {
-      return { success: true };
+      _0x6d05d9({
+        loading: true,
+        error: null,
+        bannedReason: null,
+        appealUrl: null,
+      });
+      let _0x429692 = await _0xaaa36a();
+      try {
+        let _0x89b0d8 = await fetch(_0x1b7188 + "/check-signup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            fingerprint: _0x429692,
+            email: _0x53c6f3,
+          }),
+        });
+        if (_0x89b0d8.ok) {
+          let _0x438e06 = await _0x89b0d8.json();
+          if (!_0x438e06.allowed) {
+            if (_0x438e06.reason === "banned") {
+              let _0x5e5991 = _0x438e06.banReason || "This account is banned.";
+              _0x6d05d9({
+                loading: false,
+                bannedReason: _0x5e5991,
+                appealUrl: _0x438e06.appealUrl ?? null,
+                error: _0x5e5991,
+              });
+              return {
+                success: false,
+                error: _0x5e5991,
+              };
+            }
+            let _0xfcbd70 =
+              _0x438e06.message ||
+              (_0x438e06.reason === "disposable"
+                ? "Disposable email addresses are not allowed. Please use a permanent email address."
+                : "Sign up not allowed.");
+            _0x6d05d9({
+              loading: false,
+              error: _0xfcbd70,
+              appealUrl: _0x438e06.appealUrl ?? null,
+            });
+            return {
+              success: false,
+              error: _0xfcbd70,
+            };
+          }
+        }
+      } catch {}
+      try {
+        let { data: _0x29eb0d, error: _0x1ad392 } = await _0x546ce5.auth.signUp(
+          {
+            email: _0x53c6f3,
+            password: _0x1f6131,
+            options: {
+              emailRedirectTo: "https://chessr.io/email-confirmed",
+            },
+          },
+        );
+        if (_0x1ad392) {
+          throw _0x1ad392;
+        }
+        if (_0x29eb0d.user && (_0x29eb0d.user.identities?.length ?? 0) === 0) {
+          _0x6d05d9({
+            loading: false,
+          });
+          return {
+            success: false,
+            alreadyRegistered: true,
+          };
+        } else {
+          if (_0x29eb0d.user?.id) {
+            fetch(_0x1b7188 + "/report-signup", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                userId: _0x29eb0d.user.id,
+                email: _0x53c6f3,
+                fingerprint: _0x429692,
+                kind: "signup",
+              }),
+            }).catch(() => {});
+          }
+          _0x6d05d9({
+            loading: false,
+          });
+          return {
+            success: true,
+          };
+        }
+      } catch (_0x8d5187) {
+        let _0x3fb6ed =
+          _0x8d5187 instanceof Error ? _0x8d5187.message : "Sign up failed";
+        _0x6d05d9({
+          loading: false,
+          error: _0x3fb6ed,
+        });
+        return {
+          success: false,
+          error: _0x3fb6ed,
+        };
+      }
     },
     signIn: async (_0x1baec2, _0x31373b) => {
-      return { success: true };
+      _0x6d05d9({
+        loading: true,
+        error: null,
+        bannedReason: null,
+        appealUrl: null,
+      });
+      try {
+        let { data: _0x2e2e96, error: _0x24a3d6 } =
+          await _0x546ce5.auth.signInWithPassword({
+            email: _0x1baec2,
+            password: _0x31373b,
+          });
+        if (_0x24a3d6) {
+          throw _0x24a3d6;
+        }
+        let { data: _0x419ac8 } = await _0x546ce5
+          .from("user_settings")
+          .select("banned, ban_reason")
+          .eq("user_id", _0x2e2e96.user.id)
+          .single();
+        if (_0x419ac8?.banned) {
+          let _0x1618cd = _0x419ac8.ban_reason || "This account is banned.";
+          let _0x3e528e = _0x2e2e96.user.id;
+          await _0x546ce5.auth.signOut();
+          let _0x4c006d = await _0xaaa36a().catch(() => null);
+          fetch(_0x1b7188 + "/report-banned-login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userId: _0x3e528e,
+              email: _0x1baec2,
+              banReason: _0x1618cd,
+              fingerprint: _0x4c006d,
+            }),
+          }).catch(() => {});
+          _0x6d05d9({
+            loading: false,
+            bannedReason: _0x1618cd,
+            appealUrl: "https://discord.gg/72j4dUadTu",
+            error: _0x1618cd,
+            user: null,
+            session: null,
+          });
+          return {
+            success: false,
+            banned: true,
+            error: _0x1618cd,
+          };
+        }
+        await _0x415f7f().fetchPlan(_0x2e2e96.user.id);
+        _0x1e68a8.storage.local
+          .remove("chessr-pending-confirm-email")
+          .catch(() => {});
+        try {
+          sessionStorage.removeItem(
+            "chessr:login-trigger-fired:" + _0x2e2e96.user.id,
+          );
+        } catch {}
+        let _0xb2a830 = await _0xaaa36a().catch(() => null);
+        fetch(_0x1b7188 + "/report-signup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: _0x2e2e96.user.id,
+            email: _0x1baec2,
+            fingerprint: _0xb2a830,
+            kind: "login",
+          }),
+        }).catch(() => {});
+        _0x6d05d9({
+          user: _0x2e2e96.user,
+          session: _0x2e2e96.session,
+          loading: false,
+        });
+        return {
+          success: true,
+        };
+      } catch (_0x54eb5d) {
+        let _0x43cb07 =
+          _0x54eb5d instanceof Error ? _0x54eb5d.message : "Sign in failed";
+        if (
+          _0x54eb5d?.code === "email_not_confirmed" ||
+          /email not confirmed/i.test(_0x43cb07)
+        ) {
+          _0x6d05d9({
+            loading: false,
+            error: null,
+          });
+          return {
+            success: false,
+            emailNotConfirmed: true,
+          };
+        } else {
+          _0x6d05d9({
+            loading: false,
+            error: _0x43cb07,
+          });
+          return {
+            success: false,
+            error: _0x43cb07,
+          };
+        }
+      }
     },
     signOut: async () => {
-      return Promise.resolve();
+      _0x6d05d9({
+        loading: true,
+      });
+      try {
+        await _0x546ce5.auth.signOut();
+        _0x6d05d9({
+          user: null,
+          session: null,
+          plan: "free",
+          planExpiry: null,
+          freetrialEndedAt: null,
+          guidelinesAcceptedAt: null,
+          freetrialUsed: false,
+          loading: false,
+        });
+      } catch (_0x2dd57b) {
+        _0x6d05d9({
+          loading: false,
+          error:
+            _0x2dd57b instanceof Error ? _0x2dd57b.message : "Sign out failed",
+        });
+      }
     },
     changePassword: async (_0x1cdb7c, _0x2509b3) => {
-      return { success: true };
+      try {
+        let { user: _0x41c7b4 } = _0x415f7f();
+        if (!_0x41c7b4?.email) {
+          throw Error("No user logged in");
+        }
+        let { error: _0x3a5154 } = await _0x546ce5.auth.signInWithPassword({
+          email: _0x41c7b4.email,
+          password: _0x1cdb7c,
+        });
+        if (_0x3a5154) {
+          throw Error("Current password is incorrect");
+        }
+        let { error: _0x4238b2 } = await _0x546ce5.auth.updateUser({
+          password: _0x2509b3,
+        });
+        if (_0x4238b2) {
+          throw _0x4238b2;
+        }
+        return {
+          success: true,
+        };
+      } catch (_0x377e21) {
+        return {
+          success: false,
+          error:
+            _0x377e21 instanceof Error
+              ? _0x377e21.message
+              : "Password change failed",
+        };
+      }
     },
     resendConfirmation: async (_0x53cfd1) => {
-      return { success: true };
+      try {
+        let { error: _0x2af264 } = await _0x546ce5.auth.resend({
+          type: "signup",
+          email: _0x53cfd1,
+          options: {
+            emailRedirectTo: "https://chessr.io/email-confirmed",
+          },
+        });
+        if (_0x2af264) {
+          throw _0x2af264;
+        }
+        return {
+          success: true,
+        };
+      } catch (_0x4c2490) {
+        return {
+          success: false,
+          error:
+            _0x4c2490 instanceof Error ? _0x4c2490.message : "Resend failed",
+        };
+      }
     },
     resetPassword: async (_0x44f163) => {
-      return { success: true };
+      try {
+        let { error: _0x13a68f } = await _0x546ce5.auth.resetPasswordForEmail(
+          _0x44f163,
+          {
+            redirectTo: "https://chessr.io/reset-password",
+          },
+        );
+        if (_0x13a68f) {
+          throw _0x13a68f;
+        }
+        return {
+          success: true,
+        };
+      } catch (_0xf7149a) {
+        return {
+          success: false,
+          error:
+            _0xf7149a instanceof Error
+              ? _0xf7149a.message
+              : "Password reset failed",
+        };
+      }
     },
     clearError: () =>
       _0x6d05d9({
@@ -55191,9 +55597,13 @@ var content = (function () {
     }
   }
   var _0x59afaa = new Set(["premium", "lifetime", "beta", "freetrial"]);
-  function _0xb56a89(_0x5d46ef) { return true; }
+  function _0xb56a89(_0x5d46ef) {
+    return _0x59afaa.has(_0x5d46ef ?? "");
+  }
   var _0x40822a = _0xb56a89;
-  function _0x48fec5(_0x17a219, _0x534948, _0x40fa08) { return false; }
+  function _0x48fec5(_0x17a219, _0x534948, _0x40fa08) {
+    return _0x17a219 === "free" && !_0x534948 && !_0x40fa08;
+  }
   var _0xca72dc = [
     {
       labelKey: "engine.rodent.groupMasters",
@@ -99072,7 +99482,7 @@ var content = (function () {
                       ? "Link your account"
                       : undefined,
                 children: [
-                  (_0x80c555 || (false)) &&
+                  (_0x80c555 || (!_0x403192 && !_0x1ed22c)) &&
                     (0, _0xb7b29c.jsxDEV)(
                       "span",
                       {

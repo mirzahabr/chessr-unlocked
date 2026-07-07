@@ -1,13 +1,19 @@
-# chessr-build-b — active development
+# chessr-original-restored — DO NOT MODIFY
 
-This is **Build B** — the working copy of the Chessr.io extension where all
-future development, features, and fixes should be made.
+This folder is a **permanent, frozen reference copy** of the Chessr.io
+extension after its structure was restored (deobfuscated, reformatted, and
+documented) with **no functional changes** to behavior.
 
-- It started as an exact copy of `chessr-original-restored/` (the frozen,
-  structure-restored baseline with no functional changes).
-- The sibling `chessr-original-restored/` folder is a permanent reference and
-  must not be edited — treat it as read-only. Diff against it if you need to
-  see what changed since the restoration baseline.
+- This copy was created as an exact snapshot at the point the restoration
+  work was considered complete.
+- **All future development happens in the sibling `chessr-build-b/` folder,
+  not here.**
+- If you need to compare current work against the known-good restored
+  baseline, or recover something that was accidentally broken during later
+  development, this is the folder to diff against or copy from.
 - See `project-documentation/PROJECT_REPORT.md` inside this folder for the
-  full architecture write-up (accurate as of the point these two copies
-  diverged; update it here as Build B evolves).
+  full architecture write-up (accurate as of this snapshot).
+
+Do not edit files in this folder. If it ever needs to be updated, that should
+be a deliberate, separate decision — not an incidental side effect of normal
+development in `chessr-build-b/`.
