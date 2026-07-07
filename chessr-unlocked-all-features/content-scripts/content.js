@@ -99471,204 +99471,96 @@ var content = (function () {
                         },
                         this,
                       )
-                    : _0x1ed22c
-                      ? _0x2c86e6
-                        ? (0, _0xb7b29c.jsxDEV)(
-                            "div",
-                            {
-                              className: "chessr-panel-body",
-                              children: (0, _0xb7b29c.jsxDEV)(
-                                _0x2a37ec,
-                                {},
-                                undefined,
-                                false,
-                                {
-                                  fileName: _0x192142,
-                                  lineNumber: 474,
-                                  columnNumber: 50,
-                                },
-                                this,
-                              ),
-                            },
-                            undefined,
-                            false,
-                            {
-                              fileName: _0x192142,
-                              lineNumber: 474,
-                              columnNumber: 15,
-                            },
-                            this,
-                          )
-                        : _0x3f1515 && _0x1937fb
-                          ? (0, _0xb7b29c.jsxDEV)(
-                              _0xb7b29c.Fragment,
+                    : (0, _0xb7b29c.jsxDEV)(
+                        _0xb7b29c.Fragment,
+                        {
+                          children: [
+                            (0, _0xb7b29c.jsxDEV)(
+                              _0x59833d,
                               {
-                                children: [
-                                  (0, _0xb7b29c.jsxDEV)(
-                                    _0x59833d,
-                                    {
-                                      showSettings: false,
-                                      onToggleSettings: () => {},
-                                      hideActions: true,
-                                    },
-                                    undefined,
-                                    false,
-                                    {
-                                      fileName: _0x192142,
-                                      lineNumber: 477,
-                                      columnNumber: 17,
-                                    },
-                                    this,
-                                  ),
-                                  (0, _0xb7b29c.jsxDEV)(
-                                    "div",
-                                    {
-                                      className: "chessr-panel-body",
-                                      children: (0, _0xb7b29c.jsxDEV)(
-                                        _0x202efb,
-                                        {
-                                          profile: _0x1937fb,
-                                        },
-                                        undefined,
-                                        false,
-                                        {
-                                          fileName: _0x192142,
-                                          lineNumber: 479,
-                                          columnNumber: 19,
-                                        },
-                                        this,
-                                      ),
-                                    },
-                                    undefined,
-                                    false,
-                                    {
-                                      fileName: _0x192142,
-                                      lineNumber: 478,
-                                      columnNumber: 17,
-                                    },
-                                    this,
-                                  ),
-                                ],
+                                showSettings: _0x47455d,
+                                onToggleSettings: () =>
+                                  _0x4c379c(!_0x47455d),
                               },
-                              undefined,
-                              true,
-                            )
-                          : (0, _0xb7b29c.jsxDEV)(
-                              _0xb7b29c.Fragment,
-                              {
-                                children: [
-                                  (0, _0xb7b29c.jsxDEV)(
-                                    _0x59833d,
-                                    {
-                                      showSettings: _0x47455d,
-                                      onToggleSettings: () =>
-                                        _0x4c379c(!_0x47455d),
-                                    },
-                                    undefined,
-                                    false,
-                                    {
-                                      fileName: _0x192142,
-                                      lineNumber: 484,
-                                      columnNumber: 17,
-                                    },
-                                    this,
-                                  ),
-                                  (0, _0xb7b29c.jsxDEV)(
-                                    "div",
-                                    {
-                                      className: "chessr-panel-body",
-                                      children: (() => {
-                                        let _0xe690f1 = _0x424285();
-                                        if (_0x47455d) {
-                                          return (0, _0xb7b29c.jsxDEV)(
-                                            _0xdc3530,
-                                            {
-                                              activeTab: _0x2cdd50,
-                                              setActiveTab: _0x53baf7,
-                                            },
-                                            undefined,
-                                            false,
-                                            {
-                                              fileName: _0x192142,
-                                              lineNumber: 488,
-                                              columnNumber: 46,
-                                            },
-                                            this,
-                                          );
-                                        } else if (_0xe690f1 && !_0x359cc8) {
-                                          return (0, _0xb7b29c.jsxDEV)(
-                                            _0x131157,
-                                            {
-                                              gameId: _0xe690f1,
-                                            },
-                                            undefined,
-                                            false,
-                                            {
-                                              fileName: _0x192142,
-                                              lineNumber: 493,
-                                              columnNumber: 56,
-                                            },
-                                            this,
-                                          );
-                                        } else {
-                                          return (0, _0xb7b29c.jsxDEV)(
-                                            _0x347683,
-                                            {
-                                              activeTab: _0x51bdb0,
-                                              setActiveTab: _0x343853,
-                                            },
-                                            undefined,
-                                            false,
-                                            {
-                                              fileName: _0x192142,
-                                              lineNumber: 494,
-                                              columnNumber: 28,
-                                            },
-                                            this,
-                                          );
-                                        }
-                                      })(),
-                                    },
-                                    undefined,
-                                    false,
-                                    {
-                                      fileName: _0x192142,
-                                      lineNumber: 485,
-                                      columnNumber: 17,
-                                    },
-                                    this,
-                                  ),
-                                ],
-                              },
-                              undefined,
-                              true,
-                            )
-                      : (0, _0xb7b29c.jsxDEV)(
-                          "div",
-                          {
-                            className: "chessr-panel-body",
-                            children: (0, _0xb7b29c.jsxDEV)(
-                              _0x251840,
-                              {},
                               undefined,
                               false,
                               {
                                 fileName: _0x192142,
-                                lineNumber: 501,
-                                columnNumber: 15,
+                                lineNumber: 484,
+                                columnNumber: 17,
                               },
                               this,
                             ),
-                          },
-                          undefined,
-                          false,
-                          {
-                            fileName: _0x192142,
-                            lineNumber: 500,
-                            columnNumber: 13,
-                          },
-                          this,
-                        ),
+                            (0, _0xb7b29c.jsxDEV)(
+                              "div",
+                              {
+                                className: "chessr-panel-body",
+                                children: (() => {
+                                  let _0xe690f1 = _0x424285();
+                                  if (_0x47455d) {
+                                    return (0, _0xb7b29c.jsxDEV)(
+                                      _0xdc3530,
+                                      {
+                                        activeTab: _0x2cdd50,
+                                        setActiveTab: _0x53baf7,
+                                      },
+                                      undefined,
+                                      false,
+                                      {
+                                        fileName: _0x192142,
+                                        lineNumber: 488,
+                                        columnNumber: 46,
+                                      },
+                                      this,
+                                    );
+                                  } else if (_0xe690f1 && !_0x359cc8) {
+                                    return (0, _0xb7b29c.jsxDEV)(
+                                      _0x131157,
+                                      {
+                                        gameId: _0xe690f1,
+                                      },
+                                      undefined,
+                                      false,
+                                      {
+                                        fileName: _0x192142,
+                                        lineNumber: 493,
+                                        columnNumber: 56,
+                                      },
+                                      this,
+                                    );
+                                  } else {
+                                    return (0, _0xb7b29c.jsxDEV)(
+                                      _0x347683,
+                                      {
+                                        activeTab: _0x51bdb0,
+                                        setActiveTab: _0x343853,
+                                      },
+                                      undefined,
+                                      false,
+                                      {
+                                        fileName: _0x192142,
+                                        lineNumber: 494,
+                                        columnNumber: 28,
+                                      },
+                                      this,
+                                    );
+                                  }
+                                })(),
+                              },
+                              undefined,
+                              false,
+                              {
+                                fileName: _0x192142,
+                                lineNumber: 485,
+                                columnNumber: 17,
+                              },
+                              this,
+                            ),
+                          ],
+                        },
+                        undefined,
+                        true,
+                      ),
               },
               undefined,
               false,
