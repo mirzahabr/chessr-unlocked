@@ -1,0 +1,271 @@
+{
+  "known_limitations": [
+    "AI move-explanation (/api/explain-move) requires a real Supabase JWT; cannot work anonymously — always errors. Server-side dependency, not fixable client-side.",
+    "Game Review over wss://api.chessr.io/ws?userId=anon connects without a token; whether the server treats anon as premium is server-side policy and remains unverified."
+  ],
+  "schema_version": 1,
+  "unlocks": [
+    {
+      "applies_to": [
+        "content-scripts/content.js",
+        "chunks/<stream-bundle>"
+      ],
+      "confidence": "high",
+      "description": "signUp/signIn/signOut/changePassword/resendConfirmation/resetPassword are no-network stubs.",
+      "evidence": [
+        "previous-version match",
+        "stable string anchor",
+        "verified against v3.4.0: pre-unlock anchor occurrence counts identical to v3.3.2 original"
+      ],
+      "id": "accounts-store-stub",
+      "locate": {
+        "anchors": [
+          "accounts: [],",
+          "linked_accounts"
+        ],
+        "role": "linked-accounts store (fetchAccounts/linkAccount/unlinkAccount)"
+      },
+      "notes": "Formalized this version (v3.4.0) — this stub was already applied in v3.3.2's shipped chessr-unlocked-all-features build but had never been captured as its own manifest entry.",
+      "status": "active",
+      "transform": "fetchAccounts -> set {loading:false, accounts:[]}, no network call. linkAccount -> return {success:true}. unlinkAccount -> no-op. setNeedsLinking left as a plain setter (never triggered because of link-account-effect-noop).",
+      "verify": [
+        "grep 'accounts: [],'"
+      ],
+      "version_introduced": "3.3.2",
+      "version_last_verified": "3.4.0"
+    },
+    {
+      "applies_to": [
+        "content-scripts/content.js",
+        "chunks/<stream-bundle>"
+      ],
+      "confidence": "high",
+      "description": "signUp/signIn/signOut/changePassword/resendConfirmation/resetPassword are no-network stubs.",
+      "evidence": [
+        "previous-version match",
+        "stable string anchor",
+        "verified against v3.4.0: pre-unlock anchor occurrence counts identical to v3.3.2 original (signUp: async x1, signIn: async x1)"
+      ],
+      "id": "auth-method-stubs",
+      "locate": {
+        "anchors": [
+          "signUp: async",
+          "signIn: async"
+        ],
+        "role": "auth methods (pre-unlock locate anchors -- corrected in v3.4.0 pass, see notes)"
+      },
+      "notes": "locate.anchors corrected in the v3.4.0 pass: previously seeded with POST-unlock strings ('Sign-in is not required', 'No account system') which cannot locate the target in a fresh, not-yet-unlocked build. These pre-unlock anchors (the method names themselves) were verified present in both v3.3.2's original restoration and v3.4.0's fresh restoration before the unlock was applied.",
+      "status": "active",
+      "transform": "Replace each method body with a stub returning the expected {success,error} shape; no Supabase or backend calls.",
+      "verify": [
+        "grep 'Sign-in is not required'"
+      ],
+      "version_introduced": "3.3.2",
+      "version_last_verified": "3.4.0"
+    },
+    {
+      "applies_to": [
+        "content-scripts/content.js",
+        "chunks/<stream-bundle>"
+      ],
+      "confidence": "high",
+      "description": "Auth/plan store starts as a permanent premium anonymous session so the login gate never renders.",
+      "evidence": [
+        "previous-version match",
+        "stable string anchor",
+        "verified against v3.4.0: plan: \"free\" x5, user: null x48, session: null x42 -- identical counts to v3.3.2 original"
+      ],
+      "id": "auth-store-initial-state",
+      "locate": {
+        "anchors": [
+          "plan: \"free\"",
+          "user: null",
+          "session: null"
+        ],
+        "role": "auth store initial state (pre-unlock locate anchors -- corrected in v3.4.0 pass, see notes)"
+      },
+      "notes": "Non-null user is the hidden switch: `if (!user) return <LoginScreen/>` forces login while user is null. locate.anchors corrected in the v3.4.0 pass: previously seeded with POST-unlock strings ('id: \"anon\"', 'plan: \"premium\"') which cannot locate the target in a fresh, not-yet-unlocked build.",
+      "status": "active",
+      "transform": "Set user/session to a mock anon object, plan:'premium', planLoading/initializing:false, guidelinesAcceptedAt:new Date(0).",
+      "verify": [
+        "grep 'id: \"anon\"'",
+        "grep 'plan: \"premium\"'"
+      ],
+      "version_introduced": "3.3.2",
+      "version_last_verified": "3.4.0"
+    },
+    {
+      "applies_to": [
+        "content-scripts/content.js",
+        "chunks/<stream-bundle>"
+      ],
+      "confidence": "high",
+      "description": "Version gate (/health minExtensionVersion) removed; never blocks UI load.",
+      "evidence": [
+        "previous-version match",
+        "stable string anchor",
+        "verified against v3.4.0: minExtensionVersion x1, checkVersion: async x1 -- identical counts to v3.3.2 original"
+      ],
+      "id": "checkversion-stub",
+      "locate": {
+        "anchors": [
+          "checkVersion: async",
+          "minExtensionVersion"
+        ],
+        "role": "version gate (pre-unlock locate anchors -- corrected in v3.4.0 pass, see notes)"
+      },
+      "notes": "locate.anchors corrected in the v3.4.0 pass: 'minExtensionVersion' only appears in the pre-unlock body (the /health fetch + semver compare), making it a strong pre-unlock-only anchor; it is absent after the transform.",
+      "status": "active",
+      "transform": "Replace checkVersion body with unconditional {updateRequired:false, checking:false}; remove the /health fetch.",
+      "verify": [
+        "grep 'updateRequired: false'"
+      ],
+      "version_introduced": "3.3.2",
+      "version_last_verified": "3.4.0"
+    },
+    {
+      "applies_to": [
+        "content-scripts/content.js",
+        "chunks/<stream-bundle>"
+      ],
+      "confidence": "high",
+      "description": "linked: false / inGuild: null Discord integration store stubbed -- fetchStatus/fetchMembership/initLink/unlink are all no-network.",
+      "evidence": [
+        "previous-version match",
+        "stable string anchor",
+        "verified against v3.4.0: pre-unlock anchor occurrence counts identical to v3.3.2 original"
+      ],
+      "id": "discord-store-stub",
+      "locate": {
+        "anchors": [
+          "inGuild: null,",
+          "discord/status"
+        ],
+        "role": "Discord integration store (fetchStatus/fetchMembership/initLink/unlink)"
+      },
+      "notes": "Formalized this version (v3.4.0) — this stub was already applied in v3.3.2's shipped chessr-unlocked-all-features build but had never been captured as its own manifest entry. v3.4.0's original endpoints use query-string params (/discord/status?userId=...) rather than path segments; wording-only difference, same neutralization.",
+      "status": "active",
+      "transform": "fetchStatus -> set {linked:false, username:null, avatar:null, loading:false}, no network. fetchMembership -> set {inGuild:false}, no network. initLink -> no-op. unlink -> set {linked:false, username:null, avatar:null}, no network.",
+      "verify": [
+        "grep 'inGuild: null,'"
+      ],
+      "version_introduced": "3.3.2",
+      "version_last_verified": "3.4.0"
+    },
+    {
+      "applies_to": [
+        "content-scripts/content.js",
+        "chunks/<stream-bundle>"
+      ],
+      "confidence": "high",
+      "description": "Removed the two 'if (elo < 2500 && !limitStrength) setLimitStrength(true)' enforcement sites per bundle.",
+      "detect": "absence",
+      "evidence": [
+        "previous-version match",
+        "verified against v3.4.0: exactly 2 sites present pre-unlock, identical to v3.3.2 original"
+      ],
+      "id": "elo-2500-enforcement-removal",
+      "locate": {
+        "anchors": [
+          "< 2500 && !"
+        ],
+        "role": "ELO enforcement (removal — verify by absence)"
+      },
+      "notes": "Removal unlock: verify passes when the anchor is ABSENT from the unlocked build. This anchor is naturally pre-unlock-compatible (it's the enforcement code itself, not a post-unlock artifact) -- no correction needed.",
+      "status": "active",
+      "transform": "Delete both enforcement blocks so manual ELO can exceed 2500.",
+      "verify": [
+        "grep '< 2500 && !'"
+      ],
+      "version_introduced": "3.3.2",
+      "version_last_verified": "3.4.0"
+    },
+    {
+      "applies_to": [
+        "content-scripts/content.js",
+        "chunks/<stream-bundle>"
+      ],
+      "confidence": "high",
+      "description": "Engine settings initial state unlocked: no strength cap, unlimited search budget.",
+      "evidence": [
+        "previous-version match",
+        "stable string anchor",
+        "verified against v3.4.0: limitStrength: true x1 -- identical to v3.3.2 original"
+      ],
+      "id": "engine-settings-unlock",
+      "locate": {
+        "anchors": [
+          "limitStrength: true"
+        ],
+        "role": "engine settings (pre-unlock locate anchor -- corrected in v3.4.0 pass, see notes)"
+      },
+      "notes": "locate.anchors corrected in the v3.4.0 pass: previously seeded with the POST-unlock value ('limitStrength: false'), which cannot locate the target in a fresh, not-yet-unlocked build. The pre-unlock value (true) is the correct locate anchor.",
+      "status": "active",
+      "transform": "limitStrength:false, searchNodes:999999999, searchDepth:999, searchMovetime:999999, serverLoadThreshold:0.",
+      "verify": [
+        "grep 'limitStrength: false'",
+        "grep 'searchNodes: 999999999'"
+      ],
+      "version_introduced": "3.3.2",
+      "version_last_verified": "3.4.0"
+    },
+    {
+      "applies_to": [
+        "content-scripts/content.js",
+        "chunks/<stream-bundle>"
+      ],
+      "confidence": "high",
+      "description": "Community Guidelines modal (gate: guidelinesAcceptedAt===null) suppressed by seeding a past date.",
+      "evidence": [
+        "previous-version match",
+        "stable string anchor",
+        "verified against v3.4.0: guidelinesAcceptedAt: null x2 -- identical to v3.3.2 original"
+      ],
+      "id": "guidelines-gate",
+      "locate": {
+        "anchors": [
+          "guidelinesAcceptedAt: null"
+        ],
+        "role": "guidelines gate (pre-unlock locate anchor -- corrected in v3.4.0 pass, see notes)"
+      },
+      "notes": "Second-order regression exposed once user became non-null (v3.3.2). locate.anchors corrected in the v3.4.0 pass: previously seeded with the POST-unlock value ('guidelinesAcceptedAt: new Date(0)'), which cannot locate the target in a fresh, not-yet-unlocked build.",
+      "status": "active",
+      "transform": "Initial state guidelinesAcceptedAt:new Date(0) so the modal's null-gate is never true.",
+      "verify": [
+        "grep 'guidelinesAcceptedAt: new Date(0)'"
+      ],
+      "version_introduced": "3.3.2",
+      "version_last_verified": "3.4.0"
+    },
+    {
+      "applies_to": [
+        "content-scripts/content.js",
+        "chunks/<stream-bundle>"
+      ],
+      "confidence": "medium",
+      "description": "Neutralized the 'detect chess profile -> setNeedsLinking(true)' effect so the link-account nag never shows.",
+      "detect": "absence",
+      "evidence": [
+        "previous-version match",
+        "behavioral trace",
+        "verified against v3.4.0: effect present pre-unlock at the same structural shape (platform detection -> profile lookup -> conditional linking-flag setter) as v3.3.2 original"
+      ],
+      "id": "link-account-effect-noop",
+      "locate": {
+        "anchors": [
+          "setNeedsLinking(true"
+        ],
+        "role": "link-account nag (removal — verify by absence)"
+      },
+      "notes": "Removal at an OBFUSCATED, aliased call site (original calls the store setter via an obfuscated alias, not the readable name), so grep-anchoring is unreliable — the readable anchor is absent in BOTH builds, in every version processed so far. Detection must be confirmed by the model against the previous version's effect body (recovery-ladder step 2). Anchor reliability capped at medium.",
+      "status": "active",
+      "transform": "Replace the effect body with an unconditional early return.",
+      "verify": [
+        "grep 'setNeedsLinking(true'"
+      ],
+      "version_introduced": "3.3.2",
+      "version_last_verified": "3.4.0"
+    }
+  ],
+  "version_basis": "3.4.0"
+}

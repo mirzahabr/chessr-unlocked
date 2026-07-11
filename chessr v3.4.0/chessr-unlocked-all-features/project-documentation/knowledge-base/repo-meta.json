@@ -1,0 +1,13 @@
+{
+  "components": {
+    "discoveries": 1,
+    "knowledge-base": 1,
+    "re-config": 1,
+    "region-store": 1,
+    "structural-signature": 1,
+    "unlock-manifest": 1
+  },
+  "note": "bootstrapped from pre-schema repository",
+  "repo_schema_version": 1,
+  "written_by_skill": "1.0.0"
+}

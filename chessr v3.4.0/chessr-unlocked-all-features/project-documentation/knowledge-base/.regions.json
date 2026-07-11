@@ -1,0 +1,14 @@
+{
+  "regions": {
+    "/Users/nurasyl/Documents/Chessr/knowledge-base/architecture.md#overview": "f8f84886b7af7e76a9649bb916b4e8683d00a5615c752302a405ddeed68a20ab",
+    "/Users/nurasyl/Documents/Chessr/knowledge-base/authentication.md#overview": "2cd04d651fa630d110d6cd5a75fcc50325806b7ca67498ddafa1d567a9c283b5",
+    "/Users/nurasyl/Documents/Chessr/knowledge-base/authentication.md#v3.4.0-update": "0bb6092905323c9e3a80bfbfe7abf86d5a175b7fa0987fa698eeb20a4dd35556",
+    "/Users/nurasyl/Documents/Chessr/knowledge-base/engine.md#overview": "63317feefa951ec23fb787c85ab85d8d9c08a6aedb9698796f5947ec980f7d3a",
+    "/Users/nurasyl/Documents/Chessr/knowledge-base/messaging.md#overview": "963bd1517455bf4221e73c3d57dcec3e4a8027383f1001dfd108529e479db4e6",
+    "/Users/nurasyl/Documents/Chessr/knowledge-base/networking.md#overview": "dad846ce83c8cd33ab5921b682fc2df2ed27f77c0239e69e1d577482bb140e72",
+    "/Users/nurasyl/Documents/Chessr/knowledge-base/popup.md#overview": "eefc841ac22ed463b3008912e50ec0e547706d7b29b660e8944769f7a429c6a1",
+    "/Users/nurasyl/Documents/Chessr/knowledge-base/storage.md#overview": "dc1f5f575036cd8bcc5e8a6c81baa4930df1b52ffa3766b166562085d0be2715",
+    "/Users/nurasyl/Documents/Chessr/knowledge-base/ui.md#overview": "222104452439d8d823b3b4c39b4394a1a2a83cb5ad3b627aba8d220b18c2df0a"
+  },
+  "schema_version": 1
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "default_mode": "dry-run",
+  "fidelity": {
+    "rename_policy": "high-confidence-only"
+  },
+  "approval_thresholds": {
+    "max_files_without_approval": 12,
+    "max_new_gates_without_approval": 2,
+    "max_kb_docs_rewritten_without_approval": 3,
+    "manifest_change_always_requires_approval": true,
+    "low_confidence_always_requires_approval": true,
+    "structure_change_always_requires_approval": true
+  }
+}

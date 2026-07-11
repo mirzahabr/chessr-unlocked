@@ -1,0 +1,112 @@
+{
+  "manifest_version": 3,
+  "name": "Chessr.io — Chess assist done right!",
+  "description": "Chessr.io v3",
+  "version": "3.4.0",
+  "icons": {
+    "16": "/icons/icon16.png",
+    "48": "/icons/icon48.png",
+    "128": "/icons/icon128.png"
+  },
+  "action": {},
+  "permissions": [
+    "storage",
+    "activeTab",
+    "declarativeNetRequest",
+    "debugger"
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "ruleset_1",
+        "enabled": true,
+        "path": "/rules.json"
+      }
+    ]
+  },
+  "host_permissions": [
+    "*://chess.com/*",
+    "*://*.chess.com/*",
+    "*://lichess.org/*",
+    "*://*.lichess.org/*",
+    "*://worldchess.com/*",
+    "*://*.worldchess.com/*",
+    "*://app.chessr.io/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "/icons/*",
+        "/engine/*",
+        "/icons/cls-*.svg"
+      ],
+      "matches": [
+        "*://chess.com/*",
+        "*://*.chess.com/*",
+        "*://lichess.org/*",
+        "*://*.lichess.org/*",
+        "*://worldchess.com/*",
+        "*://*.worldchess.com/*"
+      ]
+    },
+    {
+      "resources": [
+        "content-scripts/content.css"
+      ],
+      "use_dynamic_url": true,
+      "matches": [
+        "*://*.chess.com/*",
+        "*://*.lichess.org/*",
+        "*://*.worldchess.com/*",
+        "*://chess.com/*",
+        "*://lichess.org/*",
+        "*://worldchess.com/*"
+      ]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.chess.com/*",
+        "*://chess.com/*"
+      ],
+      "run_at": "document_start",
+      "js": [
+        "content-scripts/chesscomAnon.js",
+        "content-scripts/chesscomFakeTitle.js"
+      ],
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "*://*.chess.com/*",
+        "*://*.lichess.org/*",
+        "*://*.worldchess.com/*",
+        "*://chess.com/*",
+        "*://lichess.org/*",
+        "*://worldchess.com/*"
+      ],
+      "js": [
+        "content-scripts/content.js"
+      ]
+    },
+    {
+      "matches": [
+        "*://*.chess.com/*",
+        "*://*.lichess.org/*",
+        "*://*.worldchess.com/*",
+        "*://chess.com/*",
+        "*://lichess.org/*",
+        "*://worldchess.com/*"
+      ],
+      "run_at": "document_start",
+      "js": [
+        "content-scripts/pageContext.js"
+      ],
+      "world": "MAIN"
+    }
+  ]
+}
