@@ -90,6 +90,9 @@ If you care what a third party can see, this is the list to review.
 git clone https://github.com/mirzahabr/chessr-unlocked.git
 ```
 
+The folder is named after the **upstream** version (`3.4.0`); the modified build reports
+its own version (`3.4.0.1`), which is what `chrome://extensions/` shows.
+
 1. Open `chrome://extensions/` in Chrome.
 2. Enable **Developer mode** (top-right toggle).
 3. Click **Load unpacked** and select `versions/3.4.0/chessr-unlocked-all-features/`.
@@ -212,11 +215,16 @@ inside a build.
 
 ## Working on the repository
 
-- **Never edit `chessr-original-restored/`.** It is the behavior-preserving baseline;
-  every difference in the unlocked build must be explainable as a diff against it.
+- **Do not change behaviour in `chessr-original-restored/`.** It is the behavior-preserving
+  baseline; every difference in the unlocked build must be explainable as a diff against
+  it. The one exception is a **restoration fix** — when the deobfuscation pass changed what
+  the shipped build did (see
+  [`docs/repository-layout.md` rule 2a](docs/repository-layout.md#2a-restoration-fixes-are-allowed-product-changes-are-not)).
+  Record it in the report and the changelog; never add features there.
 - **Never edit `engine/`.** It is third-party code, byte-identical to the shipped build.
 - **Keep documentation out of builds.** Add repository notes to `docs/`; add
   product knowledge to `knowledge-base/`.
+- **Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before sending a patch.**
 - **Validate before committing** — run `python3 scripts/verify.py` (same checklist as
   [`docs/repository-layout.md`](docs/repository-layout.md#validation-checklist-for-a-version));
   CI runs it on every push and pull request.

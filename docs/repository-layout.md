@@ -41,7 +41,7 @@ evidence trail for how the extension evolved.
 
 | Folder | Contract |
 |---|---|
-| `chessr-original-restored/` | Behavior-preserving restoration of the shipped build. **Read-only.** Deobfuscated and reformatted, nothing else. It is what the unlocked build is diffed against. |
+| `chessr-original-restored/` | Behavior-preserving restoration of the shipped build. **Read-only, except for restoration fixes** (rule 2a). Restored and reformatted, nothing else. It is what the unlocked build is diffed against. |
 | `chessr-unlocked-all-features/` | The same tree with the account system removed and premium limits lifted. All changes land here. |
 
 Both folders must have an **identical file layout**. The only expected differences are
@@ -51,6 +51,25 @@ the modified files listed in the version's `PROJECT_REPORT.md` §10. Verify with
 diff -rq --exclude=engine versions/3.4.0/chessr-original-restored \
                      versions/3.4.0/chessr-unlocked-all-features
 ```
+
+### 2a. Restoration fixes are allowed; product changes are not
+
+"Read-only" means *do not change behaviour*, not *never touch*. The restoration pipeline
+(webcrack + Prettier) can itself introduce a defect — for example rewriting
+`var f; f = function(){}` into a block-scoped `function f(){}`, which throws under strict
+mode. When the baseline is provably less faithful than the shipped build, fixing the
+baseline is the correct move; working around it in the unlocked build would make every
+later diff lie about what upstream did.
+
+The bar for touching the baseline:
+
+- the change restores behaviour the shipped build already had, and
+- it is recorded in the version's `PROJECT_REPORT.md` and in `CHANGELOG.md`, and
+- it adds or removes no feature, permission or UI.
+
+Anything else belongs in `chessr-unlocked-all-features/`. If a diff against the baseline
+cannot be explained as one of the three categories in [`code-map.md`](code-map.md), it is a
+bug.
 
 ### 3. Builds contain only what Chrome loads
 

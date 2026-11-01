@@ -140,6 +140,19 @@ def check_regions() -> None:
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
 FENCE_RE = re.compile(r"```.*?```", re.S)
 CODE_SPAN_RE = re.compile(r"`[^`\n]+`")
+HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$", re.M)
+
+
+def slugify(heading: str) -> str:
+    """Approximate GitHub's heading anchor: lowercase, drop punctuation, spaces to '-'."""
+    text = heading.strip().lower()
+    text = re.sub(r"[^\w\s-]", "", text, flags=re.UNICODE)
+    return re.sub(r"\s", "-", text)
+
+
+def anchors_in(path: str) -> set[str]:
+    text = open(path, encoding="utf-8", errors="replace").read()
+    return {slugify(m.group(2)) for m in HEADING_RE.finditer(strip_code(text))}
 
 
 def strip_code(text: str) -> str:
@@ -149,19 +162,26 @@ def strip_code(text: str) -> str:
 
 def check_links() -> None:
     broken, total = [], 0
+    cache: dict[str, set[str]] = {}
     for f in tracked_files("*.md"):
         text = open(os.path.join(ROOT, f), encoding="utf-8", errors="replace").read()
         for target in LINK_RE.findall(strip_code(text)):
             target = target.strip()
-            if target.startswith(("http://", "https://", "mailto:", "#")):
+            if target.startswith(("http://", "https://", "mailto:")):
                 continue
-            path = target.split("#")[0]
-            if not path:
-                continue
+            path, _, fragment = target.partition("#")
             total += 1
-            resolved = os.path.normpath(os.path.join(ROOT, os.path.dirname(f), path))
+            resolved = (os.path.normpath(os.path.join(ROOT, os.path.dirname(f), path))
+                        if path else os.path.join(ROOT, f))
             if not os.path.exists(resolved):
                 broken.append(f"{f} -> {target}")
+                continue
+            if not fragment or not resolved.endswith(".md"):
+                continue
+            if resolved not in cache:
+                cache[resolved] = anchors_in(resolved)
+            if fragment not in cache[resolved]:
+                broken.append(f"{f} -> {target} (no such heading)")
     if broken:
         record(FAIL, "links", "; ".join(broken[:5]))
     else:
@@ -406,6 +426,53 @@ def check_signatures() -> None:
         record(PASS, "signatures", f"{checked} signature(s) match their baseline")
 
 
+def check_versions() -> None:
+    """Version numbers must line up across the folder name, both manifests and the changelog."""
+    versions = os.path.join(ROOT, "versions")
+    if not os.path.isdir(versions):
+        record(SKIP, "versions", "no versions/ directory")
+        return
+    problems, newest = [], None
+    for version in sorted(os.listdir(versions)):
+        vdir = os.path.join(versions, version)
+        if not os.path.isdir(vdir):
+            continue
+        base = os.path.join(vdir, "chessr-original-restored", "manifest.json")
+        unlocked = os.path.join(vdir, "chessr-unlocked-all-features", "manifest.json")
+        if os.path.isfile(base):
+            manifest = json.load(open(base, encoding="utf-8"))
+            if str(manifest.get("version")) != version:
+                problems.append(f"{version}: baseline manifest says {manifest.get('version')}")
+            if manifest.get("manifest_version") != 3:
+                problems.append(f"{version}: baseline is not Manifest V3")
+        if os.path.isfile(unlocked):
+            manifest = json.load(open(unlocked, encoding="utf-8"))
+            if not str(manifest.get("version", "")).startswith(f"{version}."):
+                problems.append(f"{version}: unlocked build should be {version}.N, "
+                                f"is {manifest.get('version')}")
+            if manifest.get("manifest_version") != 3:
+                problems.append(f"{version}: unlocked build is not Manifest V3")
+            if manifest.get("name") == json.load(open(base, encoding="utf-8")).get("name"):
+                problems.append(f"{version}: both builds share the name {manifest.get('name')!r}")
+            newest = version
+
+    changelog = os.path.join(ROOT, "CHANGELOG.md")
+    if newest and os.path.isfile(changelog):
+        text = open(changelog, encoding="utf-8").read()
+        match = re.search(r"^## \[([^\]]+)\]", text, re.M)
+        manifest_path = os.path.join(versions, newest,
+                                     "chessr-unlocked-all-features", "manifest.json")
+        expected = json.load(open(manifest_path, encoding="utf-8")).get("version")
+        if not match:
+            problems.append("CHANGELOG.md has no '## [version]' entry")
+        elif match.group(1) != expected:
+            problems.append(f"CHANGELOG.md top entry {match.group(1)} != current build {expected}")
+    if problems:
+        record(FAIL, "versions", "; ".join(problems[:5]))
+    else:
+        record(PASS, "versions", f"{newest} is current; names, versions and changelog agree")
+
+
 CHECKS = {
     "js-syntax": check_js_syntax,
     "json": check_json,
@@ -418,6 +485,7 @@ CHECKS = {
     "patches": check_patches,
     "schemas": check_schema_versions,
     "signatures": check_signatures,
+    "versions": check_versions,
 }
 
 

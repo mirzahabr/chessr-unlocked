@@ -25,7 +25,8 @@ will either rot or ship inside the extension.
 
 Repository-level files that are not documentation have their own homes: third-party
 licensing in [`../NOTICE.md`](../NOTICE.md) and [`../LICENSE`](../LICENSE), release history
-in [`../CHANGELOG.md`](../CHANGELOG.md), automation in [`../scripts/`](../scripts) and
+in [`../CHANGELOG.md`](../CHANGELOG.md), contribution rules in
+[`../CONTRIBUTING.md`](../CONTRIBUTING.md), automation in [`../scripts/`](../scripts) and
 [`../.github/workflows/`](../.github/workflows).
 
 Two hard rules:
