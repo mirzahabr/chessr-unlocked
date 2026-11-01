@@ -1,0 +1,382 @@
+#!/usr/bin/env python3
+"""Repository validation — the checklist from docs/repository-layout.md, executable.
+
+Runs offline, needs only Python 3.8+ and (optionally) Node for JS syntax checks.
+Exit code 0 means every hard check passed; warnings do not fail the build.
+
+    python3 scripts/verify.py            # all checks
+    python3 scripts/verify.py --verbose  # plus details for warnings
+    python3 scripts/verify.py --only anchors,regions
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import glob
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SKIP_DIRS = {"engine", "_metadata", "project-documentation", ".git", "node_modules"}
+
+PASS, FAIL, WARN, SKIP = "PASS", "FAIL", "WARN", "SKIP"
+results: list[tuple[str, str, str]] = []
+
+
+def record(status: str, check: str, detail: str = "") -> None:
+    results.append((status, check, detail))
+
+
+def rel(path: str) -> str:
+    return os.path.relpath(path, ROOT)
+
+
+def tracked_files(pattern: str = "") -> list[str]:
+    cmd = ["git", "-C", ROOT, "ls-files"]
+    if pattern:
+        cmd.append(pattern)
+    try:
+        out = subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return []
+    return [f for f in out.split("\n") if f]
+
+
+def build_dirs() -> list[str]:
+    versions = os.path.join(ROOT, "versions")
+    if not os.path.isdir(versions):
+        return []
+    out = []
+    for version in sorted(os.listdir(versions)):
+        vdir = os.path.join(versions, version)
+        if not os.path.isdir(vdir):
+            continue
+        out += [os.path.join(vdir, d) for d in sorted(os.listdir(vdir))
+                if os.path.isdir(os.path.join(vdir, d)) and d.startswith("chessr-")]
+    return out
+
+
+def walk_files(base: str, exts: tuple[str, ...]) -> list[str]:
+    out = []
+    for root, dirs, files in os.walk(base):
+        dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
+        out += [os.path.join(root, f) for f in files if f.endswith(exts)]
+    return out
+
+
+# ── checks ──────────────────────────────────────────────────────────────────
+
+def check_js_syntax() -> None:
+    node = shutil.which("node")
+    files = [f for b in build_dirs() for f in walk_files(b, (".js",))]
+    if not node:
+        record(SKIP, "js-syntax", "node not found; install Node to run this check")
+        return
+    bad = []
+    for f in files:
+        r = subprocess.run([node, "--check", f], capture_output=True, text=True)
+        if r.returncode != 0:
+            bad.append(f"{rel(f)}: {r.stderr.strip().splitlines()[-1] if r.stderr.strip() else 'parse error'}")
+    if bad:
+        record(FAIL, "js-syntax", "; ".join(bad[:5]))
+    else:
+        record(PASS, "js-syntax", f"{len(files)} files")
+
+
+def check_json() -> None:
+    files = [f for b in build_dirs() for f in walk_files(b, (".json",))]
+    kb = os.path.join(ROOT, "knowledge-base")
+    if os.path.isdir(kb):
+        for root, _dirs, names in os.walk(kb):
+            files += [os.path.join(root, n) for n in names if n.endswith(".json")]
+    bad = []
+    for f in files:
+        try:
+            json.load(open(f, encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as exc:
+            bad.append(f"{rel(f)}: {exc}")
+    if bad:
+        record(FAIL, "json", "; ".join(bad[:5]))
+    else:
+        record(PASS, "json", f"{len(files)} files")
+
+
+REGION_RE = r"<!-- BEGIN AUTO-GENERATED: {} -->(.*?)<!-- END AUTO-GENERATED: {} -->"
+
+
+def check_regions() -> None:
+    index = os.path.join(ROOT, "knowledge-base", ".regions.json")
+    if not os.path.isfile(index):
+        record(SKIP, "regions", "knowledge-base/.regions.json not found")
+        return
+    regions = json.load(open(index, encoding="utf-8")).get("regions", {})
+    missing, drift = [], []
+    for key, expected in regions.items():
+        path, _, name = key.partition("#")
+        fpath = os.path.join(ROOT, path)
+        if not os.path.isfile(fpath):
+            missing.append(f"{key} (file)")
+            continue
+        text = open(fpath, encoding="utf-8").read()
+        match = re.search(REGION_RE.format(re.escape(name), re.escape(name)), text, re.S)
+        if not match:
+            missing.append(f"{key} (fence)")
+            continue
+        actual = hashlib.sha256(match.group(1).strip().encode()).hexdigest()
+        if actual != expected:
+            drift.append(f"{key} (expected {expected[:8]}, got {actual[:8]})")
+    if missing or drift:
+        record(FAIL, "regions", "; ".join(missing + drift)[:400])
+    else:
+        record(PASS, "regions", f"{len(regions)} regions match")
+
+
+LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
+FENCE_RE = re.compile(r"```.*?```", re.S)
+CODE_SPAN_RE = re.compile(r"`[^`\n]+`")
+
+
+def strip_code(text: str) -> str:
+    """Drop fenced blocks and inline spans so code samples are not parsed as links."""
+    return CODE_SPAN_RE.sub("", FENCE_RE.sub("", text))
+
+
+def check_links() -> None:
+    broken, total = [], 0
+    for f in tracked_files("*.md"):
+        text = open(os.path.join(ROOT, f), encoding="utf-8", errors="replace").read()
+        for target in LINK_RE.findall(strip_code(text)):
+            target = target.strip()
+            if target.startswith(("http://", "https://", "mailto:", "#")):
+                continue
+            path = target.split("#")[0]
+            if not path:
+                continue
+            total += 1
+            resolved = os.path.normpath(os.path.join(ROOT, os.path.dirname(f), path))
+            if not os.path.exists(resolved):
+                broken.append(f"{f} -> {target}")
+    if broken:
+        record(FAIL, "links", "; ".join(broken[:5]))
+    else:
+        record(PASS, "links", f"{total} relative links")
+
+
+def digest_tree(base: str) -> str:
+    """Content hash of a directory tree: names + bytes, order-independent."""
+    h = hashlib.sha256()
+    for f in sorted(walk_files(base, ("",))):
+        h.update(os.path.relpath(f, base).encode())
+        h.update(hashlib.sha256(open(f, "rb").read()).digest())
+    return h.hexdigest()
+
+
+def check_engines() -> None:
+    builds = build_dirs()
+    versions = os.path.dirname(os.path.dirname(builds[0])) if builds else ""
+    if not versions:
+        record(SKIP, "engines", "no builds found")
+        return
+    problems, checked = [], 0
+    for version in sorted(os.listdir(versions)):
+        vdir = os.path.join(versions, version)
+        if not os.path.isdir(vdir):
+            continue
+        base = os.path.join(vdir, "chessr-original-restored", "engine")
+        unlocked = os.path.join(vdir, "chessr-unlocked-all-features", "engine")
+        if not (os.path.isdir(base) and os.path.isdir(unlocked)):
+            continue
+        checked += 1
+        if digest_tree(base) != digest_tree(unlocked):
+            problems.append(version)
+    if problems:
+        record(FAIL, "engines", f"engine/ differs between builds: {', '.join(problems)}")
+    else:
+        record(PASS, "engines", f"{checked} version(s), byte-identical")
+
+
+def check_anchors() -> None:
+    manifest_path = os.path.join(ROOT, "knowledge-base", "unlock-manifest.json")
+    if not os.path.isfile(manifest_path):
+        record(SKIP, "anchors", "knowledge-base/unlock-manifest.json not found")
+        return
+    manifest = json.load(open(manifest_path, encoding="utf-8"))
+    basis = manifest.get("version_basis")
+    base = os.path.join(ROOT, "versions", basis or "", "chessr-original-restored")
+    if not basis or not os.path.isdir(base):
+        record(SKIP, "anchors", f"baseline for {basis!r} not found")
+        return
+
+    corpus = []
+    for f in walk_files(base, (".js", ".html", ".json", ".css")):
+        try:
+            corpus.append(open(f, encoding="utf-8", errors="replace").read())
+        except OSError:
+            pass
+    blob = "\n".join(corpus)
+
+    missing, ambiguous, checked = [], [], 0
+    for unlock in manifest.get("unlocks", []):
+        locate = unlock.get("locate", {})
+        for anchor in locate.get("anchors", []):
+            checked += 1
+            count = blob.count(anchor)
+            if count == 0:
+                missing.append(f"{unlock['id']}: {anchor!r}")
+                continue
+            expected = locate.get("expected_count")
+            if count > 3 and expected is None:
+                ambiguous.append(f"{unlock['id']}: {anchor!r} x{count}")
+    if missing:
+        record(FAIL, "anchors", "; ".join(missing))
+    elif ambiguous:
+        record(WARN, "anchors", f"{checked} checked, ambiguous: " + "; ".join(ambiguous[:4]))
+    else:
+        record(PASS, "anchors", f"{checked} anchors resolve in {basis} baseline")
+
+
+MAX_BYTES = 90 * 1024 * 1024
+
+
+def check_sizes() -> None:
+    out = subprocess.run(["git", "-C", ROOT, "ls-tree", "-r", "-l", "-z", "HEAD"],
+                         capture_output=True, text=True)
+    if out.returncode != 0:
+        record(SKIP, "size-guard", "git ls-tree failed")
+        return
+    big = []
+    for entry in out.stdout.split("\0"):
+        if not entry.strip():
+            continue
+        meta, _, path = entry.partition("\t")
+        parts = meta.split()
+        if len(parts) < 4 or not parts[3].isdigit():
+            continue
+        size = int(parts[3])
+        if size > MAX_BYTES:
+            big.append(f"{path} ({size / 1024 / 1024:.1f} MiB)")
+    if big:
+        record(FAIL, "size-guard", "; ".join(big))
+    else:
+        record(PASS, "size-guard", "no tracked file above 90 MiB")
+
+
+ABS_PATH_RE = re.compile(r'(?<![\w.])/(?:Users|home)/[A-Za-z0-9._-]+/|C:\\\\Users\\\\')
+
+
+def check_absolute_paths() -> None:
+    hits = []
+    for f in tracked_files():
+        if f.startswith("docs/") or not f.endswith((".md", ".json", ".py", ".sh", ".yml", ".yaml")):
+            continue
+        try:
+            text = open(os.path.join(ROOT, f), encoding="utf-8", errors="replace").read()
+        except OSError:
+            continue
+        if ABS_PATH_RE.search(text):
+            hits.append(f)
+    if hits:
+        record(FAIL, "absolute-paths", ", ".join(hits[:5]))
+    else:
+        record(PASS, "absolute-paths", "no machine-specific paths")
+
+
+def check_patches() -> None:
+    """If a version stores its unlocked build as a patch series, prove it round-trips."""
+    versions = os.path.join(ROOT, "versions")
+    if not os.path.isdir(versions):
+        record(SKIP, "patches", "no versions/ directory")
+        return
+    wanted = [v for v in sorted(os.listdir(versions))
+              if os.path.isdir(os.path.join(versions, v, "patches"))]
+    if not wanted:
+        record(SKIP, "patches", "no patch layer in use")
+        return
+    patch_bin = shutil.which("patch")
+    if not patch_bin:
+        record(SKIP, "patches", "'patch' not installed")
+        return
+    problems, done = [], 0
+    for version in wanted:
+        vdir = os.path.join(versions, version)
+        base = os.path.join(vdir, "chessr-original-restored")
+        built = os.path.join(vdir, "chessr-unlocked-all-features")
+        if not (os.path.isdir(base) and os.path.isdir(built)):
+            continue
+        tmp = tempfile.mkdtemp()
+        try:
+            target = os.path.join(tmp, "out")
+            shutil.copytree(base, target)
+            ok = True
+            for patch_file in sorted(glob.glob(os.path.join(vdir, "patches", "*.patch"))):
+                r = subprocess.run([patch_bin, "-p1", "--batch", "-s", "-d", target],
+                                   stdin=open(patch_file, "rb"),
+                                   capture_output=True, text=True)
+                if r.returncode != 0:
+                    problems.append(f"{version}: {os.path.basename(patch_file)} does not apply")
+                    ok = False
+                    break
+            if ok and digest_tree(target) != digest_tree(built):
+                problems.append(f"{version}: patched tree differs from the committed build")
+            if ok:
+                done += 1
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+    if problems:
+        record(FAIL, "patches", "; ".join(problems))
+    else:
+        record(PASS, "patches", f"{done} version(s) round-trip")
+
+
+CHECKS = {
+    "js-syntax": check_js_syntax,
+    "json": check_json,
+    "regions": check_regions,
+    "links": check_links,
+    "engines": check_engines,
+    "anchors": check_anchors,
+    "size-guard": check_sizes,
+    "absolute-paths": check_absolute_paths,
+    "patches": check_patches,
+}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--only", help="comma-separated subset, e.g. anchors,regions")
+    parser.add_argument("--verbose", action="store_true")
+    args = parser.parse_args()
+
+    selected = list(CHECKS)
+    if args.only:
+        wanted = [c.strip() for c in args.only.split(",") if c.strip()]
+        unknown = [c for c in wanted if c not in CHECKS]
+        if unknown:
+            print(f"unknown check(s): {', '.join(unknown)}", file=sys.stderr)
+            return 2
+        selected = wanted
+
+    for name in selected:
+        CHECKS[name]()
+
+    width = max(len(c) for _s, c, _d in results)
+    for status, check, detail in results:
+        print(f"{status:4}  {check:<{width}}  {detail}")
+        if args.verbose and status != PASS and detail:
+            print(f"      {' ' * width}  {detail}")
+
+    failed = [r for r in results if r[0] == FAIL]
+    warned = [r for r in results if r[0] == WARN]
+    print(f"\n{len(results) - len(failed) - len(warned)} passed, "
+          f"{len(warned)} warning(s), {len(failed)} failed")
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

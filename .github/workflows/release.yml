@@ -1,0 +1,52 @@
+name: release
+
+# Tags are named v<version>-unlocked, e.g. v3.4.0-unlocked.
+on:
+  push:
+    tags:
+      - "v*-unlocked"
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate before packaging
+        run: python3 scripts/verify.py
+
+      - name: Package both builds and checksum them
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          version="${version%-unlocked}"
+          src="versions/${version}"
+          if [ ! -d "$src" ]; then
+            echo "::error::no directory for $version at $src"
+            exit 1
+          fi
+          mkdir -p dist
+          for build in chessr-original-restored chessr-unlocked-all-features; do
+            tar -czf "dist/${build}-${version}.tar.gz" -C "$src" "$build"
+          done
+          (cd dist && sha256sum ./*.tar.gz > SHA256SUMS.txt)
+          cat dist/SHA256SUMS.txt
+
+      - name: Publish release with checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "Chessr.io ${GITHUB_REF_NAME#v}" \
+            --generate-notes \
+            --notes "Verify the download against SHA256SUMS.txt before loading the extension. **Use at your own risk** — see the disclaimer in the README."
