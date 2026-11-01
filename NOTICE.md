@@ -23,13 +23,15 @@ the property of its authors. Nothing here transfers any right to it.
 
 Upstream 3.7.2 removed every vendored chess engine, so the **baseline** in
 `versions/3.7.2/chessr-original-restored/` contains none. Builds are a different matter:
-`scripts/build-unlocked.sh` adds two engines back (extracted from git history, the 3.4.0
+`scripts/build-unlocked.sh` adds three engines back (extracted from git history, the 3.4.0
 tree) unless you pass `--no-local-engines`:
 
 | Component | File | Licence status | Action |
 |---|---|---|---|
 | Stockfish.js 18 | `engine/stockfish.js`, `engine/stockfish.wasm` | **GPL-3.0** (Chess.com build); no GPL text or source offer is included | Add the GPL-3.0 text and a source pointer before distributing such a build, or build with `--no-local-engines`. |
 | Komodo Dragon | `engine/dragon.js`, `engine/dragon.wasm` | **Proprietary / commercial.** Redistribution is almost certainly not permitted. | Highest legal risk in this repository. Do not publish a build containing it without written permission. |
+| Maia 3 | `engine/maia3/model.onnx`, `maia3-worker.js`, `all_moves*.json` | *Unverified.* Model weights often carry their own licence, separate from the code. | Confirm the weights' licence before redistributing. |
+| ONNX Runtime | `engine/maia3/ort/*` | **MIT** (Copyright (c) Microsoft Corporation) | Include the MIT notice and copyright line. |
 | Polyglot opening book | `engine/book.bin` | *Unverified.* | Confirm provenance before redistributing. |
 
 These engines are a deliberate, documented departure from upstream — see

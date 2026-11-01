@@ -30,26 +30,27 @@ client only asks and renders. Only the 26 MB AI-commentary engine and a 157 KB R
 That would leave the unlocked build unable to analyse anything, so this repository puts
 the 3.4.0 engines back — **as a documented forced measure, not as upstream code**:
 
-- `versions/3.7.2/vendor/local-engines.js` carries the Komodo/Dragon and Stockfish UCI
+- `versions/3.7.2/vendor/local-engines.js` carries the Komodo/Dragon, Stockfish and Maia 3
   engine classes transplanted from the 3.4.0 restoration.
 - The unlock patch splices that block into `content.js` and installs it in front of the
   server engine: if the local engine initialises, suggestions are computed in the browser.
-- `scripts/install-local-engines.sh` extracts `dragon.js/.wasm`, `stockfish.js/.wasm` and
-  `book.bin` from git history into the build (they are 54 MB and are not committed to the
-  3.7.2 tree). `scripts/build-unlocked.sh 3.7.2` runs it by default; pass
+- `scripts/install-local-engines.sh` extracts `dragon.js/.wasm`, `stockfish.js/.wasm`,
+  `book.bin` and the whole `maia3/` folder (ONNX model + runtime, ~58 MB) from git history
+  into the build. They are not committed to the 3.7.2 tree. `scripts/build-unlocked.sh 3.7.2` runs it by default; pass
   `--no-local-engines` to skip.
 
 With the local engines installed:
 
-- ✅ move suggestions, evaluation and the eval bar work with no account — Komodo and
-  Stockfish, depth 15 in roughly 250 ms in the headless test
+- ✅ move suggestions, evaluation and the eval bar work with no account — Komodo, Stockfish
+  and Maia 3, measured at depth 14 in 80–240 ms in the headless test
 - ✅ no login screen, permanent **Premium** UI state, every engine selectable
 - ✅ no "link your account" wall, no guidelines gate
 
 Still server-only:
 
-- ❌ Maia 3, Rodent IV, Leela and the server-side personalities — their drivers are not in
-  3.7.2 and were not transplanted
+- ❌ Rodent IV, Leela and the server-side personalities. Leela never had a local driver;
+  Rodent's wasm stops reading UCI input after its banner, so its 3.4.0 class was left out
+  rather than shipped in a state where `init()` hangs.
 - ❌ Game Review, which streams from Chessr's backend
 - ❌ AI move explanations beyond the server's 50/day quota
 

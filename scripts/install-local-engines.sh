@@ -7,6 +7,10 @@
 # git history (they were committed with the 3.4.0 build), so this script extracts
 # them from there.
 #
+# Engines installed: Komodo/Dragon, Stockfish and Maia 3 (ONNX).
+# Rodent IV is fetched too but not wired in: its wasm stdin shim stops accepting
+# commands after the UCI banner (see scripts/make-local-engines.py).
+#
 # This is a forced measure. The original 3.7.2 package was not supposed to
 # contain engine binaries, and a build with them enabled is not a faithful copy
 # of upstream — it is the 3.4.0 engine stack grafted onto the 3.7.2 client.
@@ -39,11 +43,17 @@ git -C "$root" archive "$commit" versions/3.4.0/chessr-original-restored/engine 
 src="$tmp/versions/3.4.0/chessr-original-restored/engine"
 mkdir -p "$out/engine"
 
-# Only the two engines the transplant supports, plus the book Komodo can use.
+# Flat engine files plus the two directory-shaped engines.
 installed=0
 for f in stockfish.js stockfish.wasm dragon.js dragon.wasm book.bin; do
   if [ -f "$src/$f" ]; then
     cp "$src/$f" "$out/engine/$f"
+    installed=$((installed + 1))
+  fi
+done
+for d in maia3; do
+  if [ -d "$src/$d" ]; then
+    cp -R "$src/$d" "$out/engine/$d"
     installed=$((installed + 1))
   fi
 done

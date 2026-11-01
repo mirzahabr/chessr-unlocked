@@ -40,8 +40,9 @@ files differ, and the patch says which.
 | `wasm/sealed_core_bg.wasm` | Rust/wasm-bindgen module: `handshake_start`, `handshake_finish`, `seal`, `open`, `free`. The JS glue lives inline in `content.js`. |
 
 No chess engine ships in upstream 3.7.2. A build produced by `scripts/build-unlocked.sh`
-adds two back — `dragon.js/.wasm` and `stockfish.js/.wasm`, plus `book.bin` — extracted
-from git history by `scripts/install-local-engines.sh`; `--no-local-engines` skips them.
+adds three back — `dragon.js/.wasm`, `stockfish.js/.wasm`, `book.bin` and the `maia3/`
+folder — extracted from git history by `scripts/install-local-engines.sh`;
+`--no-local-engines` skips them.
 `engine/` is third-party either way and untouchable: the unlock never edits it, it only
 adds files next to the explanation engine.
 
