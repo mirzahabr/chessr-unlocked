@@ -54575,7 +54575,44 @@ var content = (function () {
       x: 20,
       y: 20,
     },
+    widgetGroups: [],
   };
+  // Generates a stable id for a new floating-widget group (split/detach).
+  function _0x2f0a91() {
+    return "wg-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+  // Reconciles the group layout against the current pinned set: drops ids that
+  // got unpinned, and folds any pinned id that isn't in a group yet into the
+  // last group (or a brand-new one). Also the one-time migration path for
+  // pre-groups configs, which only ever had a single flat `pinned` list plus
+  // one `widgetPosition` -- those become a single synthesized group here.
+  function _0x8f3c21(_0x2a1c04, _0x1f6a3d, _0x4c9e17) {
+    let _0x5d0b92 = (_0x2a1c04 ?? [])
+      .map((_0x3f8a21) => ({
+        ..._0x3f8a21,
+        items: _0x3f8a21.items.filter((_0x1e8b4c) =>
+          _0x1f6a3d.includes(_0x1e8b4c),
+        ),
+      }))
+      .filter((_0x2c9d17) => _0x2c9d17.items.length > 0);
+    let _0x4b2e63 = new Set(_0x5d0b92.flatMap((_0x1a7f52) => _0x1a7f52.items));
+    let _0x3d1a90 = _0x1f6a3d.filter((_0x2e6f81) => !_0x4b2e63.has(_0x2e6f81));
+    if (_0x3d1a90.length > 0) {
+      if (_0x5d0b92.length > 0) {
+        _0x5d0b92[_0x5d0b92.length - 1] = {
+          ..._0x5d0b92[_0x5d0b92.length - 1],
+          items: [..._0x5d0b92[_0x5d0b92.length - 1].items, ..._0x3d1a90],
+        };
+      } else {
+        _0x5d0b92.push({
+          id: _0x2f0a91(),
+          position: _0x4c9e17,
+          items: _0x3d1a90,
+        });
+      }
+    }
+    return _0x5d0b92;
+  }
   var _0xd7209d = _0x5b0478()((_0x539afc, _0x42a4a4) => ({
     ..._0x4d5a27,
     editMode: false,
@@ -54595,14 +54632,31 @@ var content = (function () {
       );
     },
     togglePin: (_0x186cd7) => {
-      let { pinned: _0x48fd8b } = _0x42a4a4();
+      let {
+        pinned: _0x48fd8b,
+        widgetGroups: _0x1b4a72,
+        widgetPosition: _0x2a9f14,
+      } = _0x42a4a4();
       if (_0x48fd8b.includes(_0x186cd7)) {
+        let _0x4e8c31 = _0x48fd8b.filter(
+          (_0x38bddd) => _0x38bddd !== _0x186cd7,
+        );
         _0x539afc({
-          pinned: _0x48fd8b.filter((_0x38bddd) => _0x38bddd !== _0x186cd7),
+          pinned: _0x4e8c31,
+          widgetGroups: _0x1b4a72
+            .map((_0x298f6d) => ({
+              ..._0x298f6d,
+              items: _0x298f6d.items.filter(
+                (_0x50c2e9) => _0x50c2e9 !== _0x186cd7,
+              ),
+            }))
+            .filter((_0x1c9a70) => _0x1c9a70.items.length > 0),
         });
       } else {
+        let _0x5f1a83 = [..._0x48fd8b, _0x186cd7];
         _0x539afc({
-          pinned: [..._0x48fd8b, _0x186cd7],
+          pinned: _0x5f1a83,
+          widgetGroups: _0x8f3c21(_0x1b4a72, _0x5f1a83, _0x2a9f14),
         });
       }
     },
@@ -54617,6 +54671,27 @@ var content = (function () {
           y: _0x1fa961,
         },
       }),
+    // Bulk-replace the whole group layout: used after reorder / split /
+    // merge / detach-into-new-widget, which all touch several groups at once.
+    setWidgetGroups: (_0x4a2f81) =>
+      _0x539afc({
+        widgetGroups: _0x4a2f81,
+      }),
+    // Moves a single group's floating box without touching its contents.
+    setGroupPosition: (_0x1c8b57, _0x85b996, _0x1fa961) =>
+      _0x539afc({
+        widgetGroups: _0x42a4a4().widgetGroups.map((_0x2d9a41) =>
+          _0x2d9a41.id === _0x1c8b57
+            ? {
+                ..._0x2d9a41,
+                position: {
+                  x: _0x85b996,
+                  y: _0x1fa961,
+                },
+              }
+            : _0x2d9a41,
+        ),
+      }),
     loadFromCloud: (_0x2296cd) => {
       let _0x329539 = (_0x3bb7ac, _0x7b974f) => {
         let _0x3648ea = new Set(_0x7b974f);
@@ -54628,11 +54703,18 @@ var content = (function () {
         );
         return [..._0x3787cd, ..._0x397961];
       };
+      let _0x1a9c04 = _0x2296cd.pinned ?? _0x4d5a27.pinned;
+      let _0x2c8d95 = _0x2296cd.widgetPosition ?? _0x4d5a27.widgetPosition;
       _0x539afc({
         gameOrder: _0x329539(_0x2296cd.gameOrder, _0x4d5a27.gameOrder),
         engineOrder: _0x329539(_0x2296cd.engineOrder, _0x4d5a27.engineOrder),
-        pinned: _0x2296cd.pinned ?? _0x4d5a27.pinned,
-        widgetPosition: _0x2296cd.widgetPosition ?? _0x4d5a27.widgetPosition,
+        pinned: _0x1a9c04,
+        widgetPosition: _0x2c8d95,
+        widgetGroups: _0x8f3c21(
+          _0x2296cd.widgetGroups ?? [],
+          _0x1a9c04,
+          _0x2c8d95,
+        ),
       });
     },
     getConfig: () => {
@@ -54641,12 +54723,14 @@ var content = (function () {
         engineOrder: _0x1d417e,
         pinned: _0x414975,
         widgetPosition: _0x592bdd,
+        widgetGroups: _0x4f8a12,
       } = _0x42a4a4();
       return {
         gameOrder: _0x1192f0,
         engineOrder: _0x1d417e,
         pinned: _0x414975,
         widgetPosition: _0x592bdd,
+        widgetGroups: _0x4f8a12,
       };
     },
     resetToDefaults: () =>
@@ -54665,7 +54749,7 @@ var content = (function () {
         label: "Pick my engine",
         action: {
           kind: "open-tab",
-          tab: "settings:engine",
+          tab: "game:engine",
         },
       },
     },
@@ -55252,6 +55336,18 @@ var content = (function () {
     imprecision: 0,
     forceServerEngine: false,
     serverLoadThreshold: 0,
+    randomEloEnabled: false,
+    randomEloMin: 800,
+    randomEloMax: 2000,
+    randomMaiaTargetEnabled: false,
+    randomMaiaTargetMin: 1000,
+    randomMaiaTargetMax: 2000,
+    randomMaiaOppoEnabled: false,
+    randomMaiaOppoMin: 1000,
+    randomMaiaOppoMax: 2000,
+    randomImprecisionEnabled: false,
+    randomImprecisionMin: 0,
+    randomImprecisionMax: 30,
   };
   var _0x105e1c = _0x5b0478()((_0x1f2bdd, _0x30671c) => ({
     ..._0x2e8465,
@@ -55270,6 +55366,15 @@ var content = (function () {
     setEngineId: (_0x46482c) =>
       _0x1f2bdd({
         engineId: _0x46482c,
+        // Seed the capabilities with this engine's *expected* feature set
+        // straight away. They are normally only written after the engine
+        // finishes its UCI handshake, so until then the previous engine's
+        // capabilities are still in effect — switching from Maia (whose
+        // capabilities are all false) to Stockfish left hasUciElo=false, and
+        // since Stockfish's only section is "elo", the whole Engine tab
+        // rendered empty (permanently so if the engine failed to load).
+        // The real handshake result still overwrites this a moment later.
+        capabilities: _0x43dba4(_0x46482c),
       }),
     setMaiaVariant: (_0x5ec60e) =>
       _0x1f2bdd({
@@ -55368,8 +55473,131 @@ var content = (function () {
       }),
     setLimitStrength: (_0x11d627) =>
       _0x1f2bdd({
+        // Random ELO mode requires the strength cap to stay enforced — see
+        // setRandomEloEnabled. Ignore attempts to disable it while active.
         limitStrength: _0x11d627,
       }),
+    setRandomEloEnabled: (_0x2f6a11) =>
+      _0x1f2bdd({
+        randomEloEnabled: _0x2f6a11,
+      }),
+    // NOTE: enabling deliberately does NOT re-roll the ELO. The current target
+    // ELO stays untouched until the next move arrives (see the chessr:move
+    // handler, which calls rollRandomElo()).
+    setRandomEloMin: (_0x4a8f21) => {
+      let _0x1a2b3c = Math.max(400, Math.min(3500, Math.round(_0x4a8f21)));
+      _0x1f2bdd({
+        randomEloMin: _0x1a2b3c,
+        randomEloMax: Math.max(_0x1a2b3c, _0x30671c().randomEloMax),
+      });
+    },
+    setRandomEloMax: (_0x5c9d2e) => {
+      let _0x1a2b3c = Math.max(400, Math.min(3500, Math.round(_0x5c9d2e)));
+      _0x1f2bdd({
+        randomEloMax: _0x1a2b3c,
+        randomEloMin: Math.min(_0x1a2b3c, _0x30671c().randomEloMin),
+      });
+    },
+    setRandomEloRange: (_0x6b1a2f) => {
+      let [_0x2d3e4a, _0x1f5b6c] = _0x6b1a2f;
+      _0x1f2bdd({
+        randomEloMin: Math.max(400, Math.min(3500, Math.round(_0x2d3e4a))),
+        randomEloMax: Math.max(400, Math.min(3500, Math.round(_0x1f5b6c))),
+      });
+    },
+    // --- Maia: independent randomiser for its own target ELO ---
+    setRandomMaiaTargetEnabled: (_0x2f6a11) =>
+      _0x1f2bdd({
+        randomMaiaTargetEnabled: _0x2f6a11,
+      }),
+    setRandomMaiaTargetRange: (_0x6b1a2f) => {
+      let [_0x2d3e4a, _0x1f5b6c] = _0x6b1a2f;
+      _0x1f2bdd({
+        randomMaiaTargetMin: Math.max(600, Math.min(2600, Math.round(_0x2d3e4a))),
+        randomMaiaTargetMax: Math.max(600, Math.min(2600, Math.round(_0x1f5b6c))),
+      });
+    },
+    // --- Maia: independent randomiser for the opponent-ELO input ---
+    setRandomMaiaOppoEnabled: (_0x2f6a11) =>
+      _0x1f2bdd({
+        randomMaiaOppoEnabled: _0x2f6a11,
+      }),
+    setRandomMaiaOppoRange: (_0x6b1a2f) => {
+      let [_0x2d3e4a, _0x1f5b6c] = _0x6b1a2f;
+      _0x1f2bdd({
+        randomMaiaOppoMin: Math.max(600, Math.min(2600, Math.round(_0x2d3e4a))),
+        randomMaiaOppoMax: Math.max(600, Math.min(2600, Math.round(_0x1f5b6c))),
+      });
+    },
+    // --- Rodent: randomiser for the imprecision dial ---
+    setRandomImprecisionEnabled: (_0x2f6a11) =>
+      _0x1f2bdd({
+        randomImprecisionEnabled: _0x2f6a11,
+      }),
+    setRandomImprecisionRange: (_0x6b1a2f) => {
+      let [_0x2d3e4a, _0x1f5b6c] = _0x6b1a2f;
+      _0x1f2bdd({
+        randomImprecisionMin: Math.max(0, Math.min(100, Math.round(_0x2d3e4a))),
+        randomImprecisionMax: Math.max(0, Math.min(100, Math.round(_0x1f5b6c))),
+      });
+    },
+    // Single entry point called once per move (see the chessr:move handler).
+    // Each randomiser is independent; whichever are enabled get re-rolled.
+    rollRandomElo: () => {
+      let _0x8c1d2e = _0x30671c();
+      let _0x7f3a1b = (_0x4e2d1a, _0x5b3c2d, _0x6a4e3f, _0x1c5d4e, _0x2e6f5a) => {
+        let _0x3a7b6c = Math.min(_0x4e2d1a, _0x5b3c2d);
+        let _0x4b8c7d = Math.max(_0x4e2d1a, _0x5b3c2d);
+        let _0x5c9d8e =
+          Math.round(
+            (_0x3a7b6c + Math.random() * (_0x4b8c7d - _0x3a7b6c)) / _0x6a4e3f,
+          ) * _0x6a4e3f;
+        return Math.max(_0x1c5d4e, Math.min(_0x2e6f5a, _0x5c9d8e));
+      };
+      let _0x9d1e2f = {};
+      if (_0x8c1d2e.randomEloEnabled) {
+        _0x9d1e2f.targetEloAuto = false;
+        _0x9d1e2f.targetEloManual = _0x7f3a1b(
+          _0x8c1d2e.randomEloMin,
+          _0x8c1d2e.randomEloMax,
+          50,
+          400,
+          3500,
+        );
+      }
+      if (_0x8c1d2e.randomMaiaTargetEnabled) {
+        _0x9d1e2f.maiaTargetEloAuto = false;
+        _0x9d1e2f.maiaTargetEloManual = _0x7f3a1b(
+          _0x8c1d2e.randomMaiaTargetMin,
+          _0x8c1d2e.randomMaiaTargetMax,
+          50,
+          600,
+          2600,
+        );
+      }
+      if (_0x8c1d2e.randomMaiaOppoEnabled) {
+        _0x9d1e2f.maiaOppoEloAuto = false;
+        _0x9d1e2f.maiaOppoEloManual = _0x7f3a1b(
+          _0x8c1d2e.randomMaiaOppoMin,
+          _0x8c1d2e.randomMaiaOppoMax,
+          50,
+          600,
+          2600,
+        );
+      }
+      if (_0x8c1d2e.randomImprecisionEnabled) {
+        _0x9d1e2f.imprecision = _0x7f3a1b(
+          _0x8c1d2e.randomImprecisionMin,
+          _0x8c1d2e.randomImprecisionMax,
+          1,
+          0,
+          100,
+        );
+      }
+      if (Object.keys(_0x9d1e2f).length > 0) {
+        _0x1f2bdd(_0x9d1e2f);
+      }
+    },
     setSearchMode: (_0x4cbbc2) =>
       _0x1f2bdd({
         searchMode: _0x4cbbc2,
@@ -56142,6 +56370,7 @@ var content = (function () {
       "game.tab.engine": "Engine",
       "game.tab.automove": "Auto Move",
       "game.tab.opening": "Opening",
+      "sidebar.section.game": "Game",
       "game.status.checkmateLost": "Checkmate — You lost",
       "game.status.checkmateWon": "Checkmate — You won!",
       "game.status.stalemate": "Stalemate",
@@ -56337,6 +56566,7 @@ var content = (function () {
       "settings.tab.general": "General",
       "settings.tab.engine": "Engine",
       "settings.tab.suggestions": "Suggestions",
+      "sidebar.section.settings": "Settings",
       "settings.general.language": "Language",
       "settings.general.language.auto": "Auto (browser default)",
       "settings.general.anonNames": "Anonymous names",
@@ -56643,6 +56873,7 @@ var content = (function () {
       "game.tab.engine": "Motor",
       "game.tab.automove": "Auto Move",
       "game.tab.opening": "Apertura",
+      "sidebar.section.game": "Partida",
       "game.status.checkmateLost": "Jaque mate — Perdiste",
       "game.status.checkmateWon": "Jaque mate — ¡Ganaste!",
       "game.status.stalemate": "Tablas por ahogado",
@@ -56843,6 +57074,7 @@ var content = (function () {
       "settings.tab.general": "General",
       "settings.tab.engine": "Motor",
       "settings.tab.suggestions": "Sugerencias",
+      "sidebar.section.settings": "Ajustes",
       "settings.general.language": "Idioma",
       "settings.general.language.auto": "Auto (idioma del navegador)",
       "settings.general.anonNames": "Nombres anónimos",
@@ -57153,6 +57385,7 @@ var content = (function () {
       "game.tab.engine": "Motor",
       "game.tab.automove": "Auto Move",
       "game.tab.opening": "Abertura",
+      "sidebar.section.game": "Partida",
       "game.status.checkmateLost": "Xeque-mate — Você perdeu",
       "game.status.checkmateWon": "Xeque-mate — Você ganhou!",
       "game.status.stalemate": "Empate por afogamento",
@@ -57352,6 +57585,7 @@ var content = (function () {
       "settings.tab.general": "Geral",
       "settings.tab.engine": "Motor",
       "settings.tab.suggestions": "Sugestões",
+      "sidebar.section.settings": "Configurações",
       "settings.general.language": "Idioma",
       "settings.general.language.auto": "Auto (idioma do navegador)",
       "settings.general.anonNames": "Nomes anônimos",
@@ -57659,6 +57893,7 @@ var content = (function () {
       "game.tab.engine": "Движок",
       "game.tab.automove": "Auto Move",
       "game.tab.opening": "Дебют",
+      "sidebar.section.game": "Партия",
       "game.status.checkmateLost": "Мат — Вы проиграли",
       "game.status.checkmateWon": "Мат — Вы выиграли!",
       "game.status.stalemate": "Пат",
@@ -57855,6 +58090,7 @@ var content = (function () {
       "settings.tab.general": "Общие",
       "settings.tab.engine": "Движок",
       "settings.tab.suggestions": "Подсказки",
+      "sidebar.section.settings": "Настройки",
       "settings.general.language": "Язык",
       "settings.general.language.auto": "Авто (язык браузера)",
       "settings.general.anonNames": "Скрыть имена",
@@ -58162,6 +58398,7 @@ var content = (function () {
       "game.tab.engine": "Moteur",
       "game.tab.automove": "Auto Move",
       "game.tab.opening": "Ouverture",
+      "sidebar.section.game": "Partie",
       "game.status.checkmateLost": "Échec et mat — Vous avez perdu",
       "game.status.checkmateWon": "Échec et mat — Vous avez gagné !",
       "game.status.stalemate": "Pat",
@@ -58366,6 +58603,7 @@ var content = (function () {
       "settings.tab.general": "Général",
       "settings.tab.engine": "Moteur",
       "settings.tab.suggestions": "Suggestions",
+      "sidebar.section.settings": "Paramètres",
       "settings.general.language": "Langue",
       "settings.general.language.auto": "Auto (langue du navigateur)",
       "settings.general.anonNames": "Noms anonymes",
@@ -58678,6 +58916,7 @@ var content = (function () {
       "game.tab.engine": "Engine",
       "game.tab.automove": "Auto Move",
       "game.tab.opening": "Eröffnung",
+      "sidebar.section.game": "Partie",
       "game.status.checkmateLost": "Schachmatt — Du hast verloren",
       "game.status.checkmateWon": "Schachmatt — Du hast gewonnen!",
       "game.status.stalemate": "Patt",
@@ -58873,6 +59112,7 @@ var content = (function () {
       "settings.tab.general": "Allgemein",
       "settings.tab.engine": "Engine",
       "settings.tab.suggestions": "Vorschläge",
+      "sidebar.section.settings": "Einstellungen",
       "settings.general.language": "Sprache",
       "settings.general.language.auto": "Auto (Browsersprache)",
       "settings.general.anonNames": "Anonyme Namen",
@@ -59182,6 +59422,7 @@ var content = (function () {
       "game.tab.engine": "Motore",
       "game.tab.automove": "Auto Move",
       "game.tab.opening": "Apertura",
+      "sidebar.section.game": "Partita",
       "game.status.checkmateLost": "Scacco matto — Hai perso",
       "game.status.checkmateWon": "Scacco matto — Hai vinto!",
       "game.status.stalemate": "Stallo",
@@ -59381,6 +59622,7 @@ var content = (function () {
       "settings.tab.general": "Generale",
       "settings.tab.engine": "Motore",
       "settings.tab.suggestions": "Suggerimenti",
+      "sidebar.section.settings": "Impostazioni",
       "settings.general.language": "Lingua",
       "settings.general.language.auto": "Auto (lingua del browser)",
       "settings.general.anonNames": "Nomi anonimi",
@@ -59694,6 +59936,7 @@ var content = (function () {
       "game.tab.engine": "Motor",
       "game.tab.automove": "Auto Move",
       "game.tab.opening": "Açılış",
+      "sidebar.section.game": "Oyun",
       "game.status.checkmateLost": "Şah mat — Kaybettin",
       "game.status.checkmateWon": "Şah mat — Kazandın!",
       "game.status.stalemate": "Pat",
@@ -59889,6 +60132,7 @@ var content = (function () {
       "settings.tab.general": "Genel",
       "settings.tab.engine": "Motor",
       "settings.tab.suggestions": "Öneriler",
+      "sidebar.section.settings": "Ayarlar",
       "settings.general.language": "Dil",
       "settings.general.language.auto": "Oto (tarayıcı dili)",
       "settings.general.anonNames": "Anonim isimler",
@@ -60323,13 +60567,35 @@ var content = (function () {
       opening: _0x16a530.getState().getPayload(),
     };
   }
+  // Local settings persistence.
+  //
+  // Upstream stores all extension settings server-side, in Supabase's
+  // user_settings.extension_settings, keyed by account. With the account
+  // system removed there is no usable account, so every save silently failed
+  // and every page load fell back to the built-in defaults — i.e. the whole
+  // configuration reset on each reload. These helpers mirror the exact same
+  // payload into chrome.storage.local, which needs no account and survives
+  // reloads, browser restarts and navigation between chess sites.
+  var _0x10ca10 = "chessr_settings_local";
+  function _0x10ca11(_0x10ca12) {
+    try {
+      _0x4776fd.storage.local
+        .set({
+          [_0x10ca10]: _0x10ca12,
+        })
+        .catch(() => {});
+    } catch {}
+  }
   function _0x5172fb(_0x32e6b8) {
-    if (_0x13a5a9) {
-      if (_0xa6a04c) {
-        clearTimeout(_0xa6a04c);
-      }
-      _0xa6a04c = setTimeout(() => {
-        let _0x13e02a = _0x32885d(_0x32e6b8);
+    if (_0xa6a04c) {
+      clearTimeout(_0xa6a04c);
+    }
+    _0xa6a04c = setTimeout(() => {
+      let _0x13e02a = _0x32885d(_0x32e6b8);
+      // Always persist locally; the cloud write below is best-effort and only
+      // attempted when there is an account id (there is none in this build).
+      _0x10ca11(_0x13e02a);
+      if (_0x13a5a9) {
         _0x3b43ff
           .from("user_settings")
           .update({
@@ -60337,8 +60603,8 @@ var content = (function () {
           })
           .eq("user_id", _0x13a5a9)
           .then();
-      }, 1000);
-    }
+      }
+    }, 1000);
   }
   var _0x17973f = _0x5b0478((_0x288dad, _0x38df2d) => ({
     ..._0x3279ee,
@@ -60505,13 +60771,26 @@ var content = (function () {
     loadFromCloud: async (_0x40076b) => {
       _0x13a5a9 = _0x40076b;
       try {
-        let { data: _0x3f94e2 } = await _0x3b43ff
-          .from("user_settings")
-          .select("extension_settings")
-          .eq("user_id", _0x40076b)
-          .single();
-        if (_0x3f94e2?.extension_settings) {
-          let _0xc7aca1 = _0x3f94e2.extension_settings;
+        // Locally-saved settings win over the (unreachable) cloud copy. The
+        // Supabase read is wrapped separately so that its failure — which is
+        // the normal case in this build — cannot skip the local restore.
+        let _0x3f94e2 = null;
+        try {
+          let _0x10ca13 = await _0x3b43ff
+            .from("user_settings")
+            .select("extension_settings")
+            .eq("user_id", _0x40076b)
+            .single();
+          _0x3f94e2 = _0x10ca13?.data ?? null;
+        } catch {}
+        let _0x10ca14 = null;
+        try {
+          _0x10ca14 =
+            (await _0x4776fd.storage.local.get(_0x10ca10))[_0x10ca10] ?? null;
+        } catch {}
+        let _0x10ca15 = _0x10ca14 ?? _0x3f94e2?.extension_settings ?? null;
+        if (_0x10ca15) {
+          let _0xc7aca1 = _0x10ca15;
           let _0x36add6 = _0xc7aca1.showTitle ?? _0x3279ee.showTitle;
           let _0x566b5f = _0xc7aca1.titleType ?? _0x3279ee.titleType;
           let _0x10c66d = _0xc7aca1.locale;
@@ -60688,12 +60967,14 @@ var content = (function () {
   }));
   var _0x2b6383 = null;
   function _0x12ef08() {
-    if (_0x13a5a9) {
-      if (_0x2b6383) {
-        clearTimeout(_0x2b6383);
-      }
-      _0x2b6383 = setTimeout(() => {
-        let _0x1c72b7 = _0x32885d(_0x17973f.getState());
+    if (_0x2b6383) {
+      clearTimeout(_0x2b6383);
+    }
+    _0x2b6383 = setTimeout(() => {
+      let _0x1c72b7 = _0x32885d(_0x17973f.getState());
+      // Same as _0x5172fb: local first, cloud only if an account exists.
+      _0x10ca11(_0x1c72b7);
+      if (_0x13a5a9) {
         _0x3b43ff
           .from("user_settings")
           .update({
@@ -60701,8 +60982,8 @@ var content = (function () {
           })
           .eq("user_id", _0x13a5a9)
           .then();
-      }, 1000);
-    }
+      }
+    }, 1000);
   }
   _0xd7209d.subscribe(_0x12ef08);
   _0x105e1c.subscribe(_0x12ef08);
@@ -62504,38 +62785,6 @@ var content = (function () {
                     _0x477284.Fragment,
                     {
                       children: [
-                        (0, _0x477284.jsxDEV)(
-                          "span",
-                          {
-                            className: "panel-header-title",
-                            children: [
-                              "chessr",
-                              (0, _0x477284.jsxDEV)(
-                                "span",
-                                {
-                                  className: "panel-header-title-dot",
-                                  children: ".io",
-                                },
-                                undefined,
-                                false,
-                                {
-                                  fileName: _0x8d1557,
-                                  lineNumber: 64,
-                                  columnNumber: 56,
-                                },
-                                this,
-                              ),
-                            ],
-                          },
-                          undefined,
-                          true,
-                          {
-                            fileName: _0x8d1557,
-                            lineNumber: 64,
-                            columnNumber: 13,
-                          },
-                          this,
-                        ),
                         _0x42e376
                           ? (0, _0x477284.jsxDEV)(
                               "span",
@@ -62847,78 +63096,6 @@ var content = (function () {
                     {
                       fileName: _0x8d1557,
                       lineNumber: 112,
-                      columnNumber: 11,
-                    },
-                    this,
-                  ),
-                !_0x4c9f58 &&
-                  !_0x4be799 &&
-                  (0, _0x477284.jsxDEV)(
-                    "button",
-                    {
-                      className: "panel-header-btn",
-                      onClick: _0x3c3481,
-                      "data-tooltip": _0x34c53b("panel.settings"),
-                      disabled: _0x5b1728,
-                      children: (0, _0x477284.jsxDEV)(
-                        "svg",
-                        {
-                          width: "14",
-                          height: "14",
-                          viewBox: "0 0 24 24",
-                          fill: "none",
-                          stroke: "currentColor",
-                          strokeWidth: "2",
-                          strokeLinecap: "round",
-                          strokeLinejoin: "round",
-                          children: [
-                            (0, _0x477284.jsxDEV)(
-                              "path",
-                              {
-                                d: "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z",
-                              },
-                              undefined,
-                              false,
-                              {
-                                fileName: _0x8d1557,
-                                lineNumber: 132,
-                                columnNumber: 15,
-                              },
-                              this,
-                            ),
-                            (0, _0x477284.jsxDEV)(
-                              "circle",
-                              {
-                                cx: "12",
-                                cy: "12",
-                                r: "3",
-                              },
-                              undefined,
-                              false,
-                              {
-                                fileName: _0x8d1557,
-                                lineNumber: 133,
-                                columnNumber: 15,
-                              },
-                              this,
-                            ),
-                          ],
-                        },
-                        undefined,
-                        true,
-                        {
-                          fileName: _0x8d1557,
-                          lineNumber: 131,
-                          columnNumber: 13,
-                        },
-                        this,
-                      ),
-                    },
-                    undefined,
-                    false,
-                    {
-                      fileName: _0x8d1557,
-                      lineNumber: 130,
                       columnNumber: 11,
                     },
                     this,
@@ -67953,67 +68130,67 @@ var content = (function () {
         key: "best",
         label: "Best",
         full: _0x38e973("perf.cls.best"),
-        color: "#81B64C",
+        color: "#3b83d9",
       },
       {
         key: "brilliant",
         label: "Brill",
         full: _0x38e973("perf.cls.brilliant"),
-        color: "#26C2A3",
+        color: "#3b83d9",
       },
       {
         key: "great",
         label: "Great",
         full: _0x38e973("perf.cls.great"),
-        color: "#749BBF",
+        color: "#3b83d9",
       },
       {
         key: "excellent",
         label: "Exce",
         full: _0x38e973("perf.cls.excellent"),
-        color: "#6ee7b7",
+        color: "#3b83d9",
       },
       {
         key: "good",
         label: "Good",
         full: _0x38e973("perf.cls.good"),
-        color: "#95B776",
+        color: "#3b83d9",
       },
       {
         key: "book",
         label: "Book",
         full: _0x38e973("perf.cls.book"),
-        color: "#D5A47D",
+        color: "#3b83d9",
       },
       {
         key: "forced",
         label: "Frcd",
         full: _0x38e973("perf.cls.forced"),
-        color: "#96AF8B",
+        color: "#3b83d9",
       },
       {
         key: "inaccuracy",
         label: "Inacc",
         full: _0x38e973("perf.cls.inaccuracy"),
-        color: "#F7C631",
+        color: "#3b83d9",
       },
       {
         key: "mistake",
         label: "Mist",
         full: _0x38e973("perf.cls.mistake"),
-        color: "#FFA459",
+        color: "#3b83d9",
       },
       {
         key: "miss",
         label: "Miss",
         full: _0x38e973("perf.cls.miss"),
-        color: "#FF7769",
+        color: "#3b83d9",
       },
       {
         key: "blunder",
         label: "Blund",
         full: _0x38e973("perf.cls.blunder"),
-        color: "#FA412D",
+        color: "#3b83d9",
       },
     ];
   }
@@ -68531,21 +68708,52 @@ var content = (function () {
                             "data-tooltip": _0x3e9dd2,
                             children: [
                               (0, _0x477284.jsxDEV)(
-                                "span",
+                                "div",
                                 {
-                                  className: "perf-cls-count",
-                                  style: {
-                                    color: _0x39028c
-                                      ? "hsl(var(--muted-foreground) / 0.4)"
-                                      : _0xeb9bef,
-                                  },
-                                  children: _0x3645bf,
+                                  className: "perf-cls-head",
+                                  children: [
+                                    (0, _0x477284.jsxDEV)(
+                                      "span",
+                                      {
+                                        className: "perf-cls-count",
+                                        style: {
+                                          color: _0x39028c
+                                            ? "hsl(var(--muted-foreground) / 0.4)"
+                                            : _0xeb9bef,
+                                        },
+                                        children: _0x3645bf,
+                                      },
+                                      undefined,
+                                      false,
+                                      {
+                                        fileName: _0x17944d,
+                                        lineNumber: 262,
+                                        columnNumber: 17,
+                                      },
+                                      this,
+                                    ),
+                                    (0, _0x477284.jsxDEV)(
+                                      _0xc1aac1,
+                                      {
+                                        type: _0x4f82c1,
+                                        size: 16,
+                                      },
+                                      undefined,
+                                      false,
+                                      {
+                                        fileName: _0x17944d,
+                                        lineNumber: 268,
+                                        columnNumber: 17,
+                                      },
+                                      this,
+                                    ),
+                                  ],
                                 },
                                 undefined,
-                                false,
+                                true,
                                 {
                                   fileName: _0x17944d,
-                                  lineNumber: 262,
+                                  lineNumber: 261,
                                   columnNumber: 17,
                                 },
                                 this,
@@ -68553,14 +68761,20 @@ var content = (function () {
                               (0, _0x477284.jsxDEV)(
                                 "span",
                                 {
-                                  className: "perf-cls-label",
-                                  children: _0x43affe,
+                                  style: {
+                                    fontSize: "9px",
+                                    color: _0x39028c
+                                      ? "hsl(var(--muted-foreground) / 0.4)"
+                                      : _0xeb9bef,
+                                    marginTop: "2px",
+                                  },
+                                  children: _0x3e9dd2,
                                 },
                                 undefined,
                                 false,
                                 {
                                   fileName: _0x17944d,
-                                  lineNumber: 268,
+                                  lineNumber: 270,
                                   columnNumber: 17,
                                 },
                                 this,
@@ -68735,17 +68949,17 @@ var content = (function () {
     }
   }
   var _0x353c87 = {
-    best: "#81B64C",
-    brilliant: "#26C2A3",
-    great: "#749BBF",
-    excellent: "#6ee7b7",
-    good: "#95B776",
-    book: "#D5A47D",
-    forced: "#96AF8B",
-    inaccuracy: "#F7C631",
-    mistake: "#FFA459",
-    miss: "#FF7769",
-    blunder: "#FA412D",
+    best: "#3b83d9",
+    brilliant: "#3b83d9",
+    great: "#3b83d9",
+    excellent: "#3b83d9",
+    good: "#3b83d9",
+    book: "#3b83d9",
+    forced: "#3b83d9",
+    inaccuracy: "#3b83d9",
+    mistake: "#3b83d9",
+    miss: "#3b83d9",
+    blunder: "#3b83d9",
   };
   var _0x253d9d = {
     best: "Best",
@@ -68806,15 +69020,25 @@ var content = (function () {
       "http://www.w3.org/2000/svg",
       "svg",
     );
+    // Badges straddle the squares' corners and so overhang the board on the
+    // outer files and ranks. An <svg> clips to its own viewport, which used to
+    // cut them off, so the overlay is grown by a margin on every side. Board
+    // coordinates stay 0..width because the viewBox origin moves with it.
+    let _0x2a3f19 = _0x298d7c * 0.4;
+    let _0x1b7e04 = _0x4bcfee.width + _0x2a3f19 * 2;
     _0x5cb276.setAttribute("class", "chessr-arrow-overlay");
-    _0x5cb276.setAttribute("width", "" + _0x4bcfee.width);
-    _0x5cb276.setAttribute("height", "" + _0x4bcfee.width);
+    _0x5cb276.setAttribute("width", "" + _0x1b7e04);
+    _0x5cb276.setAttribute("height", "" + _0x1b7e04);
     _0x5cb276.setAttribute(
       "viewBox",
-      "0 0 " + _0x4bcfee.width + " " + _0x4bcfee.width,
+      -_0x2a3f19 + " " + -_0x2a3f19 + " " + _0x1b7e04 + " " + _0x1b7e04,
     );
     _0x5cb276.style.cssText =
-      "position:absolute;top:0;left:0;pointer-events:none;z-index:100;";
+      "position:absolute;top:" +
+      -_0x2a3f19 +
+      "px;left:" +
+      -_0x2a3f19 +
+      "px;pointer-events:none;z-index:100;overflow:visible;";
     let _0x3fa03a = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "defs",
@@ -68891,57 +69115,89 @@ var content = (function () {
       };
     }
   }
-  function _0x14367b(_0x241cce, _0x50e64d, _0x5d9e8f, _0x1c629b, _0x5c2804) {
-    let _0x410d12 = Math.max(6, _0x298d7c / 11);
-    let _0xe52dd3 = _0x410d12 * 0.6;
-    let _0x207c5e = _0x410d12 * 0.2;
-    let _0x1e61e9 = _0x50e64d.length * _0x410d12 * 0.65 + _0xe52dd3 * 2;
-    let _0x4707ef = _0x410d12 + _0x207c5e * 2;
-    let _0x1a4d5a = _0x241cce.x + _0x298d7c / 2 - _0x1e61e9 / 2 - 8;
+  // Reverse map: classification short name (as shown in _0x253d9d) → classification key.
+  // Used to resolve which SVG icon a badge should render.
+  var _0xf3c1e1 = Object.fromEntries(
+    Object.entries(_0x253d9d).map(([_0x1f7a01, _0x2c8b44]) => [
+      _0x2c8b44,
+      _0x1f7a01,
+    ]),
+  );
+  // Only classification badges are drawn on the board. Anything without an icon
+  // (opening theory / deviation labels, check, capture, promotion, premove, ...)
+  // renders nothing instead of an empty circle.
+  function _0x14367b(
+    _0x241cce,
+    _0x50e64d,
+    _0x5d9e8f,
+    _0x1c629b,
+    _0x5c2804,
+    _0x2fd41e,
+  ) {
+    let _0xaa4db1 = _0xf3c1e1[_0x50e64d];
+    if (!_0xaa4db1) {
+      return null;
+    }
+    // The 6px floor must not outgrow the square itself, or on small boards the
+    // icon and the rank badge stop fitting side by side.
+    let _0x410d12 =
+      Math.min(Math.max(6, _0x298d7c / 11), _0x298d7c * 0.11) * 3.75;
+    let _0x3b5c22 = _0x410d12 * 0.6;
+    let _0x4707ef = _0x3b5c22 * 2;
+    let _0x1e61e9 = _0x410d12 * 2.2;
+    // Sits on the corner shared by the neighbouring squares.
+    let _0x1a4d5a = _0x241cce.x + _0x298d7c / 2 - _0x1e61e9 / 2 + _0x298d7c / 3;
     let _0x4c0f3d =
       _0x241cce.y -
       _0x298d7c / 2 +
-      _0x4707ef / 2 +
-      8 +
+      _0x1e61e9 / 2 -
+      _0x298d7c / 3 +
       _0x1c629b * (_0x4707ef + 2);
     let _0x4ff491 = document.createElementNS("http://www.w3.org/2000/svg", "g");
     _0x4ff491.setAttribute(
       "transform",
       "translate(" + _0x1a4d5a + ", " + _0x4c0f3d + ")",
     );
+    _0x4ff491.style.zIndex = "999";  // Above pieces
+    // Subtle background circle for the icon.
     let _0x253d5b = document.createElementNS(
       "http://www.w3.org/2000/svg",
-      "rect",
+      "circle",
     );
-    _0x253d5b.setAttribute("x", "" + -_0x1e61e9 / 2);
-    _0x253d5b.setAttribute("y", "" + -_0x4707ef / 2);
-    _0x253d5b.setAttribute("width", "" + _0x1e61e9);
-    _0x253d5b.setAttribute("height", "" + _0x4707ef);
-    _0x253d5b.setAttribute("rx", "" + _0x410d12 * 0.3);
+    _0x253d5b.setAttribute("cx", "0");
+    _0x253d5b.setAttribute("cy", "0");
+    _0x253d5b.setAttribute("r", "" + _0x3b5c22);
     let _0x5085a5 = parseInt(_0x5d9e8f.slice(1, 3), 16);
     let _0x4a9f0f = parseInt(_0x5d9e8f.slice(3, 5), 16);
     let _0x5ac245 = parseInt(_0x5d9e8f.slice(5, 7), 16);
     _0x253d5b.setAttribute(
       "fill",
-      "rgba(" + _0x5085a5 + ", " + _0x4a9f0f + ", " + _0x5ac245 + ", 0.85)",
+      "rgba(" + _0x5085a5 + ", " + _0x4a9f0f + ", " + _0x5ac245 + ", 0.6)",
     );
+    // Opponent's move: fully opaque red ring so it reads apart from our own
+    // suggestions at a glance.
+    if (_0x2fd41e) {
+      _0x253d5b.setAttribute("stroke", "#ef4444");
+      _0x253d5b.setAttribute("stroke-opacity", "1");
+      _0x253d5b.setAttribute(
+        "stroke-width",
+        "" + Math.max(2, _0x410d12 * 0.11),
+      );
+    }
     _0x4ff491.appendChild(_0x253d5b);
+    // Render the classification icon.
     let _0x5b6aff = document.createElementNS(
       "http://www.w3.org/2000/svg",
-      "text",
+      "image",
     );
-    _0x5b6aff.setAttribute("x", "0");
-    _0x5b6aff.setAttribute("y", "" + _0x410d12 * 0.35);
-    _0x5b6aff.setAttribute("text-anchor", "middle");
-    _0x5b6aff.setAttribute("font-size", "" + _0x410d12);
-    _0x5b6aff.setAttribute("font-weight", "700");
     _0x5b6aff.setAttribute(
-      "font-family",
-      "-apple-system, BlinkMacSystemFont, sans-serif",
+      "href",
+      _0x4776fd.runtime.getURL("/icons/cls-" + _0xaa4db1 + ".svg"),
     );
-    _0x5b6aff.setAttribute("letter-spacing", "0.04em");
-    _0x5b6aff.setAttribute("fill", "white");
-    _0x5b6aff.textContent = _0x50e64d.toUpperCase();
+    _0x5b6aff.setAttribute("x", "" + -_0x410d12 * 0.5);
+    _0x5b6aff.setAttribute("y", "" + -_0x410d12 * 0.5);
+    _0x5b6aff.setAttribute("width", "" + _0x410d12);
+    _0x5b6aff.setAttribute("height", "" + _0x410d12);
     _0x4ff491.appendChild(_0x5b6aff);
     if (_0x5c2804) {
       _0xf6052e.fromTo(
@@ -68974,7 +69230,11 @@ var content = (function () {
         _0x2ada07.isConnected &&
         _0x2ba4f7.slice(2, 4) === _0x4024c8
       ) {
-        _0x49c253 += _0x2ada07.childElementCount;
+        _0x49c253 += Array.from(_0x2ada07.children).filter(
+          (_0x3f1a7c) =>
+            !_0x3f1a7c.hasAttribute("data-rank-badge") &&
+            !_0x3f1a7c.hasAttribute("data-sq-outline"),
+        ).length;
       }
     }
     let _0x451a48 = [
@@ -68999,7 +69259,121 @@ var content = (function () {
     }
     return _0x49c253;
   }
-  function _0x19aba7(_0x5b68a, _0x394823) {
+  // Rank badge ("#1", "#2", ...) drawn in the bottom-LEFT corner of the
+  // destination square, 30% smaller than the classification icon. The bottom
+  // corner keeps it clear of the icons of the neighbouring squares, which sit
+  // on the shared TOP corners and overhang into this square.
+  function _0x7c4e11(_0x241cce, _0x3a99e2, _0x1c629b, _0x5c2804) {
+    let _0x410d12 =
+      Math.min(Math.max(6, _0x298d7c / 11), _0x298d7c * 0.11) * 2.625;
+    let _0x3b5c22 = _0x410d12 * 0.55;
+    let _0x4707ef = _0x3b5c22 * 2;
+    let _0x5f2a13 = _0x298d7c * 0.04;
+    let _0x1a4d5a = _0x241cce.x - _0x298d7c / 2 + _0x3b5c22 + _0x5f2a13;
+    let _0x4c0f3d =
+      _0x241cce.y +
+      _0x298d7c / 2 -
+      _0x3b5c22 -
+      _0x5f2a13 -
+      _0x1c629b * (_0x4707ef + 2);
+    let _0x4ff491 = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    _0x4ff491.setAttribute(
+      "transform",
+      "translate(" + _0x1a4d5a + ", " + _0x4c0f3d + ")",
+    );
+    _0x4ff491.style.zIndex = "999"; // Above pieces
+    _0x4ff491.setAttribute("data-rank-badge", "1");
+    let _0x253d5b = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "circle",
+    );
+    _0x253d5b.setAttribute("cx", "0");
+    _0x253d5b.setAttribute("cy", "0");
+    _0x253d5b.setAttribute("r", "" + _0x3b5c22);
+    _0x253d5b.setAttribute("fill", "rgba(24, 24, 27, 0.82)");
+    _0x253d5b.setAttribute("stroke", "rgba(255, 255, 255, 0.55)");
+    _0x253d5b.setAttribute("stroke-width", "" + Math.max(1, _0x410d12 * 0.05));
+    _0x4ff491.appendChild(_0x253d5b);
+    let _0x2c6d18 = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "text",
+    );
+    _0x2c6d18.setAttribute("x", "0");
+    _0x2c6d18.setAttribute("y", "0");
+    _0x2c6d18.setAttribute("text-anchor", "middle");
+    _0x2c6d18.setAttribute("dominant-baseline", "central");
+    _0x2c6d18.setAttribute("font-size", "" + _0x410d12 * 0.6);
+    _0x2c6d18.setAttribute("font-weight", "700");
+    _0x2c6d18.setAttribute(
+      "font-family",
+      "-apple-system, BlinkMacSystemFont, sans-serif",
+    );
+    _0x2c6d18.setAttribute("fill", "#ffffff");
+    _0x2c6d18.textContent = "#" + _0x3a99e2;
+    _0x4ff491.appendChild(_0x2c6d18);
+    if (_0x5c2804) {
+      _0xf6052e.fromTo(
+        _0x4ff491,
+        {
+          attr: {
+            transform:
+              "translate(" + _0x1a4d5a + ", " + _0x4c0f3d + ") scale(0)",
+          },
+          opacity: 0,
+        },
+        {
+          attr: {
+            transform:
+              "translate(" + _0x1a4d5a + ", " + _0x4c0f3d + ") scale(1)",
+          },
+          opacity: 1,
+          duration: 0.2,
+          ease: "back.out(2)",
+        },
+      );
+    }
+    return _0x4ff491;
+  }
+  // All square outlines live in one layer kept first in document order, i.e.
+  // painted beneath every badge group. Without it a badge that overhangs into a
+  // neighbouring square would be covered by that square's own outline, since
+  // SVG has no z-index and paints strictly in document order.
+  function _0x5d9c31() {
+    if (!_0x53ea9a) {
+      return null;
+    }
+    let _0x2b8e91 = _0x53ea9a.querySelector(":scope > [data-sq-outlines]");
+    if (!_0x2b8e91) {
+      _0x2b8e91 = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      _0x2b8e91.setAttribute("data-sq-outlines", "");
+    }
+    if (_0x53ea9a.firstChild !== _0x2b8e91) {
+      _0x53ea9a.insertBefore(_0x2b8e91, _0x53ea9a.firstChild);
+    }
+    return _0x2b8e91;
+  }
+  // Semi-transparent outline around a suggestion's destination square, tinted
+  // with that suggestion's arrow colour so rank #1/#2/#3 stay distinguishable.
+  function _0x8ad2f4(_0x241cce, _0x3a99e2) {
+    let { arrowColors: _0x510598 } = _0x17973f.getState();
+    let _0x326742 = _0x510598[_0x3a99e2 - 1] || _0x510598[_0x510598.length - 1];
+    let _0x2d0b19 = Math.max(2, _0x298d7c * 0.045);
+    let _0x1ceb4d = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "rect",
+    );
+    _0x1ceb4d.setAttribute("x", "" + (_0x241cce.x - _0x298d7c / 2 + _0x2d0b19 / 2));
+    _0x1ceb4d.setAttribute("y", "" + (_0x241cce.y - _0x298d7c / 2 + _0x2d0b19 / 2));
+    _0x1ceb4d.setAttribute("width", "" + (_0x298d7c - _0x2d0b19));
+    _0x1ceb4d.setAttribute("height", "" + (_0x298d7c - _0x2d0b19));
+    _0x1ceb4d.setAttribute("rx", "" + _0x298d7c * 0.06);
+    _0x1ceb4d.setAttribute("fill", "none");
+    _0x1ceb4d.setAttribute("stroke", _0x326742);
+    _0x1ceb4d.setAttribute("stroke-width", "" + _0x2d0b19);
+    _0x1ceb4d.setAttribute("stroke-opacity", "0.55");
+    return _0x1ceb4d;
+  }
+  function _0x19aba7(_0x5b68a, _0x394823, _0x3a99e2) {
     let _0x345e33 = _0x5b68a.move.slice(2, 4);
     let _0x497e95 = _0x1bb6d2(_0x345e33);
     if (!_0x497e95) {
@@ -69008,47 +69382,23 @@ var content = (function () {
     let _0x59ba98 = document.createElementNS("http://www.w3.org/2000/svg", "g");
     _0x59ba98.setAttribute("data-badges-for", _0x5b68a.move);
     let _0x5b3ec3 = _0x52763b(_0x345e33);
-    if (_0x4ac367 && _0x2ec16f === _0x5b68a.move) {
-      _0x59ba98.appendChild(
-        _0x14367b(
-          _0x497e95,
-          _0x4ac367.slice(0, 5),
-          _0x512453,
-          _0x5b3ec3++,
-          _0x394823,
-        ),
-      );
-    }
-    if (_0x590a65 && _0x7b991d === _0x5b68a.move) {
-      _0x59ba98.appendChild(
-        _0x14367b(
-          _0x497e95,
-          _0x590a65.slice(0, 5),
-          _0x50528d,
-          _0x5b3ec3++,
-          _0x394823,
-        ),
-      );
-    }
-    if (_0x5b68a.class) {
+    let _0x4d7e0a = _0x5b3ec3;
+    if (_0x5b68a.class && _0x253d9d[_0x5b68a.class]) {
       let _0x5180cc = _0x5b68a.class;
-      _0x59ba98.appendChild(
-        _0x14367b(
-          _0x497e95,
-          _0x253d9d[_0x5180cc],
-          _0x353c87[_0x5180cc],
-          _0x5b3ec3++,
-          _0x394823,
-        ),
+      let _0x2a7d19 = _0x14367b(
+        _0x497e95,
+        _0x253d9d[_0x5180cc],
+        _0x353c87[_0x5180cc],
+        _0x5b3ec3++,
+        _0x394823,
       );
+      if (_0x2a7d19) {
+        _0x59ba98.appendChild(_0x2a7d19);
+      }
     }
-    for (let _0x3da7bd of _0x5b68a.labels ?? []) {
-      let { displayText: _0x3f03e4, badgeColor: _0x35e602 } = _0x4bdd65(
-        _0x3da7bd,
-        _0x5b68a.mateScore,
-      );
+    if (_0x3a99e2) {
       _0x59ba98.appendChild(
-        _0x14367b(_0x497e95, _0x3f03e4, _0x35e602, _0x5b3ec3++, _0x394823),
+        _0x7c4e11(_0x497e95, _0x3a99e2, _0x4d7e0a, _0x394823),
       );
     }
     return _0x59ba98;
@@ -69058,14 +69408,31 @@ var content = (function () {
       return;
     }
     let _0x559d4b = new Set(_0x53c183.map((_0x5a2913) => _0x5a2913.move));
-    for (let [_0x54e488, _0x55e466] of _0x49c425) {
-      if (!_0x559d4b.has(_0x54e488)) {
-        _0x55e466.remove();
-        _0x49c425.delete(_0x54e488);
+    // Keep classification badges permanently on the board (don't remove them)
+    // for (let [_0x54e488, _0x55e466] of _0x49c425) {
+    //   if (!_0x559d4b.has(_0x54e488)) {
+    //     _0x55e466.remove();
+    //     _0x49c425.delete(_0x54e488);
+    //   }
+    // }
+    let _0x2b8e91 = _0x5d9c31();
+    if (_0x2b8e91) {
+      _0x2b8e91.textContent = "";
+      let _0x3d81f5 = new Set();
+      for (let [_0x1c7a04, _0x4e2b93] of _0x53c183.entries()) {
+        let _0x2fa7c8 = _0x4e2b93.move.slice(2, 4);
+        if (_0x3d81f5.has(_0x2fa7c8)) {
+          continue;
+        }
+        _0x3d81f5.add(_0x2fa7c8);
+        let _0x5a90e7 = _0x1bb6d2(_0x2fa7c8);
+        if (_0x5a90e7) {
+          _0x2b8e91.appendChild(_0x8ad2f4(_0x5a90e7, _0x1c7a04 + 1));
+        }
       }
     }
     let _0x29a8cc = new Set();
-    for (let _0x26179a of _0x53c183) {
+    for (let [_0x6b3f0d, _0x26179a] of _0x53c183.entries()) {
       let _0x191f21 = _0x26179a.move.slice(2, 4);
       let _0x4996b3 = (_0x26179a.labels ?? []).some((_0x32f1fd) =>
         _0x32f1fd.startsWith("promotion:"),
@@ -69093,11 +69460,16 @@ var content = (function () {
         "|" +
         _0x1ab33d.join(",") +
         "|" +
-        (_0x26179a.mateScore ?? "-");
+        (_0x26179a.mateScore ?? "-") +
+        "|#" +
+        (_0x6b3f0d + 1);
       let _0x16fc69 = _0x49c425.get(_0x26179a.move);
       if (_0x16fc69 && _0x16fc69.getAttribute("data-state") === _0x2f85ae) {
         continue;
       }
+      // Drop the outdated render of this same move before appending the new
+      // one, otherwise every state change (e.g. the classification arriving)
+      // leaves an orphaned group stacked underneath.
       if (_0x16fc69) {
         _0x16fc69.remove();
         _0x49c425.delete(_0x26179a.move);
@@ -69108,6 +69480,7 @@ var content = (function () {
           labels: _0x1ab33d,
         },
         _0x14ae62,
+        _0x6b3f0d + 1,
       );
       if (_0x251795) {
         _0x251795.setAttribute("data-state", _0x2f85ae);
@@ -69540,10 +69913,17 @@ var content = (function () {
         _0x353c87[_0x59f15e.classification],
         _0x52763b(_0x36b163),
         false,
+        true,
       );
-      _0xeb1d3f.appendChild(_0x254740);
+      if (_0x254740) {
+        _0xeb1d3f.appendChild(_0x254740);
+      }
     }
-    _0x53ea9a.insertBefore(_0xeb1d3f, _0x53ea9a.firstChild);
+    let _0x4b1c93 = _0x5d9c31();
+    _0x53ea9a.insertBefore(
+      _0xeb1d3f,
+      _0x4b1c93 ? _0x4b1c93.nextSibling : _0x53ea9a.firstChild,
+    );
     _0x2ef59f = _0xeb1d3f;
   }
   function _0x566bf2(_0x3cbeaa) {
@@ -69619,9 +69999,15 @@ var content = (function () {
         _0x52763b(_0x2fc085),
         false,
       );
-      _0x45b900.appendChild(_0x178603);
+      if (_0x178603) {
+        _0x45b900.appendChild(_0x178603);
+      }
     }
-    _0x53ea9a.insertBefore(_0x45b900, _0x53ea9a.firstChild);
+    let _0x2e7f61 = _0x5d9c31();
+    _0x53ea9a.insertBefore(
+      _0x45b900,
+      _0x2e7f61 ? _0x2e7f61.nextSibling : _0x53ea9a.firstChild,
+    );
     _0x320bdd = _0x45b900;
   }
   function _0x1b00ec(_0x2bc2a7, _0x4786df, _0x3fabf7, _0x4b8c67, _0x3ca298) {
@@ -69696,15 +70082,16 @@ var content = (function () {
     _0x242599.setAttribute("marker-end", "url(#" + _0x3fabf7 + ")");
     _0x573d22.appendChild(_0x242599);
     if (_0x3ca298) {
-      _0x573d22.appendChild(
-        _0x14367b(
-          _0x2e4294,
-          _0x3ca298.slice(0, 5),
-          _0x4786df,
-          _0x52763b(_0xe44bed),
-          false,
-        ),
+      let _0x3e91c7 = _0x14367b(
+        _0x2e4294,
+        _0x3ca298.slice(0, 5),
+        _0x4786df,
+        _0x52763b(_0xe44bed),
+        false,
       );
+      if (_0x3e91c7) {
+        _0x573d22.appendChild(_0x3e91c7);
+      }
     }
     _0x53ea9a.appendChild(_0x573d22);
     return _0x573d22;
@@ -69820,9 +70207,16 @@ var content = (function () {
     _0x255b38.setAttribute("opacity", "0.85");
     _0x255b38.setAttribute("marker-end", "url(#" + _0xb15a2d + ")");
     _0x5d4c68.appendChild(_0x255b38);
-    _0x5d4c68.appendChild(
-      _0x14367b(_0x40234b, "Premove", _0xe69ffc, _0x52763b(_0x4185ce), false),
+    let _0x1d5c8a = _0x14367b(
+      _0x40234b,
+      "Premove",
+      _0xe69ffc,
+      _0x52763b(_0x4185ce),
+      false,
     );
+    if (_0x1d5c8a) {
+      _0x5d4c68.appendChild(_0x1d5c8a);
+    }
     _0x53ea9a.appendChild(_0x5d4c68);
     _0x537293 = _0x5d4c68;
   }
@@ -71452,6 +71846,283 @@ var content = (function () {
         columnNumber: 5,
       },
       this,
+    );
+  }
+  // Custom dropdown replacing native <select> in the redesigned settings UI.
+  // options: [{ value, label, disabled? }]
+  function _0x9f4a1e({ options: _0x1a2b3d, value: _0x4c5d6e, onChange: _0x7f8a9b, disabled: _0xb1c2d4 }) {
+    let [_0xe3f405, _0x516273] = (0, _0x5145bc.useState)(false);
+    let [_0x6d2e8f, _0x8c4f2a] = (0, _0x5145bc.useState)(null);
+    let _0x829a0b = (0, _0x5145bc.useRef)(null);
+    let _0x3a7b1c = (0, _0x5145bc.useRef)(null);
+    (0, _0x5145bc.useEffect)(() => {
+      if (!_0xe3f405) {
+        return;
+      }
+      let _0xc4d5e6 = (_0xf708a9) => {
+        // The panel renders inside a shadow root: once a click reaches
+        // document its target is retargeted to the host, so contains()
+        // always reported "outside" and closed the menu on the very click
+        // that opened it. composedPath still carries the real inner path.
+        let _0x2b8d15 =
+          typeof _0xf708a9.composedPath === "function"
+            ? _0xf708a9.composedPath()
+            : [];
+        if (
+          _0x829a0b.current &&
+          !_0x2b8d15.includes(_0x829a0b.current) &&
+          !_0x829a0b.current.contains(_0xf708a9.target)
+        ) {
+          _0x516273(false);
+        }
+      };
+      // pointerdown (not click) so the press that opened the menu can never
+      // be the same event that closes it: that press's pointerdown already
+      // fired before this listener existed, so only a later press can match.
+      document.addEventListener("pointerdown", _0xc4d5e6, true);
+      return () => document.removeEventListener("pointerdown", _0xc4d5e6, true);
+    }, [_0xe3f405]);
+    // Both the panel body and the section scroll, and either would clip an
+    // absolutely-positioned popup. Pin the menu to the viewport instead,
+    // measuring the trigger on open. offsetWidth vs getBoundingClientRect
+    // recovers an ancestor `zoom` (font-size small/big), which scales the
+    // coordinate space fixed positioning resolves against.
+    (0, _0x5145bc.useEffect)(() => {
+      if (!_0xe3f405 || !_0x3a7b1c.current) {
+        _0x8c4f2a(null);
+        return;
+      }
+      let _0x5f9c20 = _0x3a7b1c.current;
+      let _0x7e1a34 = _0x5f9c20.getBoundingClientRect();
+      let _0x9b3d57 = _0x5f9c20.offsetWidth
+        ? _0x7e1a34.width / _0x5f9c20.offsetWidth
+        : 1;
+      if (!_0x9b3d57 || !isFinite(_0x9b3d57)) {
+        _0x9b3d57 = 1;
+      }
+      _0x8c4f2a({
+        position: "fixed",
+        top: (_0x7e1a34.bottom + 6) / _0x9b3d57,
+        left: _0x7e1a34.left / _0x9b3d57,
+        right: "auto",
+        width: "auto",
+        minWidth: _0x7e1a34.width / _0x9b3d57,
+      });
+    }, [_0xe3f405]);
+    let _0x1b2c3d = _0x1a2b3d.find((_0x2d3e4f) => _0x2d3e4f.value === _0x4c5d6e);
+    return (0, _0x477284.jsxDEV)(
+      "div",
+      {
+        ref: _0x829a0b,
+        className: "nl-dropdown " + (_0xe3f405 ? "nl-open" : ""),
+        children: [
+          (0, _0x477284.jsxDEV)(
+            "button",
+            {
+              type: "button",
+              className:
+                "nl-dd-btn " + (_0xb1c2d4 ? "nl-dd-btn--disabled" : ""),
+              disabled: _0xb1c2d4,
+              ref: _0x3a7b1c,
+              onClick: () => !_0xb1c2d4 && _0x516273((_0x3e4f5a) => !_0x3e4f5a),
+              children: [
+                (0, _0x477284.jsxDEV)(
+                  "span",
+                  {
+                    className: "nl-dd-label",
+                    children: _0x1b2c3d?.label ?? "",
+                  },
+                  undefined,
+                  false,
+                ),
+                (0, _0x477284.jsxDEV)(
+                  "span",
+                  { className: "nl-dd-arrow" },
+                  undefined,
+                  false,
+                ),
+              ],
+            },
+            undefined,
+            true,
+          ),
+          (0, _0x477284.jsxDEV)(
+            "div",
+            {
+              className: "nl-dd-menu",
+              style: _0x6d2e8f ?? undefined,
+              children: _0x1a2b3d.map((_0x4d5e6f) =>
+                (0, _0x477284.jsxDEV)(
+                  "button",
+                  {
+                    type: "button",
+                    key: _0x4d5e6f.value,
+                    disabled: _0x4d5e6f.disabled,
+                    className:
+                      "nl-dd-option " +
+                      (_0x4d5e6f.value === _0x4c5d6e ? "nl-selected" : ""),
+                    onClick: () => {
+                      if (!_0x4d5e6f.disabled) {
+                        _0x7f8a9b(_0x4d5e6f.value);
+                        _0x516273(false);
+                      }
+                    },
+                    children: _0x4d5e6f.label,
+                  },
+                  _0x4d5e6f.value,
+                  false,
+                ),
+              ),
+            },
+            undefined,
+            false,
+          ),
+        ],
+      },
+      undefined,
+      true,
+    );
+  }
+  // Digit-odometer value display: each character gets its own fixed-width
+  // column; on change, the old digit slides out while the new one slides in
+  // from the direction the value is moving (up if it grew, down if it
+  // shrank). Unchanged positions are left completely alone.
+  function _0x2e8f61(_0x1a) {
+    return _0x1a >= 0 ? "translateY(100%)" : "translateY(-100%)";
+  }
+  function _0x5d1b74(_0x1a) {
+    return _0x1a >= 0 ? "translateY(-100%)" : "translateY(100%)";
+  }
+  function _0x7c3d92({ value: _0x8a9b0c }) {
+    let _0x1c2d3e = String(_0x8a9b0c);
+    let _0x4e5f60 = (0, _0x5145bc.useRef)(_0x1c2d3e);
+    let _0x1f4a90 = (0, _0x5145bc.useRef)(0);
+    let [_0x718293, _0xa4b5c6] = (0, _0x5145bc.useState)(() =>
+      _0x1c2d3e
+        .split("")
+        .map((_0xd7e8f9) => ({ cur: _0xd7e8f9, prev: null, dir: 0, settled: true })),
+    );
+    (0, _0x5145bc.useEffect)(() => {
+      let _0x0a1b2c = _0x4e5f60.current;
+      if (_0x0a1b2c === _0x1c2d3e) {
+        return;
+      }
+      _0x4e5f60.current = _0x1c2d3e;
+      let _0x2c9d61 = Date.now();
+      let _0x8b6e12 = _0x2c9d61 - _0x1f4a90.current;
+      _0x1f4a90.current = _0x2c9d61;
+      if (_0x8b6e12 < 220) {
+        // Values arriving faster than the flip settles (e.g. while dragging
+        // the paired slider) would restart the slide mid-flight, stacking
+        // the old and new digit on top of each other. Snap instantly instead;
+        // only a change that stands on its own gets the animated flip.
+        _0xa4b5c6(
+          _0x1c2d3e
+            .split("")
+            .map((_0xd7e8f9) => ({
+              cur: _0xd7e8f9,
+              prev: null,
+              dir: 0,
+              settled: true,
+            })),
+        );
+        return;
+      }
+      let _0x3d4e5f = parseFloat(_0x0a1b2c.replace(/[^0-9.-]/g, ""));
+      let _0x6a7b8c = parseFloat(_0x1c2d3e.replace(/[^0-9.-]/g, ""));
+      let _0x9d0e1f =
+        !Number.isNaN(_0x3d4e5f) && !Number.isNaN(_0x6a7b8c)
+          ? _0x6a7b8c > _0x3d4e5f
+            ? 1
+            : _0x6a7b8c < _0x3d4e5f
+              ? -1
+              : 0
+          : 0;
+      let _0x2f3a4b = _0x0a1b2c.split("");
+      let _0x5c6d7e = _0x1c2d3e.split("");
+      let _0x8f9a0b = Math.max(_0x2f3a4b.length, _0x5c6d7e.length);
+      let _0xb1c2d3 = [];
+      for (let _0x4d5e = 0; _0x4d5e < _0x8f9a0b; _0x4d5e++) {
+        let _0x6f7a8 = _0x5c6d7e[_0x4d5e] ?? "";
+        let _0x9b0c1d = _0x2f3a4b[_0x4d5e] ?? "";
+        _0xb1c2d3.push(
+          _0x6f7a8 !== _0x9b0c1d
+            ? { cur: _0x6f7a8, prev: _0x9b0c1d, dir: _0x9d0e1f, settled: false }
+            : { cur: _0x6f7a8, prev: null, dir: 0, settled: true },
+        );
+      }
+      _0xa4b5c6(_0xb1c2d3);
+      let _0x2e3f40 = requestAnimationFrame(() => {
+        _0x1a2b30 = requestAnimationFrame(() => {
+          _0xa4b5c6((_0x3b4c5d) =>
+            _0x3b4c5d.map((_0x6e7f8) => ({ ..._0x6e7f8, settled: true })),
+          );
+        });
+      });
+      var _0x1a2b30;
+      let _0x4c5d6e = setTimeout(() => {
+        _0xa4b5c6((_0x7f8a9b) =>
+          _0x7f8a9b.map((_0xb0c1d2) => ({ ..._0xb0c1d2, prev: null })),
+        );
+      }, 190);
+      return () => {
+        cancelAnimationFrame(_0x2e3f40);
+        if (_0x1a2b30) {
+          cancelAnimationFrame(_0x1a2b30);
+        }
+        clearTimeout(_0x4c5d6e);
+      };
+    }, [_0x1c2d3e]);
+    return (0, _0x477284.jsxDEV)(
+      "span",
+      {
+        className: "nl-odometer",
+        children: _0x718293.map((_0xd1e2f3, _0x4a5b6c) =>
+          (0, _0x477284.jsxDEV)(
+            "span",
+            {
+              className: "nl-digit-col",
+              children: [
+                (0, _0x477284.jsxDEV)(
+                  "span",
+                  {
+                    className: "nl-digit",
+                    style: {
+                      transform: _0xd1e2f3.settled
+                        ? "translateY(0)"
+                        : _0x2e8f61(_0xd1e2f3.dir),
+                      opacity: _0xd1e2f3.settled ? 1 : 0,
+                    },
+                    children: _0xd1e2f3.cur,
+                  },
+                  "cur",
+                  false,
+                ),
+                _0xd1e2f3.prev !== null &&
+                  (0, _0x477284.jsxDEV)(
+                    "span",
+                    {
+                      className: "nl-digit",
+                      style: {
+                        transform: _0xd1e2f3.settled
+                          ? _0x5d1b74(_0xd1e2f3.dir)
+                          : "translateY(0)",
+                        opacity: _0xd1e2f3.settled ? 0 : 1,
+                      },
+                      children: _0xd1e2f3.prev,
+                    },
+                    "prev",
+                    false,
+                  ),
+              ],
+            },
+            _0x4a5b6c,
+            true,
+          ),
+        ),
+      },
+      undefined,
+      false,
     );
   }
   var _0x348461 =
@@ -74064,6 +74735,254 @@ var content = (function () {
       this,
     );
   }
+  // Simple inline stroke icons for the sidebar items -- avoids bundling new
+  // SVG asset files just for 8 small nav glyphs.
+  function _0x3d5e08({ type: _0x1a2c9e, size: _0x2b3d0f = 14 }) {
+    let _0x4c5e1a = {
+      width: _0x2b3d0f,
+      height: _0x2b3d0f,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: "2",
+      strokeLinecap: "round",
+      strokeLinejoin: "round",
+    };
+    let _0x5d6e2b;
+    switch (_0x1a2c9e) {
+      case "play":
+        _0x5d6e2b = (0, _0x477284.jsxDEV)(
+          "polygon",
+          { points: "5 3 19 12 5 21 5 3" },
+          undefined,
+          false,
+        );
+        break;
+      case "cpu":
+        _0x5d6e2b = (0, _0x477284.jsxDEV)(
+          _0x477284.Fragment,
+          {
+            children: [
+              (0, _0x477284.jsxDEV)(
+                "rect",
+                { x: "4", y: "4", width: "16", height: "16", rx: "2" },
+                undefined,
+                false,
+              ),
+              (0, _0x477284.jsxDEV)(
+                "rect",
+                { x: "9", y: "9", width: "6", height: "6" },
+                undefined,
+                false,
+              ),
+            ],
+          },
+          undefined,
+          true,
+        );
+        break;
+      case "zap":
+        _0x5d6e2b = (0, _0x477284.jsxDEV)(
+          "polygon",
+          { points: "13 2 3 14 12 14 11 22 21 10 12 10 13 2" },
+          undefined,
+          false,
+        );
+        break;
+      case "book":
+        _0x5d6e2b = (0, _0x477284.jsxDEV)(
+          _0x477284.Fragment,
+          {
+            children: [
+              (0, _0x477284.jsxDEV)(
+                "path",
+                {
+                  d: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20",
+                },
+                undefined,
+                false,
+              ),
+              (0, _0x477284.jsxDEV)(
+                "path",
+                {
+                  d: "M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",
+                },
+                undefined,
+                false,
+              ),
+            ],
+          },
+          undefined,
+          true,
+        );
+        break;
+      case "user":
+        _0x5d6e2b = (0, _0x477284.jsxDEV)(
+          _0x477284.Fragment,
+          {
+            children: [
+              (0, _0x477284.jsxDEV)(
+                "path",
+                { d: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" },
+                undefined,
+                false,
+              ),
+              (0, _0x477284.jsxDEV)(
+                "circle",
+                { cx: "12", cy: "7", r: "4" },
+                undefined,
+                false,
+              ),
+            ],
+          },
+          undefined,
+          true,
+        );
+        break;
+      case "list":
+        _0x5d6e2b = (0, _0x477284.jsxDEV)(
+          _0x477284.Fragment,
+          {
+            children: [
+              (0, _0x477284.jsxDEV)(
+                "line",
+                { x1: "8", y1: "6", x2: "21", y2: "6" },
+                undefined,
+                false,
+              ),
+              (0, _0x477284.jsxDEV)(
+                "line",
+                { x1: "8", y1: "12", x2: "21", y2: "12" },
+                undefined,
+                false,
+              ),
+              (0, _0x477284.jsxDEV)(
+                "line",
+                { x1: "8", y1: "18", x2: "21", y2: "18" },
+                undefined,
+                false,
+              ),
+              (0, _0x477284.jsxDEV)(
+                "line",
+                { x1: "3", y1: "6", x2: "3.01", y2: "6" },
+                undefined,
+                false,
+              ),
+              (0, _0x477284.jsxDEV)(
+                "line",
+                { x1: "3", y1: "12", x2: "3.01", y2: "12" },
+                undefined,
+                false,
+              ),
+              (0, _0x477284.jsxDEV)(
+                "line",
+                { x1: "3", y1: "18", x2: "3.01", y2: "18" },
+                undefined,
+                false,
+              ),
+            ],
+          },
+          undefined,
+          true,
+        );
+        break;
+      default:
+        _0x5d6e2b = (0, _0x477284.jsxDEV)(
+          _0x477284.Fragment,
+          {
+            children: [
+              (0, _0x477284.jsxDEV)(
+                "circle",
+                { cx: "12", cy: "12", r: "10" },
+                undefined,
+                false,
+              ),
+              (0, _0x477284.jsxDEV)(
+                "path",
+                { d: "M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" },
+                undefined,
+                false,
+              ),
+              (0, _0x477284.jsxDEV)(
+                "line",
+                { x1: "12", y1: "17", x2: "12.01", y2: "17" },
+                undefined,
+                false,
+              ),
+            ],
+          },
+          undefined,
+          true,
+        );
+    }
+    return (0, _0x477284.jsxDEV)(
+      "svg",
+      { ..._0x4c5e1a, className: "dbs-tab-icon", children: _0x5d6e2b },
+      undefined,
+      false,
+    );
+  }
+  // Left sidebar nav: sections = [{ title, items: [{id,label,icon}] }],
+  // active/onChange work with the full "group:tab" id (see chessr:open-tab).
+  function _0x7c1a92({ sections: _0x6e7f28, active: _0x8f906c, onChange: _0x9a0e5d }) {
+    return (0, _0x477284.jsxDEV)(
+      "div",
+      {
+        className: "dbs-sidebar",
+        children: _0x6e7f28.map((_0xb1c2d3) =>
+          (0, _0x477284.jsxDEV)(
+            "div",
+            {
+              className: "dbs-tab-group",
+              children: [
+                _0xb1c2d3.title &&
+                  (0, _0x477284.jsxDEV)(
+                    "div",
+                    { className: "dbs-tab-title", children: _0xb1c2d3.title },
+                    undefined,
+                    false,
+                  ),
+                ..._0xb1c2d3.items.map((_0xd4e5f6) =>
+                  (0, _0x477284.jsxDEV)(
+                    "div",
+                    {
+                      className:
+                        "dbs-tab-item " +
+                        (_0x8f906c === _0xd4e5f6.id ? "dbs-tab-item--active" : ""),
+                      onClick: () => _0x9a0e5d(_0xd4e5f6.id),
+                      children: [
+                        (0, _0x477284.jsxDEV)(
+                          _0x3d5e08,
+                          { type: _0xd4e5f6.icon },
+                          undefined,
+                          false,
+                        ),
+                        _0xd4e5f6.label,
+                      ],
+                    },
+                    _0xd4e5f6.id,
+                    true,
+                  ),
+                ),
+              ],
+            },
+            _0xb1c2d3.title ?? "ungrouped",
+            true,
+          ),
+        ),
+      },
+      undefined,
+      false,
+    );
+  }
+  var _0x6f7a8b = {
+    engine: "cpu",
+    automove: "zap",
+  };
+  var _0x9c0d1e = {
+    general: "list",
+    suggestions: "help",
+  };
   var _0x30f24f =
     "/Users/timothe/dev/chess/chessr-v3/extension/entrypoints/content/components/GameSummaryCard.tsx";
   var _0x2f6fc3 = new Map();
@@ -75233,13 +76152,13 @@ var content = (function () {
       return (Math.floor(_0x250cf6 * 10) / 10).toFixed(1);
     }
   }
-  function _0xc1aac1({ type: _0x12c49b }) {
+  function _0xc1aac1({ type: _0x12c49b, size: _0x9f0a1c = 20 }) {
     return (0, _0x477284.jsxDEV)(
       "img",
       {
         src: _0x4776fd.runtime.getURL("/icons/cls-" + _0x12c49b + ".svg"),
-        width: 20,
-        height: 20,
+        width: _0x9f0a1c,
+        height: _0x9f0a1c,
         alt: _0x12c49b,
         style: {
           display: "block",
@@ -75341,7 +76260,7 @@ var content = (function () {
       {
         style: {
           padding: 2,
-          borderRadius: 12,
+          borderRadius: 0,
           background: _0x98b644 ? "#22c55e" : "transparent",
           flexShrink: 0,
         },
@@ -75351,7 +76270,7 @@ var content = (function () {
             style: {
               width: _0x2556f7,
               height: _0x2556f7,
-              borderRadius: 10,
+              borderRadius: 0,
               overflow: "hidden",
               background: "rgba(255,255,255,0.06)",
               display: "flex",
@@ -81783,7 +82702,7 @@ var content = (function () {
                       alignItems: "center",
                       gap: 6,
                       padding: "6px 8px",
-                      borderRadius: 6,
+                      borderRadius: 0,
                       background: "rgba(213,164,125,0.08)",
                       border: "1px solid rgba(213,164,125,0.25)",
                       fontSize: 10,
@@ -82845,7 +83764,7 @@ var content = (function () {
           alignItems: "center",
           gap: 9,
           padding: "5px 10px",
-          borderRadius: 7,
+          borderRadius: 0,
           background: (_0x1fd3c3 ?? _0x2e0af5) + "0d",
         },
         children: [
@@ -82945,7 +83864,7 @@ var content = (function () {
                     letterSpacing: "0.06em",
                     textTransform: "uppercase",
                     padding: "2px 6px",
-                    borderRadius: 4,
+                    borderRadius: 0,
                     background: _0x1fd3c3 + "1e",
                     color: _0x1fd3c3,
                     border: "1px solid " + _0x1fd3c3 + "44",
@@ -83176,20 +84095,12 @@ var content = (function () {
     let { t: _0x393d7b } = _0x3fc566();
     return [
       {
-        id: "game",
-        label: _0x393d7b("game.tab.game"),
-      },
-      {
         id: "engine",
         label: _0x393d7b("game.tab.engine"),
       },
       {
         id: "automove",
         label: _0x393d7b("game.tab.automove"),
-      },
-      {
-        id: "opening",
-        label: _0x393d7b("game.tab.opening"),
       },
     ];
   }
@@ -83869,7 +84780,6 @@ var content = (function () {
   }
   function _0x444a3a({ activeTab: _0x2a35f9, setActiveTab: _0x887f1a }) {
     let { t: _0x263f87 } = _0x3fc566();
-    let _0x49db6b = _0x33beec();
     let {
       isPlaying: _0x24e6ef,
       playerColor: _0x266fae,
@@ -84469,28 +85379,12 @@ var content = (function () {
             this,
           ),
           (0, _0x477284.jsxDEV)(
-            _0x445627,
-            {
-              tabs: _0x49db6b,
-              active: _0x2a35f9,
-              onChange: _0x887f1a,
-            },
-            undefined,
-            false,
-            {
-              fileName: _0x3c805b,
-              lineNumber: 498,
-              columnNumber: 7,
-            },
-            this,
-          ),
-          (0, _0x477284.jsxDEV)(
             "div",
             {
               ref: _0x2c834d,
               className: "game-tab-content",
               children: [
-                _0x2a35f9 === "game" &&
+                _0x2a35f9 === "engine" &&
                   (0, _0x477284.jsxDEV)(
                     _0x4d89f5,
                     {
@@ -84519,32 +85413,18 @@ var content = (function () {
                                   _0x3b8ada,
                                   {
                                     id: _0x4f01c9,
-                                    children: [
-                                      (0, _0x477284.jsxDEV)(
-                                        _0xf6a743,
-                                        {},
-                                        undefined,
-                                        false,
-                                        {
-                                          fileName: _0x3c805b,
-                                          lineNumber: 508,
-                                          columnNumber: 21,
-                                        },
-                                        this,
-                                      ),
-                                      (0, _0x477284.jsxDEV)(
-                                        _0x54ceb9,
-                                        {},
-                                        undefined,
-                                        false,
-                                        {
-                                          fileName: _0x3c805b,
-                                          lineNumber: 509,
-                                          columnNumber: 21,
-                                        },
-                                        this,
-                                      ),
-                                    ],
+                                    children: (0, _0x477284.jsxDEV)(
+                                      _0xf6a743,
+                                      {},
+                                      undefined,
+                                      false,
+                                      {
+                                        fileName: _0x3c805b,
+                                        lineNumber: 508,
+                                        columnNumber: 21,
+                                      },
+                                      this,
+                                    ),
                                   },
                                   _0x4f01c9,
                                   true,
@@ -85067,30 +85947,47 @@ var content = (function () {
                   ),
                 _0x2a35f9 === "engine" &&
                   (0, _0x477284.jsxDEV)(
-                    _0x4d9ad0,
+                    "div",
                     {
-                      onDragEnd: (_0x1a0b0d) => {
-                        let { active: _0x1c00ea, over: _0x18a996 } = _0x1a0b0d;
-                        if (_0x18a996 && _0x1c00ea.id !== _0x18a996.id) {
-                          _0x2da8c1(
-                            "engine",
-                            _0x458c57(
-                              _0xa76b5d,
-                              _0xa76b5d.indexOf(_0x1c00ea.id),
-                              _0xa76b5d.indexOf(_0x18a996.id),
-                            ),
-                          );
-                        }
-                      },
+                      className: "nl-engine-grid",
+                      children: [
+                        (0, _0x477284.jsxDEV)(
+                          _0x5b8252,
+                          {},
+                          undefined,
+                          false,
+                        ),
+                        (0, _0x477284.jsxDEV)(
+                          _0x4d9ad0,
+                          {
+                            onDragEnd: (_0x1a0b0d) => {
+                              let { active: _0x1c00ea, over: _0x18a996 } =
+                                _0x1a0b0d;
+                              if (_0x18a996 && _0x1c00ea.id !== _0x18a996.id) {
+                                _0x2da8c1(
+                                  "engine",
+                                  _0x458c57(
+                                    _0xa76b5d,
+                                    _0xa76b5d.indexOf(_0x1c00ea.id),
+                                    _0xa76b5d.indexOf(_0x18a996.id),
+                                  ),
+                                );
+                              }
+                            },
+                          },
+                          undefined,
+                          false,
+                          {
+                            fileName: _0x3c805b,
+                            lineNumber: 573,
+                            columnNumber: 9,
+                          },
+                          this,
+                        ),
+                      ],
                     },
                     undefined,
-                    false,
-                    {
-                      fileName: _0x3c805b,
-                      lineNumber: 573,
-                      columnNumber: 9,
-                    },
-                    this,
+                    true,
                   ),
                 _0x2a35f9 === "automove" &&
                   (0, _0x477284.jsxDEV)(
@@ -85101,19 +85998,6 @@ var content = (function () {
                     {
                       fileName: _0x3c805b,
                       lineNumber: 577,
-                      columnNumber: 9,
-                    },
-                    this,
-                  ),
-                _0x2a35f9 === "opening" &&
-                  (0, _0x477284.jsxDEV)(
-                    _0x44ed50,
-                    {},
-                    undefined,
-                    false,
-                    {
-                      fileName: _0x3c805b,
-                      lineNumber: 581,
                       columnNumber: 9,
                     },
                     this,
@@ -85139,6 +86023,125 @@ var content = (function () {
         columnNumber: 5,
       },
       this,
+    );
+  }
+  // Reusable "randomise this value after every move" control: a labelled
+  // toggle plus, once enabled, a two-thumb range slider bounding the roll.
+  // Used by the shared Target-ELO card, both Maia ELO fields and Rodent's
+  // imprecision dial, so the four randomisers stay visually identical.
+  function _0xfffe01({
+    label: _0xr1,
+    desc: _0xr2,
+    enabled: _0xr3,
+    onToggle: _0xr4,
+    min: _0xr5,
+    max: _0xr6,
+    step: _0xr7,
+    range: _0xr8,
+    onRange: _0xr9,
+    allowed: _0xr10,
+  }) {
+    return (0, _0x477284.jsxDEV)(
+      _0x477284.Fragment,
+      {
+        children: [
+          (0, _0x477284.jsxDEV)(
+            "div",
+            {
+              className: "engine-force-row",
+              children: [
+                (0, _0x477284.jsxDEV)(
+                  "div",
+                  {
+                    className: "engine-force-text",
+                    children: [
+                      (0, _0x477284.jsxDEV)(
+                        "span",
+                        { className: "engine-force-label", children: _0xr1 },
+                        undefined,
+                        false,
+                      ),
+                      (0, _0x477284.jsxDEV)(
+                        "span",
+                        { className: "engine-force-desc", children: _0xr2 },
+                        undefined,
+                        false,
+                      ),
+                    ],
+                  },
+                  undefined,
+                  true,
+                ),
+                (0, _0x477284.jsxDEV)(
+                  _0x5ab1be,
+                  {
+                    checked: !!_0xr3 && !!_0xr10,
+                    onChange: (_0xr11) => {
+                      if (_0xr10) {
+                        _0xr4(_0xr11);
+                      }
+                    },
+                    disabled: !_0xr10,
+                  },
+                  undefined,
+                  false,
+                ),
+              ],
+            },
+            undefined,
+            true,
+          ),
+          _0xr3 &&
+            _0xr10 &&
+            (0, _0x477284.jsxDEV)(
+              _0x477284.Fragment,
+              {
+                children: [
+                  (0, _0x477284.jsxDEV)(
+                    "div",
+                    {
+                      className: "engine-section-header",
+                      style: { marginTop: 6 },
+                      children: [
+                        (0, _0x477284.jsxDEV)(
+                          "span",
+                          { className: "engine-hint", children: "От " + _0xr8[0] },
+                          undefined,
+                          false,
+                        ),
+                        (0, _0x477284.jsxDEV)(
+                          "span",
+                          { className: "engine-hint", children: "До " + _0xr8[1] },
+                          undefined,
+                          false,
+                        ),
+                      ],
+                    },
+                    undefined,
+                    true,
+                  ),
+                  (0, _0x477284.jsxDEV)(
+                    _0x521d04,
+                    {
+                      min: _0xr5,
+                      max: _0xr6,
+                      step: _0xr7,
+                      value: _0xr8,
+                      onChange: _0xr9,
+                      color: "#a855f7",
+                    },
+                    undefined,
+                    false,
+                  ),
+                ],
+              },
+              undefined,
+              true,
+            ),
+        ],
+      },
+      undefined,
+      true,
     );
   }
   function _0x10c6d1() {
@@ -85822,7 +86825,9 @@ var content = (function () {
                 (0, _0x477284.jsxDEV)(
                   _0x5ab1be,
                   {
-                    checked: !_0x3e1c2b.limitStrength && _0x19fb15,
+                    checked:
+                      !_0x3e1c2b.limitStrength &&
+                      _0x19fb15,
                     onChange: (_0x5f041b) => {
                       if (_0x19fb15) {
                         _0x3e1c2b.setLimitStrength(!_0x5f041b);
@@ -85849,6 +86854,25 @@ var content = (function () {
               columnNumber: 7,
             },
             this,
+          ),
+          (0, _0x477284.jsxDEV)(
+            _0xfffe01,
+            {
+              label: "Random ELO",
+              desc: _0x19fb15
+                ? "Подбирает новый целевой ELO из диапазона после каждого хода."
+                : _0x321702("engine.upgradeUnlock"),
+              enabled: _0x3e1c2b.randomEloEnabled,
+              onToggle: _0x3e1c2b.setRandomEloEnabled,
+              min: 400,
+              max: 3500,
+              step: 50,
+              range: [_0x3e1c2b.randomEloMin, _0x3e1c2b.randomEloMax],
+              onRange: _0x3e1c2b.setRandomEloRange,
+              allowed: _0x19fb15,
+            },
+            undefined,
+            false,
           ),
         ],
       },
@@ -87069,6 +88093,23 @@ var content = (function () {
                           },
                           this,
                         ),
+                    (0, _0x477284.jsxDEV)(
+                      _0xfffe01,
+                      {
+                        label: "Random ELO",
+                        desc: "Подбирает новый целевой ELO из диапазона после каждого хода.",
+                        enabled: _0x16bf73.randomMaiaTargetEnabled,
+                        onToggle: _0x16bf73.setRandomMaiaTargetEnabled,
+                        min: 600,
+                        max: 2600,
+                        step: 50,
+                        range: [_0x16bf73.randomMaiaTargetMin, _0x16bf73.randomMaiaTargetMax],
+                        onRange: _0x16bf73.setRandomMaiaTargetRange,
+                        allowed: true,
+                      },
+                      undefined,
+                      false,
+                    ),
                   ],
                 },
                 undefined,
@@ -87226,6 +88267,23 @@ var content = (function () {
                           },
                           this,
                         ),
+                    (0, _0x477284.jsxDEV)(
+                      _0xfffe01,
+                      {
+                        label: "Random ELO соперника",
+                        desc: "Подбирает новый ELO соперника из диапазона после каждого хода.",
+                        enabled: _0x16bf73.randomMaiaOppoEnabled,
+                        onToggle: _0x16bf73.setRandomMaiaOppoEnabled,
+                        min: 600,
+                        max: 2600,
+                        step: 50,
+                        range: [_0x16bf73.randomMaiaOppoMin, _0x16bf73.randomMaiaOppoMax],
+                        onRange: _0x16bf73.setRandomMaiaOppoRange,
+                        allowed: true,
+                      },
+                      undefined,
+                      false,
+                    ),
                   ],
                 },
                 undefined,
@@ -87435,6 +88493,23 @@ var content = (function () {
                         columnNumber: 11,
                       },
                       this,
+                    ),
+                    (0, _0x477284.jsxDEV)(
+                      _0xfffe01,
+                      {
+                        label: "Random неточность",
+                        desc: "Подбирает новую неточность из диапазона после каждого хода.",
+                        enabled: _0x33de19.randomImprecisionEnabled,
+                        onToggle: _0x33de19.setRandomImprecisionEnabled,
+                        min: 0,
+                        max: 100,
+                        step: 1,
+                        range: [_0x33de19.randomImprecisionMin, _0x33de19.randomImprecisionMax],
+                        onRange: _0x33de19.setRandomImprecisionRange,
+                        allowed: true,
+                      },
+                      undefined,
+                      false,
                     ),
                   ],
                 },
@@ -87937,16 +89012,8 @@ var content = (function () {
     let { t: _0x4fbca6 } = _0x3fc566();
     return [
       {
-        id: "account",
-        label: _0x4fbca6("settings.tab.account"),
-      },
-      {
         id: "general",
         label: _0x4fbca6("settings.tab.general"),
-      },
-      {
-        id: "engine",
-        label: _0x4fbca6("settings.tab.engine"),
       },
       {
         id: "suggestions",
@@ -88110,54 +89177,23 @@ var content = (function () {
                   this,
                 ),
                 (0, _0x477284.jsxDEV)(
-                  "select",
+                  _0x9f4a1e,
                   {
-                    className: "settings-select",
-                    value: _0x3fa7da,
-                    onChange: (_0xf01d5c) => _0x355d3c(_0xf01d5c.target.value),
-                    children: [
-                      (0, _0x477284.jsxDEV)(
-                        "option",
-                        {
-                          value: "auto",
-                          children: _0x4f5a02("settings.general.language.auto"),
-                        },
-                        undefined,
-                        false,
-                        {
-                          fileName: _0x4ac57e,
-                          lineNumber: 142,
-                          columnNumber: 11,
-                        },
-                        this,
-                      ),
-                      _0x304e9b.map((_0x589039) =>
-                        (0, _0x477284.jsxDEV)(
-                          "option",
-                          {
-                            value: _0x589039,
-                            children: _0x1ad309[_0x589039],
-                          },
-                          _0x589039,
-                          false,
-                          {
-                            fileName: _0x4ac57e,
-                            lineNumber: 144,
-                            columnNumber: 13,
-                          },
-                          this,
-                        ),
-                      ),
+                    options: [
+                      {
+                        value: "auto",
+                        label: _0x4f5a02("settings.general.language.auto"),
+                      },
+                      ..._0x304e9b.map((_0x589039) => ({
+                        value: _0x589039,
+                        label: _0x1ad309[_0x589039],
+                      })),
                     ],
+                    value: _0x3fa7da,
+                    onChange: _0x355d3c,
                   },
                   undefined,
-                  true,
-                  {
-                    fileName: _0x4ac57e,
-                    lineNumber: 137,
-                    columnNumber: 9,
-                  },
-                  this,
+                  false,
                 ),
               ],
             },
@@ -88289,29 +89325,11 @@ var content = (function () {
                           this,
                         ),
                         (0, _0x477284.jsxDEV)(
-                          "select",
+                          _0x9f4a1e,
                           {
-                            className: "settings-select",
+                            options: _0x351110,
                             value: _0x4955fe,
-                            onChange: (_0x2fbfac) =>
-                              _0x16e387(_0x2fbfac.target.value),
-                            children: _0x351110.map((_0xa3b688) =>
-                              (0, _0x477284.jsxDEV)(
-                                "option",
-                                {
-                                  value: _0xa3b688.value,
-                                  children: _0xa3b688.label,
-                                },
-                                _0xa3b688.value,
-                                false,
-                                {
-                                  fileName: _0x4ac57e,
-                                  lineNumber: 166,
-                                  columnNumber: 17,
-                                },
-                                this,
-                              ),
-                            ),
+                            onChange: _0x16e387,
                           },
                           undefined,
                           false,
@@ -88457,65 +89475,27 @@ var content = (function () {
                   this,
                 ),
                 (0, _0x477284.jsxDEV)(
-                  "select",
+                  _0x9f4a1e,
                   {
-                    className: "settings-select",
-                    value: _0x5728b5,
-                    onChange: (_0x1a6a4c) => _0x3e3ec3(_0x1a6a4c.target.value),
-                    children: [
-                      (0, _0x477284.jsxDEV)(
-                        "option",
-                        {
-                          value: "small",
-                          children: _0x4f5a02(
-                            "settings.general.fontSize.small",
-                          ),
-                        },
-                        undefined,
-                        false,
-                        {
-                          fileName: _0x4ac57e,
-                          lineNumber: 187,
-                          columnNumber: 11,
-                        },
-                        this,
-                      ),
-                      (0, _0x477284.jsxDEV)(
-                        "option",
-                        {
-                          value: "normal",
-                          children: _0x4f5a02(
-                            "settings.general.fontSize.normal",
-                          ),
-                        },
-                        undefined,
-                        false,
-                        {
-                          fileName: _0x4ac57e,
-                          lineNumber: 188,
-                          columnNumber: 11,
-                        },
-                        this,
-                      ),
-                      (0, _0x477284.jsxDEV)(
-                        "option",
-                        {
-                          value: "big",
-                          children: _0x4f5a02("settings.general.fontSize.big"),
-                        },
-                        undefined,
-                        false,
-                        {
-                          fileName: _0x4ac57e,
-                          lineNumber: 189,
-                          columnNumber: 11,
-                        },
-                        this,
-                      ),
+                    options: [
+                      {
+                        value: "small",
+                        label: _0x4f5a02("settings.general.fontSize.small"),
+                      },
+                      {
+                        value: "normal",
+                        label: _0x4f5a02("settings.general.fontSize.normal"),
+                      },
+                      {
+                        value: "big",
+                        label: _0x4f5a02("settings.general.fontSize.big"),
+                      },
                     ],
+                    value: _0x5728b5,
+                    onChange: _0x3e3ec3,
                   },
                   undefined,
-                  true,
+                  false,
                   {
                     fileName: _0x4ac57e,
                     lineNumber: 182,
@@ -89384,7 +90364,6 @@ var content = (function () {
   }
   function _0x4548a2({ activeTab: _0x2eee16, setActiveTab: _0x105d82 }) {
     let { t: _0x321e5c } = _0x3fc566();
-    let _0x1f4c14 = _0x4060de();
     let _0x15c930 = _0x4e24e3();
     let [_0x4c889a, _0x53c29b] = (0, _0x5145bc.useState)(false);
     let {
@@ -89455,1154 +90434,11 @@ var content = (function () {
         className: "settings-screen",
         children: [
           (0, _0x477284.jsxDEV)(
-            _0x445627,
-            {
-              tabs: _0x1f4c14,
-              active: _0x2eee16,
-              onChange: _0x105d82,
-            },
-            undefined,
-            false,
-            {
-              fileName: _0x4ac57e,
-              lineNumber: 380,
-              columnNumber: 7,
-            },
-            this,
-          ),
-          (0, _0x477284.jsxDEV)(
             "div",
             {
               ref: _0x3781cb,
               className: "settings-tab-content",
               children: [
-                _0x2eee16 === "account" &&
-                  (0, _0x477284.jsxDEV)(
-                    "div",
-                    {
-                      className: "settings-section",
-                      children: [
-                        (0, _0x477284.jsxDEV)(
-                          "div",
-                          {
-                            className: "settings-item settings-item--column",
-                            children: [
-                              (0, _0x477284.jsxDEV)(
-                                "div",
-                                {
-                                  className: "settings-item-row",
-                                  children: [
-                                    (0, _0x477284.jsxDEV)(
-                                      "span",
-                                      {
-                                        className: "settings-label",
-                                        children: _0x321e5c(
-                                          "settings.account.title",
-                                        ),
-                                      },
-                                      undefined,
-                                      false,
-                                      {
-                                        fileName: _0x4ac57e,
-                                        lineNumber: 387,
-                                        columnNumber: 15,
-                                      },
-                                      this,
-                                    ),
-                                    _0x1a129d?.email_confirmed_at
-                                      ? (0, _0x477284.jsxDEV)(
-                                          "span",
-                                          {
-                                            className: "settings-verified",
-                                            children: _0x321e5c(
-                                              "settings.account.verified",
-                                            ),
-                                          },
-                                          undefined,
-                                          false,
-                                          {
-                                            fileName: _0x4ac57e,
-                                            lineNumber: 389,
-                                            columnNumber: 17,
-                                          },
-                                          this,
-                                        )
-                                      : (0, _0x477284.jsxDEV)(
-                                          "span",
-                                          {
-                                            className: "settings-unverified",
-                                            children: _0x321e5c(
-                                              "settings.account.unverified",
-                                            ),
-                                          },
-                                          undefined,
-                                          false,
-                                          {
-                                            fileName: _0x4ac57e,
-                                            lineNumber: 391,
-                                            columnNumber: 17,
-                                          },
-                                          this,
-                                        ),
-                                  ],
-                                },
-                                undefined,
-                                true,
-                                {
-                                  fileName: _0x4ac57e,
-                                  lineNumber: 386,
-                                  columnNumber: 13,
-                                },
-                                this,
-                              ),
-                              (0, _0x477284.jsxDEV)(
-                                "div",
-                                {
-                                  className: "settings-account-email",
-                                  children: _0x1a129d?.email || "—",
-                                },
-                                undefined,
-                                false,
-                                {
-                                  fileName: _0x4ac57e,
-                                  lineNumber: 394,
-                                  columnNumber: 13,
-                                },
-                                this,
-                              ),
-                              _0x1a129d?.created_at &&
-                                (0, _0x477284.jsxDEV)(
-                                  "div",
-                                  {
-                                    className: "settings-account-joined",
-                                    children: _0x321e5c(
-                                      "settings.account.joined",
-                                      {
-                                        date: new Date(
-                                          _0x1a129d.created_at,
-                                        ).toLocaleDateString(undefined, {
-                                          year: "numeric",
-                                          month: "short",
-                                          day: "numeric",
-                                        }),
-                                      },
-                                    ),
-                                  },
-                                  undefined,
-                                  false,
-                                  {
-                                    fileName: _0x4ac57e,
-                                    lineNumber: 396,
-                                    columnNumber: 15,
-                                  },
-                                  this,
-                                ),
-                            ],
-                          },
-                          undefined,
-                          true,
-                          {
-                            fileName: _0x4ac57e,
-                            lineNumber: 385,
-                            columnNumber: 11,
-                          },
-                          this,
-                        ),
-                        (0, _0x477284.jsxDEV)(
-                          "div",
-                          {
-                            className: "settings-item",
-                            children: [
-                              (0, _0x477284.jsxDEV)(
-                                "span",
-                                {
-                                  className: "settings-label",
-                                  children: _0x321e5c(
-                                    "settings.account.server",
-                                  ),
-                                },
-                                undefined,
-                                false,
-                                {
-                                  fileName: _0x4ac57e,
-                                  lineNumber: 402,
-                                  columnNumber: 13,
-                                },
-                                this,
-                              ),
-                              (0, _0x477284.jsxDEV)(
-                                "span",
-                                {
-                                  className: "settings-value",
-                                  children: [
-                                    (0, _0x477284.jsxDEV)(
-                                      "span",
-                                      {
-                                        className: "settings-value--dim",
-                                        children: _0x28dc76,
-                                      },
-                                      undefined,
-                                      false,
-                                      {
-                                        fileName: _0x4ac57e,
-                                        lineNumber: 404,
-                                        columnNumber: 15,
-                                      },
-                                      this,
-                                    ),
-                                    " ",
-                                    (0, _0x477284.jsxDEV)(
-                                      "span",
-                                      {
-                                        style: {
-                                          color:
-                                            _0x39d087 === null
-                                              ? undefined
-                                              : _0x39d087 < 200
-                                                ? "#22c55e"
-                                                : _0x39d087 < 500
-                                                  ? "#fbbf24"
-                                                  : "#f87171",
-                                        },
-                                        children:
-                                          _0x39d087 === null
-                                            ? "—"
-                                            : _0x39d087 + "ms",
-                                      },
-                                      undefined,
-                                      false,
-                                      {
-                                        fileName: _0x4ac57e,
-                                        lineNumber: 406,
-                                        columnNumber: 15,
-                                      },
-                                      this,
-                                    ),
-                                  ],
-                                },
-                                undefined,
-                                true,
-                                {
-                                  fileName: _0x4ac57e,
-                                  lineNumber: 403,
-                                  columnNumber: 13,
-                                },
-                                this,
-                              ),
-                            ],
-                          },
-                          undefined,
-                          true,
-                          {
-                            fileName: _0x4ac57e,
-                            lineNumber: 401,
-                            columnNumber: 11,
-                          },
-                          this,
-                        ),
-                        (0, _0x477284.jsxDEV)(
-                          "div",
-                          {
-                            className: "settings-plan-card",
-                            children: [
-                              (0, _0x477284.jsxDEV)(
-                                "div",
-                                {
-                                  className: "settings-plan-row",
-                                  children: [
-                                    (0, _0x477284.jsxDEV)(
-                                      "span",
-                                      {
-                                        className: "settings-label",
-                                        children: _0x321e5c(
-                                          "settings.account.plan",
-                                        ),
-                                      },
-                                      undefined,
-                                      false,
-                                      {
-                                        fileName: _0x4ac57e,
-                                        lineNumber: 413,
-                                        columnNumber: 15,
-                                      },
-                                      this,
-                                    ),
-                                    (0, _0x477284.jsxDEV)(
-                                      "span",
-                                      {
-                                        className: "settings-plan-badge",
-                                        style: {
-                                          background: _0x56bfbd.bg,
-                                          color: _0x56bfbd.color,
-                                        },
-                                        children: _0x56bfbd.label,
-                                      },
-                                      undefined,
-                                      false,
-                                      {
-                                        fileName: _0x4ac57e,
-                                        lineNumber: 414,
-                                        columnNumber: 15,
-                                      },
-                                      this,
-                                    ),
-                                  ],
-                                },
-                                undefined,
-                                true,
-                                {
-                                  fileName: _0x4ac57e,
-                                  lineNumber: 412,
-                                  columnNumber: 13,
-                                },
-                                this,
-                              ),
-                              _0x2e4c91 &&
-                                (0, _0x477284.jsxDEV)(
-                                  "span",
-                                  {
-                                    className: "settings-plan-expiry",
-                                    children: _0x2ad0ce(_0x3101dc),
-                                  },
-                                  undefined,
-                                  false,
-                                  {
-                                    fileName: _0x4ac57e,
-                                    lineNumber: 419,
-                                    columnNumber: 15,
-                                  },
-                                  this,
-                                ),
-                              _0x56bfbd.cta &&
-                                (0, _0x477284.jsxDEV)(
-                                  "button",
-                                  {
-                                    className: "settings-plan-cta",
-                                    onClick: () => _0x44301f(),
-                                    children: _0x56bfbd.cta,
-                                  },
-                                  undefined,
-                                  false,
-                                  {
-                                    fileName: _0x4ac57e,
-                                    lineNumber: 422,
-                                    columnNumber: 15,
-                                  },
-                                  this,
-                                ),
-                            ],
-                          },
-                          undefined,
-                          true,
-                          {
-                            fileName: _0x4ac57e,
-                            lineNumber: 411,
-                            columnNumber: 11,
-                          },
-                          this,
-                        ),
-                        (0, _0x477284.jsxDEV)(
-                          "div",
-                          {
-                            className: "settings-discord-card",
-                            children: [
-                              (0, _0x477284.jsxDEV)(
-                                "div",
-                                {
-                                  className: "settings-discord-row",
-                                  children: [
-                                    (0, _0x477284.jsxDEV)(
-                                      "div",
-                                      {
-                                        className: "settings-discord-left",
-                                        children: [
-                                          (0, _0x477284.jsxDEV)(
-                                            "span",
-                                            {
-                                              className:
-                                                "settings-discord-icon",
-                                              children: (0, _0x477284.jsxDEV)(
-                                                _0x42fc28,
-                                                {},
-                                                undefined,
-                                                false,
-                                                {
-                                                  fileName: _0x4ac57e,
-                                                  lineNumber: 428,
-                                                  columnNumber: 57,
-                                                },
-                                                this,
-                                              ),
-                                            },
-                                            undefined,
-                                            false,
-                                            {
-                                              fileName: _0x4ac57e,
-                                              lineNumber: 428,
-                                              columnNumber: 17,
-                                            },
-                                            this,
-                                          ),
-                                          (0, _0x477284.jsxDEV)(
-                                            "span",
-                                            {
-                                              className: "settings-label",
-                                              children: _0x321e5c(
-                                                "settings.account.discord",
-                                              ),
-                                            },
-                                            undefined,
-                                            false,
-                                            {
-                                              fileName: _0x4ac57e,
-                                              lineNumber: 429,
-                                              columnNumber: 17,
-                                            },
-                                            this,
-                                          ),
-                                        ],
-                                      },
-                                      undefined,
-                                      true,
-                                      {
-                                        fileName: _0x4ac57e,
-                                        lineNumber: 427,
-                                        columnNumber: 15,
-                                      },
-                                      this,
-                                    ),
-                                    _0x41207a.loading
-                                      ? (0, _0x477284.jsxDEV)(
-                                          "span",
-                                          {
-                                            className:
-                                              "settings-discord-status",
-                                            children: "...",
-                                          },
-                                          undefined,
-                                          false,
-                                          {
-                                            fileName: _0x4ac57e,
-                                            lineNumber: 432,
-                                            columnNumber: 17,
-                                          },
-                                          this,
-                                        )
-                                      : _0x41207a.linked
-                                        ? (0, _0x477284.jsxDEV)(
-                                            "div",
-                                            {
-                                              className:
-                                                "settings-discord-user",
-                                              children: [
-                                                _0x41207a.avatar &&
-                                                  (0, _0x477284.jsxDEV)(
-                                                    "img",
-                                                    {
-                                                      className:
-                                                        "settings-discord-avatar",
-                                                      src: _0x41207a.avatar,
-                                                      alt: "",
-                                                    },
-                                                    undefined,
-                                                    false,
-                                                    {
-                                                      fileName: _0x4ac57e,
-                                                      lineNumber: 435,
-                                                      columnNumber: 38,
-                                                    },
-                                                    this,
-                                                  ),
-                                                (0, _0x477284.jsxDEV)(
-                                                  "span",
-                                                  {
-                                                    className:
-                                                      "settings-discord-username",
-                                                    children:
-                                                      _0x41207a.username,
-                                                  },
-                                                  undefined,
-                                                  false,
-                                                  {
-                                                    fileName: _0x4ac57e,
-                                                    lineNumber: 436,
-                                                    columnNumber: 19,
-                                                  },
-                                                  this,
-                                                ),
-                                                (0, _0x477284.jsxDEV)(
-                                                  "button",
-                                                  {
-                                                    className:
-                                                      "settings-discord-unlink-icon",
-                                                    onClick: () =>
-                                                      _0x1a129d &&
-                                                      _0x41207a.unlink(
-                                                        _0x1a129d.id,
-                                                      ),
-                                                    title: _0x321e5c(
-                                                      "settings.account.discord.unlink",
-                                                    ),
-                                                    children: [
-                                                      (0, _0x477284.jsxDEV)(
-                                                        "span",
-                                                        {
-                                                          className:
-                                                            "settings-discord-link-state",
-                                                          children: (0,
-                                                          _0x477284.jsxDEV)(
-                                                            _0x1e3ada,
-                                                            {},
-                                                            undefined,
-                                                            false,
-                                                            {
-                                                              fileName:
-                                                                _0x4ac57e,
-                                                              lineNumber: 438,
-                                                              columnNumber: 67,
-                                                            },
-                                                            this,
-                                                          ),
-                                                        },
-                                                        undefined,
-                                                        false,
-                                                        {
-                                                          fileName: _0x4ac57e,
-                                                          lineNumber: 438,
-                                                          columnNumber: 21,
-                                                        },
-                                                        this,
-                                                      ),
-                                                      (0, _0x477284.jsxDEV)(
-                                                        "span",
-                                                        {
-                                                          className:
-                                                            "settings-discord-unlink-state",
-                                                          children: (0,
-                                                          _0x477284.jsxDEV)(
-                                                            _0x4d006e,
-                                                            {},
-                                                            undefined,
-                                                            false,
-                                                            {
-                                                              fileName:
-                                                                _0x4ac57e,
-                                                              lineNumber: 439,
-                                                              columnNumber: 69,
-                                                            },
-                                                            this,
-                                                          ),
-                                                        },
-                                                        undefined,
-                                                        false,
-                                                        {
-                                                          fileName: _0x4ac57e,
-                                                          lineNumber: 439,
-                                                          columnNumber: 21,
-                                                        },
-                                                        this,
-                                                      ),
-                                                    ],
-                                                  },
-                                                  undefined,
-                                                  true,
-                                                  {
-                                                    fileName: _0x4ac57e,
-                                                    lineNumber: 437,
-                                                    columnNumber: 19,
-                                                  },
-                                                  this,
-                                                ),
-                                              ],
-                                            },
-                                            undefined,
-                                            true,
-                                            {
-                                              fileName: _0x4ac57e,
-                                              lineNumber: 434,
-                                              columnNumber: 17,
-                                            },
-                                            this,
-                                          )
-                                        : (0, _0x477284.jsxDEV)(
-                                            "span",
-                                            {
-                                              className:
-                                                "settings-discord-status",
-                                              children: _0x321e5c(
-                                                "settings.account.discord.notLinked",
-                                              ),
-                                            },
-                                            undefined,
-                                            false,
-                                            {
-                                              fileName: _0x4ac57e,
-                                              lineNumber: 443,
-                                              columnNumber: 17,
-                                            },
-                                            this,
-                                          ),
-                                  ],
-                                },
-                                undefined,
-                                true,
-                                {
-                                  fileName: _0x4ac57e,
-                                  lineNumber: 426,
-                                  columnNumber: 13,
-                                },
-                                this,
-                              ),
-                              !_0x41207a.linked &&
-                                !_0x41207a.loading &&
-                                (0, _0x477284.jsxDEV)(
-                                  "button",
-                                  {
-                                    className: "settings-discord-link-btn",
-                                    onClick: () =>
-                                      _0x1a129d &&
-                                      _0x41207a.initLink(_0x1a129d.id),
-                                    children: _0x3e8c4d
-                                      ? (0, _0x477284.jsxDEV)(
-                                          _0x477284.Fragment,
-                                          {
-                                            children: [
-                                              (0, _0x477284.jsxDEV)(
-                                                "span",
-                                                {
-                                                  style: {
-                                                    fontSize: 13,
-                                                    lineHeight: 1,
-                                                  },
-                                                  children: "🎁",
-                                                },
-                                                undefined,
-                                                false,
-                                                {
-                                                  fileName: _0x4ac57e,
-                                                  lineNumber: 450,
-                                                  columnNumber: 33,
-                                                },
-                                                this,
-                                              ),
-                                              _0x321e5c("trial.modal.ctaLink"),
-                                            ],
-                                          },
-                                          undefined,
-                                          true,
-                                        )
-                                      : _0x321e5c(
-                                          "settings.account.discord.linkBtn",
-                                        ),
-                                  },
-                                  undefined,
-                                  false,
-                                  {
-                                    fileName: _0x4ac57e,
-                                    lineNumber: 449,
-                                    columnNumber: 15,
-                                  },
-                                  this,
-                                ),
-                            ],
-                          },
-                          undefined,
-                          true,
-                          {
-                            fileName: _0x4ac57e,
-                            lineNumber: 425,
-                            columnNumber: 11,
-                          },
-                          this,
-                        ),
-                        (0, _0x477284.jsxDEV)(
-                          "div",
-                          {
-                            className: "settings-accounts-card",
-                            children: [
-                              (0, _0x477284.jsxDEV)(
-                                "button",
-                                {
-                                  className: "settings-accounts-toggle",
-                                  onClick: () => _0x53c29b(!_0x4c889a),
-                                  children: [
-                                    (0, _0x477284.jsxDEV)(
-                                      "div",
-                                      {
-                                        className:
-                                          "settings-accounts-toggle-left",
-                                        children: [
-                                          (0, _0x477284.jsxDEV)(
-                                            "svg",
-                                            {
-                                              width: "16",
-                                              height: "16",
-                                              viewBox: "0 0 24 24",
-                                              fill: "none",
-                                              stroke: "currentColor",
-                                              strokeWidth: "2",
-                                              strokeLinecap: "round",
-                                              strokeLinejoin: "round",
-                                              children: [
-                                                (0, _0x477284.jsxDEV)(
-                                                  "path",
-                                                  {
-                                                    d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2",
-                                                  },
-                                                  undefined,
-                                                  false,
-                                                  {
-                                                    fileName: _0x4ac57e,
-                                                    lineNumber: 458,
-                                                    columnNumber: 19,
-                                                  },
-                                                  this,
-                                                ),
-                                                (0, _0x477284.jsxDEV)(
-                                                  "circle",
-                                                  {
-                                                    cx: "9",
-                                                    cy: "7",
-                                                    r: "4",
-                                                  },
-                                                  undefined,
-                                                  false,
-                                                  {
-                                                    fileName: _0x4ac57e,
-                                                    lineNumber: 459,
-                                                    columnNumber: 19,
-                                                  },
-                                                  this,
-                                                ),
-                                                (0, _0x477284.jsxDEV)(
-                                                  "path",
-                                                  {
-                                                    d: "M22 21v-2a4 4 0 0 0-3-3.87",
-                                                  },
-                                                  undefined,
-                                                  false,
-                                                  {
-                                                    fileName: _0x4ac57e,
-                                                    lineNumber: 460,
-                                                    columnNumber: 19,
-                                                  },
-                                                  this,
-                                                ),
-                                                (0, _0x477284.jsxDEV)(
-                                                  "path",
-                                                  {
-                                                    d: "M16 3.13a4 4 0 0 1 0 7.75",
-                                                  },
-                                                  undefined,
-                                                  false,
-                                                  {
-                                                    fileName: _0x4ac57e,
-                                                    lineNumber: 461,
-                                                    columnNumber: 19,
-                                                  },
-                                                  this,
-                                                ),
-                                              ],
-                                            },
-                                            undefined,
-                                            true,
-                                            {
-                                              fileName: _0x4ac57e,
-                                              lineNumber: 457,
-                                              columnNumber: 17,
-                                            },
-                                            this,
-                                          ),
-                                          (0, _0x477284.jsxDEV)(
-                                            "span",
-                                            {
-                                              children: _0x321e5c(
-                                                "settings.account.chessAccounts",
-                                              ),
-                                            },
-                                            undefined,
-                                            false,
-                                            {
-                                              fileName: _0x4ac57e,
-                                              lineNumber: 463,
-                                              columnNumber: 17,
-                                            },
-                                            this,
-                                          ),
-                                        ],
-                                      },
-                                      undefined,
-                                      true,
-                                      {
-                                        fileName: _0x4ac57e,
-                                        lineNumber: 456,
-                                        columnNumber: 15,
-                                      },
-                                      this,
-                                    ),
-                                    (0, _0x477284.jsxDEV)(
-                                      "div",
-                                      {
-                                        className:
-                                          "settings-accounts-toggle-right",
-                                        children: [
-                                          (0, _0x477284.jsxDEV)(
-                                            "span",
-                                            {
-                                              className:
-                                                "settings-accounts-count",
-                                              children: _0x5d745e
-                                                ? "..."
-                                                : _0x5b0f4c.length,
-                                            },
-                                            undefined,
-                                            false,
-                                            {
-                                              fileName: _0x4ac57e,
-                                              lineNumber: 466,
-                                              columnNumber: 17,
-                                            },
-                                            this,
-                                          ),
-                                          (0, _0x477284.jsxDEV)(
-                                            "svg",
-                                            {
-                                              className:
-                                                "settings-accounts-chevron " +
-                                                (_0x4c889a
-                                                  ? "settings-accounts-chevron--open"
-                                                  : ""),
-                                              width: "14",
-                                              height: "14",
-                                              viewBox: "0 0 24 24",
-                                              fill: "none",
-                                              stroke: "currentColor",
-                                              strokeWidth: "2",
-                                              strokeLinecap: "round",
-                                              strokeLinejoin: "round",
-                                              children: (0, _0x477284.jsxDEV)(
-                                                "polyline",
-                                                {
-                                                  points: "6 9 12 15 18 9",
-                                                },
-                                                undefined,
-                                                false,
-                                                {
-                                                  fileName: _0x4ac57e,
-                                                  lineNumber: 468,
-                                                  columnNumber: 19,
-                                                },
-                                                this,
-                                              ),
-                                            },
-                                            undefined,
-                                            false,
-                                            {
-                                              fileName: _0x4ac57e,
-                                              lineNumber: 467,
-                                              columnNumber: 17,
-                                            },
-                                            this,
-                                          ),
-                                        ],
-                                      },
-                                      undefined,
-                                      true,
-                                      {
-                                        fileName: _0x4ac57e,
-                                        lineNumber: 465,
-                                        columnNumber: 15,
-                                      },
-                                      this,
-                                    ),
-                                  ],
-                                },
-                                undefined,
-                                true,
-                                {
-                                  fileName: _0x4ac57e,
-                                  lineNumber: 455,
-                                  columnNumber: 13,
-                                },
-                                this,
-                              ),
-                              _0x4c889a &&
-                                (0, _0x477284.jsxDEV)(
-                                  "div",
-                                  {
-                                    className: "settings-accounts-list",
-                                    children:
-                                      _0x5b0f4c.length === 0
-                                        ? (0, _0x477284.jsxDEV)(
-                                            "p",
-                                            {
-                                              className:
-                                                "settings-accounts-empty",
-                                              children: "No accounts linked",
-                                            },
-                                            undefined,
-                                            false,
-                                            {
-                                              fileName: _0x4ac57e,
-                                              lineNumber: 475,
-                                              columnNumber: 19,
-                                            },
-                                            this,
-                                          )
-                                        : Object.entries(
-                                            _0x5b0f4c.reduce(
-                                              (_0x169e4d, _0x4af1a9) => {
-                                                (_0x169e4d[
-                                                  _0x4af1a9.platform
-                                                ] ??= []).push(_0x4af1a9);
-                                                return _0x169e4d;
-                                              },
-                                              {},
-                                            ),
-                                          ).map(([_0x39393b, _0x4385a4]) => {
-                                            let _0x5db2ae =
-                                              _0x210118[_0x39393b];
-                                            return (0, _0x477284.jsxDEV)(
-                                              "div",
-                                              {
-                                                className:
-                                                  "settings-accounts-group",
-                                                children: [
-                                                  (0, _0x477284.jsxDEV)(
-                                                    "div",
-                                                    {
-                                                      className:
-                                                        "settings-accounts-group-header",
-                                                      children: [
-                                                        (0, _0x477284.jsxDEV)(
-                                                          _0x5db2ae,
-                                                          {
-                                                            size: 16,
-                                                          },
-                                                          undefined,
-                                                          false,
-                                                          {
-                                                            fileName: _0x4ac57e,
-                                                            lineNumber: 487,
-                                                            columnNumber: 27,
-                                                          },
-                                                          this,
-                                                        ),
-                                                        (0, _0x477284.jsxDEV)(
-                                                          "span",
-                                                          {
-                                                            children:
-                                                              _0x3300cb[
-                                                                _0x39393b
-                                                              ] || _0x39393b,
-                                                          },
-                                                          undefined,
-                                                          false,
-                                                          {
-                                                            fileName: _0x4ac57e,
-                                                            lineNumber: 488,
-                                                            columnNumber: 27,
-                                                          },
-                                                          this,
-                                                        ),
-                                                        (0, _0x477284.jsxDEV)(
-                                                          "span",
-                                                          {
-                                                            className:
-                                                              "settings-accounts-group-count",
-                                                            children:
-                                                              _0x4385a4.length,
-                                                          },
-                                                          undefined,
-                                                          false,
-                                                          {
-                                                            fileName: _0x4ac57e,
-                                                            lineNumber: 489,
-                                                            columnNumber: 27,
-                                                          },
-                                                          this,
-                                                        ),
-                                                      ],
-                                                    },
-                                                    undefined,
-                                                    true,
-                                                    {
-                                                      fileName: _0x4ac57e,
-                                                      lineNumber: 486,
-                                                      columnNumber: 25,
-                                                    },
-                                                    this,
-                                                  ),
-                                                  _0x4385a4.map((_0x3fa7fc) =>
-                                                    (0, _0x477284.jsxDEV)(
-                                                      "div",
-                                                      {
-                                                        className:
-                                                          "settings-accounts-item",
-                                                        children: [
-                                                          (0, _0x477284.jsxDEV)(
-                                                            "span",
-                                                            {
-                                                              className:
-                                                                "settings-accounts-username",
-                                                              children:
-                                                                _0x3fa7fc.username,
-                                                            },
-                                                            undefined,
-                                                            false,
-                                                            {
-                                                              fileName:
-                                                                _0x4ac57e,
-                                                              lineNumber: 493,
-                                                              columnNumber: 29,
-                                                            },
-                                                            this,
-                                                          ),
-                                                          (0, _0x477284.jsxDEV)(
-                                                            "button",
-                                                            {
-                                                              className:
-                                                                "settings-discord-unlink-icon",
-                                                              onClick: () =>
-                                                                _0x1a129d &&
-                                                                _0x5bd8ce(
-                                                                  _0x3fa7fc.id,
-                                                                  _0x1a129d.id,
-                                                                ),
-                                                              title: "Unlink",
-                                                              children: [
-                                                                (0,
-                                                                _0x477284.jsxDEV)(
-                                                                  "span",
-                                                                  {
-                                                                    className:
-                                                                      "settings-discord-link-state",
-                                                                    children:
-                                                                      (0,
-                                                                      _0x477284.jsxDEV)(
-                                                                        _0x1e3ada,
-                                                                        {},
-                                                                        undefined,
-                                                                        false,
-                                                                        {
-                                                                          fileName:
-                                                                            _0x4ac57e,
-                                                                          lineNumber: 495,
-                                                                          columnNumber: 77,
-                                                                        },
-                                                                        this,
-                                                                      ),
-                                                                  },
-                                                                  undefined,
-                                                                  false,
-                                                                  {
-                                                                    fileName:
-                                                                      _0x4ac57e,
-                                                                    lineNumber: 495,
-                                                                    columnNumber: 31,
-                                                                  },
-                                                                  this,
-                                                                ),
-                                                                (0,
-                                                                _0x477284.jsxDEV)(
-                                                                  "span",
-                                                                  {
-                                                                    className:
-                                                                      "settings-discord-unlink-state",
-                                                                    children:
-                                                                      (0,
-                                                                      _0x477284.jsxDEV)(
-                                                                        _0x4d006e,
-                                                                        {},
-                                                                        undefined,
-                                                                        false,
-                                                                        {
-                                                                          fileName:
-                                                                            _0x4ac57e,
-                                                                          lineNumber: 496,
-                                                                          columnNumber: 79,
-                                                                        },
-                                                                        this,
-                                                                      ),
-                                                                  },
-                                                                  undefined,
-                                                                  false,
-                                                                  {
-                                                                    fileName:
-                                                                      _0x4ac57e,
-                                                                    lineNumber: 496,
-                                                                    columnNumber: 31,
-                                                                  },
-                                                                  this,
-                                                                ),
-                                                              ],
-                                                            },
-                                                            undefined,
-                                                            true,
-                                                            {
-                                                              fileName:
-                                                                _0x4ac57e,
-                                                              lineNumber: 494,
-                                                              columnNumber: 29,
-                                                            },
-                                                            this,
-                                                          ),
-                                                        ],
-                                                      },
-                                                      _0x3fa7fc.id,
-                                                      true,
-                                                      {
-                                                        fileName: _0x4ac57e,
-                                                        lineNumber: 492,
-                                                        columnNumber: 27,
-                                                      },
-                                                      this,
-                                                    ),
-                                                  ),
-                                                ],
-                                              },
-                                              _0x39393b,
-                                              true,
-                                              {
-                                                fileName: _0x4ac57e,
-                                                lineNumber: 485,
-                                                columnNumber: 23,
-                                              },
-                                              this,
-                                            );
-                                          }),
-                                  },
-                                  undefined,
-                                  false,
-                                  {
-                                    fileName: _0x4ac57e,
-                                    lineNumber: 473,
-                                    columnNumber: 15,
-                                  },
-                                  this,
-                                ),
-                            ],
-                          },
-                          undefined,
-                          true,
-                          {
-                            fileName: _0x4ac57e,
-                            lineNumber: 454,
-                            columnNumber: 11,
-                          },
-                          this,
-                        ),
-                      ],
-                    },
-                    undefined,
-                    true,
-                    {
-                      fileName: _0x4ac57e,
-                      lineNumber: 384,
-                      columnNumber: 9,
-                    },
-                    this,
-                  ),
                 _0x2eee16 === "general" &&
                   (0, _0x477284.jsxDEV)(
                     _0x369dd8,
@@ -90612,19 +90448,6 @@ var content = (function () {
                     {
                       fileName: _0x4ac57e,
                       lineNumber: 511,
-                      columnNumber: 9,
-                    },
-                    this,
-                  ),
-                _0x2eee16 === "engine" &&
-                  (0, _0x477284.jsxDEV)(
-                    _0x5b8252,
-                    {},
-                    undefined,
-                    false,
-                    {
-                      fileName: _0x4ac57e,
-                      lineNumber: 515,
                       columnNumber: 9,
                     },
                     this,
@@ -91185,45 +91008,31 @@ var content = (function () {
                         this,
                       ),
                       (0, _0x477284.jsxDEV)(
-                        "select",
+                        _0x9f4a1e,
                         {
-                          className: "settings-select",
+                          options: _0x4d01f4.map((_0x59203d) => {
+                            let _0x3ff855 =
+                              !_0x34441d && !_0x44a1ec.includes(_0x59203d);
+                            return {
+                              value: _0x59203d,
+                              disabled: _0x3ff855,
+                              label:
+                                _0x599539[_0x59203d].label +
+                                (_0x599539[_0x59203d].beta ? " (beta)" : "") +
+                                (_0x3ff855
+                                  ? " — " +
+                                    _0x5929f3("settings.engine.premiumTag")
+                                  : ""),
+                            };
+                          }),
                           value: _0x398d98,
-                          onChange: (_0x188a02) => {
-                            let _0x552608 = _0x188a02.target.value;
+                          onChange: (_0x552608) => {
                             if (!_0x34441d && !_0x44a1ec.includes(_0x552608)) {
                               _0x139fc3("komodo");
                               return;
                             }
                             _0x139fc3(_0x552608);
                           },
-                          children: _0x4d01f4.map((_0x59203d) => {
-                            let _0x3ff855 =
-                              !_0x34441d && !_0x44a1ec.includes(_0x59203d);
-                            return (0, _0x477284.jsxDEV)(
-                              "option",
-                              {
-                                value: _0x59203d,
-                                disabled: _0x3ff855,
-                                children: [
-                                  _0x599539[_0x59203d].label,
-                                  _0x599539[_0x59203d].beta ? " (beta)" : "",
-                                  _0x3ff855
-                                    ? " — " +
-                                      _0x5929f3("settings.engine.premiumTag")
-                                    : "",
-                                ],
-                              },
-                              _0x59203d,
-                              true,
-                              {
-                                fileName: _0x4ac57e,
-                                lineNumber: 663,
-                                columnNumber: 17,
-                              },
-                              this,
-                            );
-                          }),
                         },
                         undefined,
                         false,
@@ -91298,27 +91107,6 @@ var content = (function () {
                         },
                         this,
                       ),
-                      (0, _0x477284.jsxDEV)(
-                        "span",
-                        {
-                          className: "settings-engine-desc",
-                          children: _0x5929f3(
-                            "engine.info." +
-                              (_0x599539[_0x398d98]
-                                ? _0x398d98
-                                : _0x4d01f4[0]) +
-                              ".desc",
-                          ),
-                        },
-                        undefined,
-                        false,
-                        {
-                          fileName: _0x4ac57e,
-                          lineNumber: 677,
-                          columnNumber: 11,
-                        },
-                        this,
-                      ),
                     ],
                   },
                   undefined,
@@ -91344,51 +91132,20 @@ var content = (function () {
           (0, _0x477284.jsxDEV)(
             "div",
             {
-              className: "settings-item settings-item--column",
+              className: "settings-item settings-item-row--slider",
               children: [
                 (0, _0x477284.jsxDEV)(
-                  "div",
+                  "span",
                   {
-                    className: "settings-item-row",
-                    children: [
-                      (0, _0x477284.jsxDEV)(
-                        "span",
-                        {
-                          className: "settings-label",
-                          children: _0x5929f3("settings.engine.autoEloBoost"),
-                        },
-                        undefined,
-                        false,
-                        {
-                          fileName: _0x4ac57e,
-                          lineNumber: 683,
-                          columnNumber: 11,
-                        },
-                        this,
-                      ),
-                      (0, _0x477284.jsxDEV)(
-                        "span",
-                        {
-                          className: "settings-slider-value",
-                          children: ["+", _0x9d7b50],
-                        },
-                        undefined,
-                        true,
-                        {
-                          fileName: _0x4ac57e,
-                          lineNumber: 684,
-                          columnNumber: 11,
-                        },
-                        this,
-                      ),
-                    ],
+                    className: "settings-label",
+                    children: _0x5929f3("settings.engine.autoEloBoost"),
                   },
                   undefined,
-                  true,
+                  false,
                   {
                     fileName: _0x4ac57e,
-                    lineNumber: 682,
-                    columnNumber: 9,
+                    lineNumber: 683,
+                    columnNumber: 11,
                   },
                   this,
                 ),
@@ -91400,9 +91157,7 @@ var content = (function () {
                     step: 10,
                     value: _0x9d7b50,
                     onChange: _0x46655d,
-                    trackColor: "linear-gradient(90deg, #22c55e, #3b82f6)",
-                    thumbColor: "#22c55e",
-                    thumbColorEnd: "#3b82f6",
+                    thumbColor: "#006491",
                   },
                   undefined,
                   false,
@@ -91414,17 +91169,14 @@ var content = (function () {
                   this,
                 ),
                 (0, _0x477284.jsxDEV)(
-                  "span",
-                  {
-                    className: "settings-engine-desc",
-                    children: _0x5929f3("settings.engine.autoEloBoost.desc"),
-                  },
+                  _0x7c3d92,
+                  { value: "+" + _0x9d7b50 },
                   undefined,
                   false,
                   {
                     fileName: _0x4ac57e,
-                    lineNumber: 687,
-                    columnNumber: 9,
+                    lineNumber: 684,
+                    columnNumber: 11,
                   },
                   this,
                 ),
@@ -91435,18 +91187,6 @@ var content = (function () {
             {
               fileName: _0x4ac57e,
               lineNumber: 681,
-              columnNumber: 7,
-            },
-            this,
-          ),
-          (0, _0x477284.jsxDEV)(
-            _0x2c6f2e,
-            {},
-            undefined,
-            false,
-            {
-              fileName: _0x4ac57e,
-              lineNumber: 690,
               columnNumber: 7,
             },
             this,
@@ -91846,7 +91586,7 @@ var content = (function () {
   }
   var _0x4baef9 = {
     background: "rgba(255, 255, 255, 0.03)",
-    borderRadius: 8,
+    borderRadius: 0,
     padding: "8px 10px",
   };
   var _0x451da5 = {
@@ -91864,7 +91604,7 @@ var content = (function () {
   var _0x49eb7d = {
     padding: "3px 20px 3px 8px",
     border: "1px solid rgba(255, 255, 255, 0.08)",
-    borderRadius: 5,
+    borderRadius: 0,
     background: "rgba(255, 255, 255, 0.03)",
     color: "#e4e4e7",
     fontSize: 10,
@@ -91881,7 +91621,7 @@ var content = (function () {
     fontSize: 7,
     fontWeight: 600,
     padding: "2px 7px",
-    borderRadius: 3,
+    borderRadius: 0,
     border:
       "1px solid " + (_0x2c0b0f ? "#3b82f6" : "rgba(255, 255, 255, 0.08)"),
     background: _0x2c0b0f ? "rgba(59, 130, 246, 0.15)" : "transparent",
@@ -92016,7 +91756,7 @@ var content = (function () {
                           display: "flex",
                           alignItems: "center",
                           padding: "8px 8px 8px 12px",
-                          borderRadius: 8,
+                          borderRadius: 0,
                           borderLeft:
                             "3px solid " + _0x20756c[_0x4af797] + "20",
                           background: _0x20756c[_0x4af797] + "05",
@@ -92031,7 +91771,7 @@ var content = (function () {
                               style: {
                                 width: 32,
                                 height: 8,
-                                borderRadius: 4,
+                                borderRadius: 0,
                                 background: _0x20756c[_0x4af797] + "10",
                               },
                             },
@@ -92050,7 +91790,7 @@ var content = (function () {
                               style: {
                                 width: 24,
                                 height: 8,
-                                borderRadius: 4,
+                                borderRadius: 0,
                                 background: "rgba(255,255,255,0.03)",
                                 marginLeft: "auto",
                               },
@@ -92104,7 +91844,7 @@ var content = (function () {
                     fontWeight: 700,
                     fontFamily: "ui-monospace, monospace",
                     padding: "1px 5px",
-                    borderRadius: 3,
+                    borderRadius: 0,
                     color:
                       _0x756ea8 == null ? "rgba(255,255,255,0.2)" : "#71717a",
                     background: "rgba(255,255,255,0.04)",
@@ -93066,7 +92806,9 @@ var content = (function () {
               (0, _0x477284.jsxDEV)(
                 _0x5ab1be,
                 {
-                  checked: !_0x291d6c.limitStrength && _0x2a7383,
+                  checked:
+                    !_0x291d6c.limitStrength &&
+                    _0x2a7383,
                   onChange: (_0x2eb43d) => {
                     if (_0x2a7383) {
                       _0x291d6c.setLimitStrength(!_0x2eb43d);
@@ -93134,7 +92876,9 @@ var content = (function () {
           (0, _0x477284.jsxDEV)(
             _0x5ab1be,
             {
-              checked: !_0x42ce09.limitStrength && _0x25f226,
+              checked:
+                !_0x42ce09.limitStrength &&
+                _0x25f226,
               onChange: (_0x4742ac) => {
                 if (_0x25f226) {
                   _0x42ce09.setLimitStrength(!_0x4742ac);
@@ -93693,7 +93437,7 @@ var content = (function () {
                     style: {
                       width: 14,
                       height: 14,
-                      borderRadius: 4,
+                      borderRadius: 0,
                       background: _0x44138a === "white" ? "#fff" : "#27272a",
                       border: "1px solid rgba(255,255,255,0.1)",
                     },
@@ -93758,7 +93502,7 @@ var content = (function () {
                       alignItems: "center",
                       gap: 5,
                       padding: "3px 8px",
-                      borderRadius: 999,
+                      borderRadius: 0,
                       background: _0x3c4d4f,
                     },
                     children: [
@@ -93829,7 +93573,7 @@ var content = (function () {
                         padding: 0,
                         border: "none",
                         cursor: "pointer",
-                        borderRadius: 4,
+                        borderRadius: 0,
                         background: "rgba(168,85,247,0.15)",
                         color: "#c084fc",
                       },
@@ -95128,7 +94872,9 @@ var content = (function () {
                 (0, _0x477284.jsxDEV)(
                   _0x5ab1be,
                   {
-                    checked: !_0x162db9.limitStrength && _0x5d9fc7,
+                    checked:
+                      !_0x162db9.limitStrength &&
+                      _0x5d9fc7,
                     onChange: (_0x1be66a) => {
                       if (_0x5d9fc7) {
                         _0x162db9.setLimitStrength(!_0x1be66a);
@@ -95621,7 +95367,7 @@ var content = (function () {
         style: {
           transform: _0x33e2b9.Translate.toString(_0x25ae76),
           transition: _0x3380e5,
-          opacity: _0x80a344 ? 0.4 : 1,
+          opacity: _0x80a344 ? 0.92 : 1,
           position: "relative",
           zIndex: _0x80a344 ? 10 : undefined,
         },
@@ -95635,7 +95381,7 @@ var content = (function () {
                 width: 16,
                 height: 3,
                 background: "rgba(168,85,247,0.4)",
-                borderRadius: 2,
+                borderRadius: 0,
                 margin: "0 auto 2px",
                 cursor: "grab",
               },
@@ -95662,323 +95408,497 @@ var content = (function () {
       this,
     );
   }
-  function _0x1e2382() {
-    let _0x453880 = _0xd7209d((_0x3380d7) => _0x3380d7.pinned);
-    let _0x40fc5d = _0xd7209d((_0x24b47a) => _0x24b47a.editMode);
-    let _0x33008d = _0x105e1c((_0x4a143e) => _0x4a143e.engineId);
-    let _0x1801e2 = _0xd7209d((_0xb0d767) => _0xb0d767.setEditMode);
-    let _0x4f9487 = _0xd7209d((_0x36cf34) => _0x36cf34.reorderPinned);
-    let _0x49ae01 = _0xd7209d((_0x3c951f) => _0x3c951f.widgetPosition);
-    let _0x1e400e = _0xd7209d((_0x1c4015) => _0x1c4015.setWidgetPosition);
-    let _0x23de70 = (0, _0x5145bc.useRef)(null);
-    let _0x27c297 = (0, _0x5145bc.useRef)(false);
-    let _0x1bf7a6 = (0, _0x5145bc.useRef)({
-      x: 0,
-      y: 0,
-    });
-    let _0x53847 = (0, _0x5145bc.useCallback)(
-      (_0x55a90d) => {
-        _0x27c297.current = true;
-        _0x1bf7a6.current = {
-          x: _0x55a90d.clientX - _0x49ae01.x,
-          y: _0x55a90d.clientY - _0x49ae01.y,
+  // Renders the "Edit layout" toggle + drag handle icon shared by every group box.
+  function _0x2e9c74({ editMode: _0x1d8a05, onToggle: _0x2e7b16 }) {
+    return (0, _0x477284.jsxDEV)(
+      "button",
+      {
+        className: "floating-widget-edit",
+        onClick: _0x2e7b16,
+        title: _0x1d8a05 ? "Done editing" : "Edit layout",
+        children: _0x1d8a05
+          ? (0, _0x477284.jsxDEV)(
+              "svg",
+              {
+                width: "16",
+                height: "16",
+                viewBox: "0 0 24 24",
+                fill: "none",
+                stroke: "currentColor",
+                strokeWidth: "2",
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                children: (0, _0x477284.jsxDEV)(
+                  "polyline",
+                  { points: "20 6 9 17 4 12" },
+                  undefined,
+                  false,
+                ),
+              },
+              undefined,
+              false,
+            )
+          : (0, _0x477284.jsxDEV)(
+              "svg",
+              {
+                width: "16",
+                height: "16",
+                viewBox: "0 0 24 24",
+                fill: "none",
+                stroke: "currentColor",
+                strokeWidth: "2",
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                children: [
+                  (0, _0x477284.jsxDEV)(
+                    "path",
+                    {
+                      d: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7",
+                    },
+                    undefined,
+                    false,
+                  ),
+                  (0, _0x477284.jsxDEV)(
+                    "path",
+                    {
+                      d: "M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z",
+                    },
+                    undefined,
+                    false,
+                  ),
+                ],
+              },
+              undefined,
+              true,
+            ),
+      },
+      undefined,
+      false,
+    );
+  }
+  // One floating box holding one group of widgets. Owns its own screen
+  // position and its own drag handle (raw pointer events, like the original
+  // single-widget implementation), plus its own small dnd-kit context for
+  // reordering items *within* itself. Cross-group moves (an item leaving this
+  // box, or this whole box merging into another) are resolved by the parent
+  // via plain rect hit-testing -- see _0x1e2382 -- since dnd-kit only knows
+  // about droppables inside its own context.
+  function _0x9a4d17({
+    group: _0x1f4a02,
+    editMode: _0x2c8b91,
+    isMergeTarget: _0x3e9c17,
+    engineId: _0x4a1d63,
+    onItemDragEnd: _0x5b2e84,
+    onItemDragMove: _0x1a2b91,
+    onPositionCommit: _0x6c3f05,
+    onHoverTarget: _0x7d4a16,
+    onMerge: _0x8e5b27,
+    registerRef: _0x9f6c38,
+    onToggleEdit: _0xa07d49,
+  }) {
+    let _0xb18e50 = (0, _0x5145bc.useRef)(null);
+    let _0xc29f61 = (0, _0x5145bc.useRef)(false);
+    let _0xd3a072 = (0, _0x5145bc.useRef)({ x: 0, y: 0 });
+    let _0xe4b183 = (0, _0x5145bc.useCallback)(
+      (_0xf5c294) => {
+        _0xc29f61.current = true;
+        _0xd3a072.current = {
+          x: _0xf5c294.clientX - _0x1f4a02.position.x,
+          y: _0xf5c294.clientY - _0x1f4a02.position.y,
         };
-        _0x55a90d.target.setPointerCapture(_0x55a90d.pointerId);
+        _0xf5c294.target.setPointerCapture(_0xf5c294.pointerId);
       },
-      [_0x49ae01],
+      [_0x1f4a02.position],
     );
-    let _0x4a33de = (0, _0x5145bc.useCallback)((_0x3c0402) => {
-      if (!_0x27c297.current || !_0x23de70.current) {
-        return;
-      }
-      let _0x2483c3 = Math.max(
-        0,
-        Math.min(
-          window.innerWidth - 180,
-          _0x3c0402.clientX - _0x1bf7a6.current.x,
-        ),
-      );
-      let _0x3272c5 = Math.max(
-        0,
-        Math.min(
-          window.innerHeight - 60,
-          _0x3c0402.clientY - _0x1bf7a6.current.y,
-        ),
-      );
-      _0x23de70.current.style.left = _0x2483c3 + "px";
-      _0x23de70.current.style.top = _0x3272c5 + "px";
-    }, []);
-    let _0x33845b = (0, _0x5145bc.useCallback)(
-      (_0x38e2f1) => {
-        if (_0x27c297.current) {
-          _0x27c297.current = false;
-          _0x1e400e(
-            Math.max(
-              0,
-              Math.min(
-                window.innerWidth - 180,
-                _0x38e2f1.clientX - _0x1bf7a6.current.x,
-              ),
-            ),
-            Math.max(
-              0,
-              Math.min(
-                window.innerHeight - 60,
-                _0x38e2f1.clientY - _0x1bf7a6.current.y,
-              ),
-            ),
-          );
-        }
-      },
-      [_0x1e400e],
-    );
-    (0, _0x5145bc.useEffect)(() => {
-      let _0x133e6c = () => {
-        if (!_0x23de70.current) {
+    let _0x06d295 = (0, _0x5145bc.useCallback)(
+      (_0x17e3a6) => {
+        if (!_0xc29f61.current || !_0xb18e50.current) {
           return;
         }
-        let _0x5905e4 = _0x23de70.current.getBoundingClientRect();
-        let _0x2a221f = Math.min(
-          _0x5905e4.left,
-          window.innerWidth - _0x5905e4.width,
+        let _0x28f4b7 = Math.max(
+          0,
+          Math.min(
+            window.innerWidth - 180,
+            _0x17e3a6.clientX - _0xd3a072.current.x,
+          ),
         );
-        let _0x1f1854 = Math.min(
-          _0x5905e4.top,
-          window.innerHeight - _0x5905e4.height,
+        let _0x39a5c8 = Math.max(
+          0,
+          Math.min(
+            window.innerHeight - 60,
+            _0x17e3a6.clientY - _0xd3a072.current.y,
+          ),
         );
-        if (_0x2a221f !== _0x5905e4.left || _0x1f1854 !== _0x5905e4.top) {
-          _0x1e400e(Math.max(0, _0x2a221f), Math.max(0, _0x1f1854));
-        }
-      };
-      window.addEventListener("resize", _0x133e6c);
-      return () => window.removeEventListener("resize", _0x133e6c);
-    }, [_0x1e400e]);
-    if (_0x453880.length === 0) {
-      return null;
-    }
-    let _0x431f8 = _0x453880.filter(
-      (_0x3091d2) => _0x35124d(_0x3091d2, _0x33008d) !== null,
+        _0xb18e50.current.style.left = _0x28f4b7 + "px";
+        _0xb18e50.current.style.top = _0x39a5c8 + "px";
+        _0xb18e50.current.style.zIndex = "2147483647";
+        let _0x4ab6d9 = _0xb18e50.current.getBoundingClientRect();
+        _0x7d4a16(
+          _0x1f4a02.id,
+          _0x4ab6d9.left + _0x4ab6d9.width / 2,
+          _0x4ab6d9.top + _0x4ab6d9.height / 2,
+        );
+      },
+      [_0x1f4a02.id, _0x7d4a16],
     );
-    if (_0x431f8.length === 0) {
-      return null;
-    }
-    let _0x4b4709 = _0x40fc5d
+    let _0x5bc7d0 = (0, _0x5145bc.useCallback)(
+      (_0x6ce8f1) => {
+        if (!_0xc29f61.current || !_0xb18e50.current) {
+          return;
+        }
+        _0xc29f61.current = false;
+        _0xb18e50.current.style.zIndex = "";
+        let _0x7df9a2 = _0xb18e50.current.getBoundingClientRect();
+        let _0x8e0ab3 = _0x7d4a16(
+          _0x1f4a02.id,
+          _0x7df9a2.left + _0x7df9a2.width / 2,
+          _0x7df9a2.top + _0x7df9a2.height / 2,
+        );
+        if (_0x8e0ab3) {
+          _0x8e5b27(_0x1f4a02.id, _0x8e0ab3);
+        } else {
+          _0x6c3f05(_0x1f4a02.id, _0x7df9a2.left, _0x7df9a2.top);
+        }
+      },
+      [_0x1f4a02.id, _0x6c3f05, _0x7d4a16, _0x8e5b27],
+    );
+    let _0x9f1c82 = (0, _0x5145bc.useCallback)(
+      (_0xa02d93) => {
+        _0xb18e50.current = _0xa02d93;
+        _0x9f6c38(_0x1f4a02.id, _0xa02d93);
+      },
+      [_0x1f4a02.id, _0x9f6c38],
+    );
+    let _0xb13e04 = _0x2c8b91
       ? (0, _0x477284.jsxDEV)(
           _0x4d89f5,
           {
             collisionDetection: _0x1e3127,
-            onDragEnd: (_0x4e0165) => {
-              let { active: _0x146994, over: _0x122a8d } = _0x4e0165;
-              if (_0x122a8d && _0x146994.id !== _0x122a8d.id) {
-                _0x4f9487(
-                  _0x458c57(
-                    _0x453880,
-                    _0x453880.indexOf(_0x146994.id),
-                    _0x453880.indexOf(_0x122a8d.id),
-                  ),
-                );
-              }
-            },
+            onDragMove: _0x1a2b91,
+            onDragEnd: _0x5b2e84,
             children: (0, _0x477284.jsxDEV)(
               _0x182ef1,
               {
-                items: _0x431f8,
+                items: _0x1f4a02.items,
                 strategy: _0x56c8a1,
-                children: _0x431f8.map((_0x983ee0, _0x2396dd) =>
+                children: _0x1f4a02.items.map((_0xc24f15) =>
                   (0, _0x477284.jsxDEV)(
                     _0x4b2af9,
                     {
-                      id: _0x983ee0,
-                      children: _0x35124d(_0x983ee0, _0x33008d),
+                      id: _0xc24f15,
+                      children: _0x35124d(_0xc24f15, _0x4a1d63),
                     },
-                    _0x983ee0,
+                    _0xc24f15,
                     false,
-                    {
-                      fileName: _0x1b7a83,
-                      lineNumber: 101,
-                      columnNumber: 11,
-                    },
-                    this,
                   ),
                 ),
               },
               undefined,
               false,
-              {
-                fileName: _0x1b7a83,
-                lineNumber: 99,
-                columnNumber: 7,
-              },
-              this,
             ),
           },
           undefined,
           false,
-          {
-            fileName: _0x1b7a83,
-            lineNumber: 98,
-            columnNumber: 5,
-          },
-          this,
         )
-      : _0x431f8.map((_0xe41a24) =>
+      : _0x1f4a02.items.map((_0xd35a26) =>
           (0, _0x477284.jsxDEV)(
             "div",
-            {
-              children: _0x35124d(_0xe41a24, _0x33008d),
-            },
-            _0xe41a24,
+            { children: _0x35124d(_0xd35a26, _0x4a1d63) },
+            _0xd35a26,
             false,
-            {
-              fileName: _0x1b7a83,
-              lineNumber: 109,
-              columnNumber: 7,
-            },
-            this,
           ),
         );
     return (0, _0x477284.jsxDEV)(
       "div",
       {
-        ref: _0x23de70,
+        ref: _0x9f1c82,
         className:
-          "floating-widget " + (_0x40fc5d ? "floating-widget--edit" : ""),
+          "floating-widget " +
+          (_0x2c8b91 ? "floating-widget--edit " : "") +
+          (_0x3e9c17 ? "floating-widget--merge-target" : ""),
         style: {
-          left: _0x49ae01.x,
-          top: _0x49ae01.y,
+          left: _0x1f4a02.position.x,
+          top: _0x1f4a02.position.y,
         },
         children: [
           (0, _0x477284.jsxDEV)(
             "div",
             {
               className: "floating-widget-drag",
-              onPointerDown: _0x53847,
-              onPointerMove: _0x4a33de,
-              onPointerUp: _0x33845b,
+              onPointerDown: _0xe4b183,
+              onPointerMove: _0x06d295,
+              onPointerUp: _0x5bc7d0,
             },
             undefined,
             false,
-            {
-              fileName: _0x1b7a83,
-              lineNumber: 121,
-              columnNumber: 7,
-            },
-            this,
           ),
           (0, _0x477284.jsxDEV)(
-            "button",
-            {
-              className: "floating-widget-edit",
-              onClick: () => _0x1801e2(!_0x40fc5d),
-              title: _0x40fc5d ? "Done editing" : "Edit layout",
-              children: _0x40fc5d
-                ? (0, _0x477284.jsxDEV)(
-                    "svg",
-                    {
-                      width: "16",
-                      height: "16",
-                      viewBox: "0 0 24 24",
-                      fill: "none",
-                      stroke: "currentColor",
-                      strokeWidth: "2",
-                      strokeLinecap: "round",
-                      strokeLinejoin: "round",
-                      children: (0, _0x477284.jsxDEV)(
-                        "polyline",
-                        {
-                          points: "20 6 9 17 4 12",
-                        },
-                        undefined,
-                        false,
-                        {
-                          fileName: _0x1b7a83,
-                          lineNumber: 134,
-                          columnNumber: 13,
-                        },
-                        this,
-                      ),
-                    },
-                    undefined,
-                    false,
-                    {
-                      fileName: _0x1b7a83,
-                      lineNumber: 133,
-                      columnNumber: 11,
-                    },
-                    this,
-                  )
-                : (0, _0x477284.jsxDEV)(
-                    "svg",
-                    {
-                      width: "16",
-                      height: "16",
-                      viewBox: "0 0 24 24",
-                      fill: "none",
-                      stroke: "currentColor",
-                      strokeWidth: "2",
-                      strokeLinecap: "round",
-                      strokeLinejoin: "round",
-                      children: [
-                        (0, _0x477284.jsxDEV)(
-                          "path",
-                          {
-                            d: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7",
-                          },
-                          undefined,
-                          false,
-                          {
-                            fileName: _0x1b7a83,
-                            lineNumber: 138,
-                            columnNumber: 13,
-                          },
-                          this,
-                        ),
-                        (0, _0x477284.jsxDEV)(
-                          "path",
-                          {
-                            d: "M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z",
-                          },
-                          undefined,
-                          false,
-                          {
-                            fileName: _0x1b7a83,
-                            lineNumber: 139,
-                            columnNumber: 13,
-                          },
-                          this,
-                        ),
-                      ],
-                    },
-                    undefined,
-                    true,
-                    {
-                      fileName: _0x1b7a83,
-                      lineNumber: 137,
-                      columnNumber: 11,
-                    },
-                    this,
-                  ),
-            },
+            _0x2e9c74,
+            { editMode: _0x2c8b91, onToggle: _0xa07d49 },
             undefined,
             false,
-            {
-              fileName: _0x1b7a83,
-              lineNumber: 127,
-              columnNumber: 7,
-            },
-            this,
           ),
-          _0x4b4709,
+          _0xb13e04,
         ],
       },
       undefined,
       true,
-      {
-        fileName: _0x1b7a83,
-        lineNumber: 116,
-        columnNumber: 5,
+    );
+  }
+  function _0x1e2382() {
+    let _0x453880 = _0xd7209d((_0x3380d7) => _0x3380d7.pinned);
+    let _0x2a91f6 = _0xd7209d((_0x8b6e35) => _0x8b6e35.widgetGroups);
+    let _0x40fc5d = _0xd7209d((_0x24b47a) => _0x24b47a.editMode);
+    let _0x33008d = _0x105e1c((_0x4a143e) => _0x4a143e.engineId);
+    let _0x1801e2 = _0xd7209d((_0xb0d767) => _0xb0d767.setEditMode);
+    let _0x2b4c86 = _0xd7209d((_0x1e5a09) => _0x1e5a09.setWidgetGroups);
+    let _0x3c5d97 = _0xd7209d((_0x2f6b18) => _0x2f6b18.setGroupPosition);
+    let _0x4d6ea8 = (0, _0x5145bc.useRef)(new Map());
+    let [_0x5e7fb9, _0x6f80ca] = (0, _0x5145bc.useState)(null);
+    let _0x7091db = (0, _0x5145bc.useMemo)(
+      () => _0x8f3c21(_0x2a91f6, _0x453880, { x: 20, y: 20 }),
+      [_0x2a91f6, _0x453880],
+    );
+    // Shared hit-test: does the point (cx, cy) fall inside another group's
+    // current DOM rect? Also drives the live "merge target" highlight.
+    let _0x81a2ec = (0, _0x5145bc.useCallback)((_0x1c2d3e, _0x92e3f4, _0xa4f506) => {
+      let _0xb60718 = null;
+      for (let [_0x2c9d, _0x1a7f] of _0x4d6ea8.current) {
+        if (_0x2c9d === _0x1c2d3e || !_0x1a7f) {
+          continue;
+        }
+        let _0x3e8c = _0x1a7f.getBoundingClientRect();
+        if (
+          _0x92e3f4 >= _0x3e8c.left &&
+          _0x92e3f4 <= _0x3e8c.right &&
+          _0xa4f506 >= _0x3e8c.top &&
+          _0xa4f506 <= _0x3e8c.bottom
+        ) {
+          _0xb60718 = _0x2c9d;
+          break;
+        }
+      }
+      _0x6f80ca(_0xb60718);
+      return _0xb60718;
+    }, []);
+    let _0xc718e2 = (0, _0x5145bc.useCallback)(
+      (_0x1c8b5a, _0x2d9a41) => {
+        _0x6f80ca(null);
+        let _0x3f7a92 = _0x7091db.find((_0x4a1c) => _0x4a1c.id === _0x1c8b5a);
+        if (!_0x3f7a92) {
+          return;
+        }
+        _0x2b4c86(
+          _0x7091db
+            .filter((_0x5b2d) => _0x5b2d.id !== _0x1c8b5a)
+            .map((_0x6c3e) =>
+              _0x6c3e.id === _0x2d9a41
+                ? { ..._0x6c3e, items: [..._0x6c3e.items, ..._0x3f7a92.items] }
+                : _0x6c3e,
+            ),
+        );
       },
-      this,
+      [_0x7091db, _0x2b4c86],
+    );
+    let _0xd829f3 = (0, _0x5145bc.useCallback)(
+      (_0x1c8b57, _0x85b996, _0x1fa961) => {
+        _0x6f80ca(null);
+        _0x3c5d97(_0x1c8b57, _0x85b996, _0x1fa961);
+      },
+      [_0x3c5d97],
+    );
+    let _0xe93a04 = (0, _0x5145bc.useCallback)((_0x1c8b58, _0x0a1b2c) => {
+      if (_0x0a1b2c) {
+        _0x4d6ea8.current.set(_0x1c8b58, _0x0a1b2c);
+      } else {
+        _0x4d6ea8.current.delete(_0x1c8b58);
+      }
+    }, []);
+    // Item-level drag end: reorder inside the origin group, hand off to
+    // another existing group, or detach into a brand-new standalone widget
+    // if the item was dropped on empty page space.
+    // Live merge-target highlight while dragging a single item (mirrors the
+    // whole-group drag handler). Uses initial + delta rather than
+    // rect.current.translated: translated is derived through a longer
+    // dependent effect chain and can lag a tick behind delta/collisions,
+    // which is what caused the occasional "drops right back in place"
+    // flakiness -- delta is read straight off a ref at dispatch time.
+    let _0x1d2934 = (0, _0x5145bc.useCallback)(
+      (_0x3a5e17) => {
+        let { active: _0x4b6f28, delta: _0x5c7a39 } = _0x3a5e17;
+        let _0x6d8b40 = _0x7091db.find((_0x7e9c51) =>
+          _0x7e9c51.items.includes(_0x4b6f28.id),
+        );
+        let _0x8fa051 = _0x4b6f28.rect.current.initial;
+        if (!_0x6d8b40 || !_0x8fa051 || !_0x5c7a39) {
+          return;
+        }
+        _0x81a2ec(
+          _0x6d8b40.id,
+          _0x8fa051.left + _0x5c7a39.x + _0x8fa051.width / 2,
+          _0x8fa051.top + _0x5c7a39.y + _0x8fa051.height / 2,
+        );
+      },
+      [_0x7091db, _0x81a2ec],
+    );
+    let _0xf04b15 = (0, _0x5145bc.useCallback)(
+      (_0x4e0165) => {
+        let { active: _0x146994, over: _0x122a8d, delta: _0x9e0c72 } = _0x4e0165;
+        _0x6f80ca(null);
+        let _0x2f6a81 = _0x7091db.find((_0x3d9c) =>
+          _0x3d9c.items.includes(_0x146994.id),
+        );
+        if (!_0x2f6a81) {
+          return;
+        }
+        if (
+          _0x122a8d &&
+          _0x2f6a81.items.includes(_0x122a8d.id) &&
+          _0x146994.id !== _0x122a8d.id
+        ) {
+          _0x2b4c86(
+            _0x7091db.map((_0x1b7c) =>
+              _0x1b7c.id === _0x2f6a81.id
+                ? {
+                    ..._0x1b7c,
+                    items: _0x458c57(
+                      _0x1b7c.items,
+                      _0x1b7c.items.indexOf(_0x146994.id),
+                      _0x1b7c.items.indexOf(_0x122a8d.id),
+                    ),
+                  }
+                : _0x1b7c,
+            ),
+          );
+          return;
+        }
+        let _0x9f8d63 = _0x146994.rect.current.initial;
+        let _0x5c8a12 =
+          _0x9f8d63 && _0x9e0c72
+            ? {
+                ..._0x9f8d63,
+                left: _0x9f8d63.left + _0x9e0c72.x,
+                top: _0x9f8d63.top + _0x9e0c72.y,
+              }
+            : (_0x146994.rect.current.translated ?? _0x9f8d63);
+        if (!_0x5c8a12) {
+          return;
+        }
+        let _0x6d9b23 = _0x5c8a12.left + _0x5c8a12.width / 2;
+        let _0x7ea034 = _0x5c8a12.top + _0x5c8a12.height / 2;
+        // Only detach if the drop point actually left the origin box's own
+        // bounds. Without this, releasing anywhere the item just doesn't
+        // resolve against a sortable sibling (e.g. an inch of empty padding
+        // inside the SAME box) reads as "outside" and detaches instantly.
+        let _0x2a5f19 = _0x4d6ea8.current.get(_0x2f6a81.id);
+        if (_0x2a5f19) {
+          let _0x3b6c20 = _0x2a5f19.getBoundingClientRect();
+          if (
+            _0x6d9b23 >= _0x3b6c20.left &&
+            _0x6d9b23 <= _0x3b6c20.right &&
+            _0x7ea034 >= _0x3b6c20.top &&
+            _0x7ea034 <= _0x3b6c20.bottom
+          ) {
+            return;
+          }
+        }
+        let _0x8fb145 = null;
+        for (let [_0x9ac2, _0xa0d3] of _0x4d6ea8.current) {
+          if (_0x9ac2 === _0x2f6a81.id || !_0xa0d3) {
+            continue;
+          }
+          let _0xb1e4 = _0xa0d3.getBoundingClientRect();
+          if (
+            _0x6d9b23 >= _0xb1e4.left &&
+            _0x6d9b23 <= _0xb1e4.right &&
+            _0x7ea034 >= _0xb1e4.top &&
+            _0x7ea034 <= _0xb1e4.bottom
+          ) {
+            _0x8fb145 = _0x9ac2;
+            break;
+          }
+        }
+        let _0xc2f506 = _0x7091db
+          .map((_0xd3a6) =>
+            _0xd3a6.id === _0x2f6a81.id
+              ? {
+                  ..._0xd3a6,
+                  items: _0xd3a6.items.filter((_0xe4b7) => _0xe4b7 !== _0x146994.id),
+                }
+              : _0xd3a6,
+          )
+          .filter((_0xf5c8) => _0xf5c8.items.length > 0);
+        let _0x06d917 = _0x8fb145
+          ? _0xc2f506.map((_0x17ea) =>
+              _0x17ea.id === _0x8fb145
+                ? { ..._0x17ea, items: [..._0x17ea.items, _0x146994.id] }
+                : _0x17ea,
+            )
+          : [
+              ..._0xc2f506,
+              {
+                id: _0x2f0a91(),
+                position: {
+                  x: Math.max(
+                    0,
+                    Math.min(window.innerWidth - 180, _0x5c8a12.left),
+                  ),
+                  y: Math.max(
+                    0,
+                    Math.min(window.innerHeight - 60, _0x5c8a12.top),
+                  ),
+                },
+                items: [_0x146994.id],
+              },
+            ];
+        _0x2b4c86(_0x06d917);
+      },
+      [_0x7091db, _0x2b4c86],
+    );
+    let _0x28b719 = (0, _0x5145bc.useCallback)(
+      () => _0x1801e2(!_0x40fc5d),
+      [_0x1801e2, _0x40fc5d],
+    );
+    if (_0x453880.length === 0) {
+      return null;
+    }
+    let _0x431f8 = _0x7091db
+      .map((_0x39ac) => ({
+        ..._0x39ac,
+        items: _0x39ac.items.filter(
+          (_0x4bd1) => _0x35124d(_0x4bd1, _0x33008d) !== null,
+        ),
+      }))
+      .filter((_0x5ce2) => _0x5ce2.items.length > 0);
+    if (_0x431f8.length === 0) {
+      return null;
+    }
+    return (0, _0x477284.jsxDEV)(
+      _0x477284.Fragment,
+      {
+        children: _0x431f8.map((_0x6df3) =>
+          (0, _0x477284.jsxDEV)(
+            _0x9a4d17,
+            {
+              group: _0x6df3,
+              editMode: _0x40fc5d,
+              isMergeTarget: _0x5e7fb9 === _0x6df3.id,
+              engineId: _0x33008d,
+              onItemDragEnd: _0xf04b15,
+              onItemDragMove: _0x1d2934,
+              onPositionCommit: _0xd829f3,
+              onHoverTarget: _0x81a2ec,
+              onMerge: _0xc718e2,
+              registerRef: _0xe93a04,
+              onToggleEdit: _0x28b719,
+            },
+            _0x6df3.id,
+            false,
+          ),
+        ),
+      },
+      undefined,
+      true,
     );
   }
   var _0x180bd1 =
@@ -100355,7 +100275,7 @@ var content = (function () {
                 gap: 8,
                 padding: "8px 14px",
                 minWidth: 64,
-                borderRadius: 999,
+                borderRadius: 0,
                 border: "1px solid " + (_0x36dcb0 ? _0x6ed153 : _0x36a1a4),
                 background: _0xc42751,
                 color: "#f8fafc",
@@ -100389,7 +100309,7 @@ var content = (function () {
                       minWidth: 22,
                       height: 22,
                       padding: "0 6px",
-                      borderRadius: 6,
+                      borderRadius: 0,
                       background: _0x6ed153,
                       color: "#0a0a14",
                       fontSize: 11,
@@ -100533,8 +100453,34 @@ var content = (function () {
       }
     });
     let [_0xd0bdd0, _0xf9d79c] = (0, _0x5145bc.useState)(false);
-    let [_0x16c9c2, _0x300da2] = (0, _0x5145bc.useState)("account");
-    let [_0x2743ea, _0x16c213] = (0, _0x5145bc.useState)("game");
+    let [_0x16c9c2, _0x300da2] = (0, _0x5145bc.useState)("general");
+    let [_0x2743ea, _0x16c213] = (0, _0x5145bc.useState)("engine");
+    let { t: _0x9d8e7c } = _0x3fc566();
+    // _0x33beec/_0x4060de each call the t() hook internally, so they must be
+    // invoked unconditionally on every render -- calling them from inside the
+    // conditional sidebar branch below violates the rules of hooks (variable
+    // hook count between the loading/auth/normal render paths).
+    let _0x7d8e9f = (0, _0x5145bc.useMemo)(
+      () => [
+        {
+          title: _0x9d8e7c("sidebar.section.game"),
+          items: _0x33beec().map((_0x1e2b3c) => ({
+            id: "game:" + _0x1e2b3c.id,
+            label: _0x1e2b3c.label,
+            icon: _0x6f7a8b[_0x1e2b3c.id],
+          })),
+        },
+        {
+          title: _0x9d8e7c("sidebar.section.settings"),
+          items: _0x4060de().map((_0x4f5a6b) => ({
+            id: "settings:" + _0x4f5a6b.id,
+            label: _0x4f5a6b.label,
+            icon: _0x9c0d1e[_0x4f5a6b.id],
+          })),
+        },
+      ],
+      [_0x9d8e7c],
+    );
     let _0x27f656 = (0, _0x5145bc.useRef)(null);
     let {
       user: _0x3a6e4b,
@@ -100570,7 +100516,6 @@ var content = (function () {
       let _0x2e6ea2 = setTimeout(_0x4fb9bc, _0xe4f53a + 1500);
       return () => clearTimeout(_0x2e6ea2);
     }, [_0x1bdf48, _0x4bef38]);
-    _0x5bc47e();
     let _0x511f94 = (0, _0x5145bc.useRef)(_0xc75076);
     (0, _0x5145bc.useEffect)(() => {
       if (_0x22ffc8 && _0xc75076 && !_0x511f94.current) {
@@ -100646,7 +100591,7 @@ var content = (function () {
             label: "Open Settings",
             action: {
               kind: "open-tab",
-              tab: "settings:engine",
+              tab: "game:engine",
             },
           },
           ttl: 12000,
@@ -100986,7 +100931,15 @@ var content = (function () {
               "div",
               {
                 className:
-                  "chessr-panel " + (_0x41db3d ? "chessr-panel--stream" : ""),
+                  "chessr-panel " +
+                  (_0x41db3d ? "chessr-panel--stream " : "") +
+                  (!_0x38e575 &&
+                  !_0xd4cbb8 &&
+                  _0x3a6e4b &&
+                  !_0x3e4346 &&
+                  !(_0x2868bb && _0x4af043)
+                    ? "chessr-panel--sidebar"
+                    : ""),
                 ref: _0x27f656,
                 style:
                   _0x5a9405 === "small"
@@ -101120,96 +101073,131 @@ var content = (function () {
                               undefined,
                               true,
                             )
-                          : (0, _0x477284.jsxDEV)(
-                              _0x477284.Fragment,
-                              {
-                                children: [
-                                  (0, _0x477284.jsxDEV)(
-                                    _0x695878,
-                                    {
-                                      showSettings: _0xd0bdd0,
-                                      onToggleSettings: () =>
-                                        _0xf9d79c(!_0xd0bdd0),
-                                    },
-                                    undefined,
-                                    false,
-                                    {
-                                      fileName: _0x2cffa6,
-                                      lineNumber: 484,
-                                      columnNumber: 17,
-                                    },
-                                    this,
-                                  ),
-                                  (0, _0x477284.jsxDEV)(
-                                    "div",
-                                    {
-                                      className: "chessr-panel-body",
-                                      children: (() => {
-                                        let _0x31b500 = _0x1ed01a();
-                                        if (_0xd0bdd0) {
-                                          return (0, _0x477284.jsxDEV)(
-                                            _0x4548a2,
-                                            {
-                                              activeTab: _0x16c9c2,
-                                              setActiveTab: _0x300da2,
-                                            },
-                                            undefined,
-                                            false,
-                                            {
-                                              fileName: _0x2cffa6,
-                                              lineNumber: 488,
-                                              columnNumber: 46,
-                                            },
-                                            this,
-                                          );
-                                        } else if (_0x31b500 && !_0x5e9afe) {
-                                          return (0, _0x477284.jsxDEV)(
+                          : (() => {
+                              let _0x31b500 = _0x1ed01a();
+                              if (!_0xd0bdd0 && _0x31b500 && !_0x5e9afe) {
+                                return (0, _0x477284.jsxDEV)(
+                                  _0x477284.Fragment,
+                                  {
+                                    children: [
+                                      (0, _0x477284.jsxDEV)(
+                                        _0x695878,
+                                        {
+                                          showSettings: _0xd0bdd0,
+                                          onToggleSettings: () =>
+                                            _0xf9d79c(!_0xd0bdd0),
+                                        },
+                                        undefined,
+                                        false,
+                                      ),
+                                      (0, _0x477284.jsxDEV)(
+                                        "div",
+                                        {
+                                          className: "chessr-panel-body",
+                                          children: (0, _0x477284.jsxDEV)(
                                             _0xe08b6f,
                                             {
                                               gameId: _0x31b500,
                                             },
                                             undefined,
                                             false,
+                                          ),
+                                        },
+                                        undefined,
+                                        false,
+                                      ),
+                                    ],
+                                  },
+                                  undefined,
+                                  true,
+                                );
+                              }
+                              // The sidebar spans the full panel height, so it
+                              // moves up alongside the header instead of
+                              // sitting below it as a sibling.
+                              let _0x6c7d8e = _0xd0bdd0
+                                ? "settings:" + _0x16c9c2
+                                : "game:" + _0x2743ea;
+                              let _0x3e4f5a = (_0x2d3e4f) => {
+                                let [_0x1f2e3d, _0x4b5c6d] =
+                                  _0x2d3e4f.split(":");
+                                if (_0x1f2e3d === "settings") {
+                                  _0xf9d79c(true);
+                                  _0x300da2(_0x4b5c6d);
+                                } else {
+                                  _0xf9d79c(false);
+                                  _0x16c213(_0x4b5c6d);
+                                }
+                              };
+                              return (0, _0x477284.jsxDEV)(
+                                "div",
+                                {
+                                  className:
+                                    "chessr-panel-body chessr-panel-body--sidebar",
+                                  children: [
+                                    (0, _0x477284.jsxDEV)(
+                                      _0x7c1a92,
+                                      {
+                                        sections: _0x7d8e9f,
+                                        active: _0x6c7d8e,
+                                        onChange: _0x3e4f5a,
+                                      },
+                                      undefined,
+                                      false,
+                                    ),
+                                    (0, _0x477284.jsxDEV)(
+                                      "div",
+                                      {
+                                        className: "chessr-panel-main",
+                                        children: [
+                                          (0, _0x477284.jsxDEV)(
+                                            _0x695878,
                                             {
-                                              fileName: _0x2cffa6,
-                                              lineNumber: 493,
-                                              columnNumber: 56,
-                                            },
-                                            this,
-                                          );
-                                        } else {
-                                          return (0, _0x477284.jsxDEV)(
-                                            _0x444a3a,
-                                            {
-                                              activeTab: _0x2743ea,
-                                              setActiveTab: _0x16c213,
+                                              showSettings: _0xd0bdd0,
+                                              onToggleSettings: () =>
+                                                _0xf9d79c(!_0xd0bdd0),
                                             },
                                             undefined,
                                             false,
+                                          ),
+                                          (0, _0x477284.jsxDEV)(
+                                            "div",
                                             {
-                                              fileName: _0x2cffa6,
-                                              lineNumber: 494,
-                                              columnNumber: 28,
+                                              className: "chessr-panel-content",
+                                              children: _0xd0bdd0
+                                                ? (0, _0x477284.jsxDEV)(
+                                                    _0x4548a2,
+                                                    {
+                                                      activeTab: _0x16c9c2,
+                                                      setActiveTab: _0x300da2,
+                                                    },
+                                                    undefined,
+                                                    false,
+                                                  )
+                                                : (0, _0x477284.jsxDEV)(
+                                                    _0x444a3a,
+                                                    {
+                                                      activeTab: _0x2743ea,
+                                                      setActiveTab: _0x16c213,
+                                                    },
+                                                    undefined,
+                                                    false,
+                                                  ),
                                             },
-                                            this,
-                                          );
-                                        }
-                                      })(),
-                                    },
-                                    undefined,
-                                    false,
-                                    {
-                                      fileName: _0x2cffa6,
-                                      lineNumber: 485,
-                                      columnNumber: 17,
-                                    },
-                                    this,
-                                  ),
-                                ],
-                              },
-                              undefined,
-                              true,
-                            )
+                                            undefined,
+                                            false,
+                                          ),
+                                        ],
+                                      },
+                                      undefined,
+                                      true,
+                                    ),
+                                  ],
+                                },
+                                undefined,
+                                true,
+                              );
+                            })()
                       : (0, _0x477284.jsxDEV)(
                           "div",
                           {
@@ -101423,7 +101411,7 @@ var content = (function () {
       display: "none",
       flexDirection: "column",
       justifyContent: "flex-end",
-      borderRadius: "4px",
+      borderRadius: "0",
       overflow: "hidden",
       background: "#27272a",
       zIndex: "100",
@@ -101434,7 +101422,7 @@ var content = (function () {
     Object.assign(_0x3f841f.style, {
       width: "100%",
       background: "#e4e4e7",
-      borderRadius: "0 0 4px 4px",
+      borderRadius: "0",
       height: "50%",
     });
     _0x545ae0 = document.createElement("span");
@@ -102238,15 +102226,13 @@ var content = (function () {
   };
   var _0x598c95 = null;
   var _0x3b281a = false;
+  // The "route to server based on load" feature has been removed (settings
+  // UI + background poller are gone); this always returns false so the
+  // engine factory never routes here even for a pre-existing stored
+  // forceServerEngine:true. WASM-init-failure fallback and dev overrides are
+  // separate code paths and are untouched.
   function _0x2d9fb() {
-    if (
-      !_0x105e1c.getState().forceServerEngine ||
-      !_0x5dfcfb(_0x3f6e15.getState().plan)
-    ) {
-      return false;
-    } else {
-      return !_0x2d33ac.fallbackActive;
-    }
+    return false;
   }
   async function _0x69489c(_0x5c809f) {
     let _0x50962e = _0x105e1c.getState();
@@ -104279,6 +104265,9 @@ var content = (function () {
         torchEngine: () => _0x49e39d,
       };
       _0x31d528();
+      // The first search may have finished while the classifier was still
+      // booting; classify that batch now instead of waiting for the next move.
+      _0x1e9d47(_0x13a4d2);
       return;
     } catch (_0x1b9532) {
       let _0x20b605 =
@@ -104351,6 +104340,38 @@ var content = (function () {
         _0x558d01.getState().setAnalyzing(false);
         _0x11d95a = false;
       }
+    }
+  }
+  // Classify the candidate moves of a suggestion batch, so the board can draw
+  // its classification icons. The classifier is a separate engine that boots
+  // asynchronously, so this is called twice: once when a search returns, and
+  // again as soon as the classifier becomes ready (otherwise the very first
+  // batch after a page load would stay unclassified until the next move).
+  // Safe to call repeatedly: already-classified moves are skipped and
+  // setClassification drops results from stale requests.
+  function _0x1e9d47(_0x4a8f21, _0x2b7c93) {
+    if (!_0x49e39d?.ready || !_0x4a8f21 || _0x4a8f21 !== _0x13a4d2) {
+      return;
+    }
+    let _0x3d6e05 = _0x27b6d5.getState().moveHistoryUci;
+    let _0x5c1f88 = _0x2b7c93 ?? _0x27b6d5.getState().fen;
+    if (!_0x5c1f88 || !_0xd33e0(_0x3d6e05, _0x5c1f88)) {
+      return;
+    }
+    for (let _0x1ab834 of _0x5f2ff6.getState().suggestions) {
+      if (_0x1ab834.class) {
+        continue;
+      }
+      _0x49e39d
+        .classifyCandidate(_0x3d6e05, _0x1ab834.move)
+        .then((_0x4fd26f) => {
+          if (_0x4fd26f && _0x4a8f21 === _0x13a4d2) {
+            _0x5f2ff6
+              .getState()
+              .setClassification(_0x4a8f21, _0x1ab834.move, _0x4fd26f);
+          }
+        })
+        .catch((_0x5243aa) => {});
     }
   }
   function _0x40ef92(_0x4a147c) {
@@ -104692,32 +104713,15 @@ var content = (function () {
     _0x211092
       .search(_0x411dba)
       .then((_0x3cad8f) => {
-        if (
-          _0x23810e === _0x13a4d2 &&
-          (_0x5f2ff6.getState().setSuggestions(_0x3cad8f, _0x23810e),
-          _0x2737d0.markEvent("suggestions"),
+        if (_0x23810e === _0x13a4d2) {
+          _0x5f2ff6.getState().setSuggestions(_0x3cad8f, _0x23810e);
+          _0x2737d0.markEvent("suggestions");
           _0x562108({
             type: "suggestion_log_end",
             requestId: _0x23810e,
             extra: "d" + (_0x3cad8f[0]?.depth ?? 0) + " n=" + _0x3cad8f.length,
-          }),
-          _0x49e39d?.ready)
-        ) {
-          let _0x576f72 = _0x27b6d5.getState().moveHistoryUci;
-          if (_0xd33e0(_0x576f72, _0x1bfcfa)) {
-            for (let _0x1ab834 of _0x3cad8f) {
-              _0x49e39d
-                .classifyCandidate(_0x576f72, _0x1ab834.move)
-                .then((_0x4fd26f) => {
-                  if (_0x4fd26f && _0x23810e === _0x13a4d2) {
-                    _0x5f2ff6
-                      .getState()
-                      .setClassification(_0x23810e, _0x1ab834.move, _0x4fd26f);
-                  }
-                })
-                .catch((_0x5243aa) => {});
-            }
-          }
+          });
+          _0x1e9d47(_0x23810e, _0x1bfcfa);
         }
       })
       .catch((_0x6089ec) => {
@@ -104765,6 +104769,16 @@ var content = (function () {
       _0xfb1359();
       _0x2dab16();
       _0x4e07df();
+      // Restore the locally-saved settings as early as possible, without
+      // waiting on the auth store. Upstream this only happened from the
+      // user-id subscription, which fires on a state *change* — but the
+      // account system is stubbed out here, so the mock user is already in
+      // the initial state and that subscription may never fire, leaving the
+      // configuration at its defaults after every reload.
+      _0x17973f
+        .getState()
+        .loadFromCloud(null)
+        .catch(() => {});
       _0x2a466f((_0x19043c) => {
         if (_0x19043c) {
           _0x1d3f9c();
@@ -104924,13 +104938,6 @@ var content = (function () {
           if (_0x3f6e15.getState().user) {
             _0x1208cb(_0x53091e.engineId).catch((_0x4a0f18) => {});
           }
-        }
-      });
-      _0x179d9c(() => {
-        if (_0x3f6e15.getState().user) {
-          _0x1208cb(_0x105e1c.getState().engineId, true).catch(
-            (_0x5ef118) => {},
-          );
         }
       });
       _0x27b6d5.subscribe((_0xe3cdbc, _0xb7138e) => {
@@ -105353,6 +105360,9 @@ var content = (function () {
                 _0x40e529(_0x4b4e7f.turn),
                 _0x4b4e7f.gameEnd,
               );
+              // Random ELO mode: re-roll the target ELO within the configured
+              // range after every move (no-op if the feature is disabled).
+              _0x105e1c.getState().rollRandomElo();
             }
             break;
           case "chessr:initialMoves":
