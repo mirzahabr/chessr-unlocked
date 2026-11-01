@@ -27,7 +27,22 @@
         min-height: 100vh;
       }
     </style>
-    <script type="module" crossorigin src="/chunks/stream-Cq9Ik-VD.js"></script>
+    <!--
+      Loaded as a classic deferred script, NOT type="module".
+
+      The bundle contains no ESM syntax (no import/export/import.meta), so it
+      does not need to be a module. It does contain assignments to undeclared
+      variables — an artifact of the deobfuscation pass, which rewrote React's
+      `var f; if (a) { f = function(){} }` into a block-scoped `function f(){}`,
+      leaving the sibling branches assigning an undeclared name. Harmless as an
+      implicit global in sloppy mode (how content.js runs, hence the in-page
+      overlay works) but a hard ReferenceError under a module's implicit strict
+      mode — it crashed React's scheduler on load and left this page blank.
+
+      `defer` preserves the "run after the document is parsed" timing that
+      type="module" provided — required, since the bundle mounts into #app.
+    -->
+    <script defer src="/chunks/stream-Cq9Ik-VD.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/stream-DMcmulGQ.css">
   </head>
   <body>
