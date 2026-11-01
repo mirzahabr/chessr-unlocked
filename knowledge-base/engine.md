@@ -1,6 +1,6 @@
 # Engines and analysis
 
-## 3.7.2 ships no chess engine
+## Upstream 3.7.2 ships no chess engine
 
 The package contains three wasm files and nothing else executable:
 
@@ -11,7 +11,26 @@ The package contains three wasm files and nothing else executable:
 | `assets/sealed_core_bg-UdwPS9XK.wasm` | 157 KB | duplicate of the above, referenced from the asset URL |
 
 Stockfish, Komodo/Dragon, Rodent IV, Maia 3, Torch and the ONNX runtime that shipped
-through 3.4.0 are gone.
+through 3.4.0 are gone from the package.
+
+## What this repository adds back
+
+Because a login-free client with no engine cannot analyse, the unlocked build grafts the
+3.4.0 UCI engines back in — a documented forced measure, **not** upstream code:
+
+- `versions/3.7.2/vendor/local-engines.js` — the Komodo/Dragon and Stockfish classes from
+  the 3.4.0 restoration, spliced in front of the server engine by the patch;
+- `scripts/install-local-engines.sh` — copies `dragon.js/.wasm`, `stockfish.js/.wasm` and
+  `book.bin` (54 MB) from git history into the built `engine/` folder;
+- the factory tries the local engine first and falls back to the server path when the
+  assets are absent, so a `--no-local-engines` build behaves exactly like patched upstream.
+
+Verified in headless Chromium at depth 15 with MultiPV 3: Komodo 262 ms (e2e4 +0.58,
+g1f3 +0.41, d2d4 +0.29), Stockfish 214 ms (e2e4 +0.31, g1f3 +0.21, d2d4 +0.21). Two
+transplant fixes are recorded in the vendor file: strength options must only be set when
+limiting is requested (an unconditional `UCI Elo` clamped Komodo to depth 2), and Stockfish
+scores must be converted from pawns to centipawns (3.4.0 emitted pawns while the UI divides
+by 100).
 
 ## Where analysis happens now
 

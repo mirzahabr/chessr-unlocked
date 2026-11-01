@@ -246,6 +246,41 @@ decides what (if anything) to answer. The same applies to AI move explanations a
 This is a deliberate property of 3.7.2's design, not a defect in the patch, and it is the
 main thing to understand before installing the build.
 
+### 8.1 Local engines spliced back in (forced measure)
+
+Because a build that cannot analyse is of little use, this repository departs from a
+faithful restore: the unlocked build grafts the 3.4.0 UCI engines back in.
+
+- `versions/3.7.2/vendor/local-engines.js` holds the Komodo/Dragon and Stockfish engine
+  classes transplanted from the 3.4.0 restoration (commit `04c57c6`), with two external
+  references re-pointed: the 3.4.0 chrome alias becomes `_0x4313f9`, and the 3.4.0 result
+  normaliser becomes `_0x18aa03` (3.7.2's equivalent). Everything else in the block is
+  self-contained.
+- The patch inserts that block before the `ServerEngine` class and rewrites the factory
+  `_0xa804b4` to try `new LocalEngine()` first, falling back to the server adapter if
+  `init()` throws — which is what happens when the engine assets are not installed.
+- `scripts/install-local-engines.sh` copies `dragon.js`, `dragon.wasm`, `stockfish.js`,
+  `stockfish.wasm` and `book.bin` (54 MB) out of git history into the built `engine/`
+  folder. They are not committed to the 3.7.2 tree; the 3.4.0 blobs are already in git.
+
+Two transplant defects were found and fixed during verification:
+
+1. The option builder set `UCI Elo` even when `limitStrength` was false. Komodo honours it
+   regardless and clamped the search to depth 2. Strength options are now only touched when
+   limiting is requested, and `Skill Level` is pinned to 20 for full strength.
+2. 3.4.0's Stockfish parser returned pawns (`cp / 100`) while Komodo returned centipawns,
+   and the UI divides by 100. Stockfish is normalised to centipawns here.
+
+Measured in headless Chromium, start position, `go depth 15`, MultiPV 3:
+
+| Engine | Wall time | Suggestions |
+|---|---|---|
+| Komodo | 262 ms | e2e4 +0.58, g1f3 +0.41, d2d4 +0.29 |
+| Stockfish | 214 ms | e2e4 +0.31, g1f3 +0.21, d2d4 +0.21 |
+
+Not covered: Maia 3, Rodent IV, Leela and the server-side personalities (drivers removed
+upstream and not transplanted), Game Review, and the explanation-engine quota.
+
 ---
 
 ## 9. Restoration notes (fidelity)
@@ -285,6 +320,9 @@ artifacts were removed.
 - A headless-Chromium load test (extension loaded, page served under a mapped
   `www.chess.com` host) confirms the content script mounts the overlay host element; see
   `docs/verification.md` for the exact command and observed output.
+- The transplanted local engines were driven directly in that harness: both initialise,
+  search to depth 15 with MultiPV 3 in under 300 ms, and return legal moves with centipawn
+  scores (see §8.1).
 
 ---
 

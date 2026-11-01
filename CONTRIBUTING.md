@@ -19,7 +19,7 @@ CI runs the same command and fails if the run modifies tracked files.
 - **Repository tooling** — `scripts/`, CI, packaging. Keep it dependency-free (stdlib
   Python, POSIX shell); this repository must stay buildable with nothing installed.
 - **A new version** — follow `docs/repository-layout.md` §1 and the release checklist in
-  §8, including the knowledge-base updates.
+  §9, including the knowledge-base updates.
 
 ## What will be rejected
 

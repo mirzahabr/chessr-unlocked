@@ -65,8 +65,11 @@ scripts/make-patches.sh 3.7.2
 rm -rf versions/3.7.2/chessr-unlocked-all-features
 ```
 
-`scripts/unlock-3.7.2.py` is the source of the edits: it copies the baseline, applies nine
-anchored changes to three files, and fails if an anchor is missing or ambiguous. Regenerate
+`scripts/unlock-3.7.2.py` is the source of the edits: it copies the baseline, applies ten
+anchored changes to three files, splices in `versions/3.7.2/vendor/local-engines.js`, and
+fails if an anchor is missing or ambiguous. The engine binaries themselves are not part of
+the patch: `scripts/install-local-engines.sh` copies them from git history into the built
+folder (see §9). Regenerate
 after changing it, then rebuild and re-verify:
 
 ```bash
@@ -101,7 +104,26 @@ not, so it is re-read against the code whenever a version is processed.
 - Commit messages describe the change to the repository, not the reverse-engineering
   session that produced it.
 
-## 8. Release checklist
+## 8. The local-engine graft (3.7.2 only, until upstream changes again)
+
+Upstream 3.7.2 removed the engines and moved analysis to its server. A faithful patch
+therefore produces a client that cannot analyse. The repository accepts one deliberate
+departure:
+
+- `versions/3.7.2/vendor/local-engines.js` — Komodo/Dragon and Stockfish classes
+  transplanted from the 3.4.0 restoration, with a header stating they are not upstream.
+- `scripts/install-local-engines.sh` — extracts the 54 MB of engine assets from commit
+  `04c57c6` into `engine/`. Not committed to the 3.7.2 tree.
+- `scripts/build-unlocked.sh` runs it by default; `--no-local-engines` gives the faithful
+  build, in which the factory falls back to the server.
+
+Rules for this block: keep the provenance header, keep the two transplant fixes (strength
+options only when limiting; Stockfish centipawns), and re-verify with the harness in
+`docs/verification.md` whenever it changes. Do not extend the graft to engines whose
+drivers are not in the bundle — Maia 3, Rodent and Leela would need their 3.4.0 worker
+protocols and model files, which is a different project.
+
+## 9. Release checklist
 
 - [ ] `python3 scripts/verify.py` — every check passes.
 - [ ] `scripts/build-unlocked.sh <v>` from a clean checkout; load it with **Load unpacked**.

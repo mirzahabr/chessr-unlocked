@@ -39,8 +39,11 @@ files differ, and the patch says which.
 | `engine/explanation-engine.wasm` | 26 MB commentary model. Never modified. |
 | `wasm/sealed_core_bg.wasm` | Rust/wasm-bindgen module: `handshake_start`, `handshake_finish`, `seal`, `open`, `free`. The JS glue lives inline in `content.js`. |
 
-No chess engine ships in 3.7.2. `engine/` is still third-party and untouchable; the unlock
-does not edit it.
+No chess engine ships in upstream 3.7.2. A build produced by `scripts/build-unlocked.sh`
+adds two back — `dragon.js/.wasm` and `stockfish.js/.wasm`, plus `book.bin` — extracted
+from git history by `scripts/install-local-engines.sh`; `--no-local-engines` skips them.
+`engine/` is third-party either way and untouchable: the unlock never edits it, it only
+adds files next to the explanation engine.
 
 ## `icons/`
 

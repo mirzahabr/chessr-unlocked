@@ -36,6 +36,21 @@ continuation of the 3.4.0 line — see the warning below.
 - AI move explanations through the local `explanation-engine.wasm`, quota-limited
   (`dailyLimit` default 50).
 
+### Added — local engines (forced measure, not upstream)
+- **The 3.4.0 engines are grafted back in.** 3.7.2 removed every engine and moved analysis
+  to `wss://api.chessr.io`, which would leave the unlock with no way to analyse. The patch
+  now splices the Komodo/Dragon and Stockfish UCI classes from the 3.4.0 restoration into
+  `content.js` (`versions/3.7.2/vendor/local-engines.js`) and prefers them over the server
+  when they initialise.
+- `scripts/install-local-engines.sh` extracts `dragon.js/.wasm`, `stockfish.js/.wasm` and
+  `book.bin` from git history into the build at 54 MB; `build-unlocked.sh` runs it by
+  default and takes `--no-local-engines` for a server-only build.
+- Two fixes on top of the transplant: strength options are only set when limiting is
+  requested (Komodo was being clamped to depth 2 by an unconditional `UCI Elo`), and
+  Stockfish scores are normalised from pawns to centipawns so the UI does not divide twice.
+- Measured headless: Komodo depth 15 in 262 ms (e2e4 +0.58), Stockfish depth 15 in 214 ms
+  (e2e4 +0.31), MultiPV 3.
+
 ### Added — repository
 - `scripts/unlock-3.7.2.py`: the deterministic generator behind the patch. Six edits in
   content.js, two in the Stream bundle, one in `manifest.json`; every anchor must match

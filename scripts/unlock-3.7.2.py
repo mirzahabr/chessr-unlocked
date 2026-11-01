@@ -25,6 +25,9 @@ Edits applied (both bundles unless noted):
   6. isFree()      always false
   7. engine gate   every engine is selectable (both bundles)
   8. link gate     the "link your account" screen is never requested
+  9. local engines a 3.4.0 UCI engine fallback (Komodo/Dragon, Stockfish) is
+                   spliced in and preferred over the server when its assets are
+                   installed — a documented, non-upstream forced measure
 """
 
 from __future__ import annotations
@@ -35,6 +38,60 @@ import shutil
 import sys
 
 BUNDLES = ("content-scripts/content.js", "chunks/stream-l1H6Qjn3.js")
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LOCAL_ENGINES = os.path.join(ROOT, "versions", "3.7.2", "vendor", "local-engines.js")
+
+SERVER_ENGINE_CLASS = "  var _0x3f7f66 = class {"
+
+FACTORY_OLD = """  async function _0xa804b4(_0x404a4b) {
+    let _0x507fbb = new _0x3f7f66(_0x404a4b);
+    await _0x507fbb.init();
+    _0x2c7423({
+      slot: "suggestion",
+      engineId: _0x404a4b,
+      mode: "server",
+      success: true,
+    });
+    return _0x507fbb;
+  }"""
+
+FACTORY_NEW = """  async function _0xa804b4(_0x404a4b) {
+    // Local-engine fallback first: if the 3.4.0 engine assets are installed, the
+    // suggestion engine runs in this browser instead of on Chessr's server.
+    let _0x1f0d5c = _0x4c1d1e[_0x404a4b];
+    if (_0x1f0d5c) {
+      try {
+        let _0x2d8f41 = new _0x1f0d5c();
+        await _0x2d8f41.init();
+        _0x2c7423({
+          slot: "suggestion",
+          engineId: _0x404a4b,
+          mode: "wasm",
+          success: true,
+          detail: "local 3.4.0 engine",
+        });
+        return _0x2d8f41;
+      } catch (_0x3a7e42) {
+        _0x2c7423({
+          slot: "suggestion",
+          engineId: _0x404a4b,
+          mode: "wasm",
+          success: false,
+          detail: _0x3a7e42 instanceof Error ? _0x3a7e42.message : String(_0x3a7e42),
+        });
+      }
+    }
+    let _0x507fbb = new _0x3f7f66(_0x404a4b);
+    await _0x507fbb.init();
+    _0x2c7423({
+      slot: "suggestion",
+      engineId: _0x404a4b,
+      mode: "server",
+      success: true,
+    });
+    return _0x507fbb;
+  }"""
 
 ANON_STATE = """user: {
   id: "anon",
@@ -171,6 +228,18 @@ def unlock_bundle(text: str, is_stream: bool) -> str:
         text,
         "engine availability",
     )
+
+    # 9. Local engine fallback: splice the transplanted 3.4.0 UCI engines in
+    # front of the server engine and prefer them when they initialise.
+    if not is_stream:
+        with open(LOCAL_ENGINES, encoding="utf-8") as fh:
+            local = fh.read()
+        if text.count(SERVER_ENGINE_CLASS) != 1:
+            raise EditError("ServerEngine class anchor not found exactly once")
+        text = text.replace(SERVER_ENGINE_CLASS, local + "\n" + SERVER_ENGINE_CLASS)
+        if text.count(FACTORY_OLD) != 1:
+            raise EditError("suggestion engine factory not found exactly once")
+        text = text.replace(FACTORY_OLD, FACTORY_NEW)
 
     # 8. Link-account gate: the panel never demands a linked account.
     def _needs_linking(m: re.Match) -> str:

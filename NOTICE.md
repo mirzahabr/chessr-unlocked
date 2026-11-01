@@ -19,15 +19,24 @@ the compiled output of **Chessr.io**, a commercial browser extension: `content-s
 repository has no permission to sublicense any of it. The code is proprietary and remains
 the property of its authors. Nothing here transfers any right to it.
 
-## 2. Engines — no longer applicable in 3.7.2
+## 2. Engines
 
-Upstream removed every vendored chess engine in 3.7.2. Stockfish.js, Komodo/Dragon,
-Rodent IV, Maia 3, Torch, ONNX Runtime and the Polyglot book are **not** present, so the
-GPL-3.0 and proprietary-redistribution problems recorded for earlier versions do not apply
-to this tree. They still apply to those versions in git history, and to any release cut
-from them.
+Upstream 3.7.2 removed every vendored chess engine, so the **baseline** in
+`versions/3.7.2/chessr-original-restored/` contains none. Builds are a different matter:
+`scripts/build-unlocked.sh` adds two engines back (extracted from git history, the 3.4.0
+tree) unless you pass `--no-local-engines`:
 
-What remains is Chessr's own:
+| Component | File | Licence status | Action |
+|---|---|---|---|
+| Stockfish.js 18 | `engine/stockfish.js`, `engine/stockfish.wasm` | **GPL-3.0** (Chess.com build); no GPL text or source offer is included | Add the GPL-3.0 text and a source pointer before distributing such a build, or build with `--no-local-engines`. |
+| Komodo Dragon | `engine/dragon.js`, `engine/dragon.wasm` | **Proprietary / commercial.** Redistribution is almost certainly not permitted. | Highest legal risk in this repository. Do not publish a build containing it without written permission. |
+| Polyglot opening book | `engine/book.bin` | *Unverified.* | Confirm provenance before redistributing. |
+
+These engines are a deliberate, documented departure from upstream — see
+[`README.md`](README.md) — and are meant for local use. A build that includes them inherits
+the obligations above.
+
+What remains from Chessr itself in every build:
 
 | Component | Path | Notes |
 |---|---|---|

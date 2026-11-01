@@ -220,6 +220,30 @@
       "status": "active",
       "version_introduced": "3.4.0",
       "version_last_verified": "3.7.2"
+    },
+    {
+      "id": "local-engine-graft",
+      "description": "The 3.4.0 Komodo/Dragon and Stockfish engines are spliced into content.js and preferred over the server engine.",
+      "applies_to": [
+        "content-scripts/content.js"
+      ],
+      "locate": {
+        "role": "server suggestion engine class / factory",
+        "anchors": [
+          "var _0x3f7f66 = class {"
+        ],
+        "expected_count": 1
+      },
+      "transform": "vendor/local-engines.js is inserted before the ServerEngine class; _0xa804b4 tries the local engine first and falls back to the server when it throws.",
+      "notes": "Forced measure, not upstream behaviour: 3.7.2 removed the engines and moved analysis to api.chessr.io. The engine binaries are installed by scripts/install-local-engines.sh (from commit 04c57c6) and are not part of the patch.",
+      "verify": [
+        "engine/dragon.js and engine/stockfish.js exist in the built folder",
+        "headless: search() returns MultiPV suggestions at depth 15"
+      ],
+      "confidence": "high",
+      "status": "active",
+      "version_introduced": "3.7.2",
+      "version_last_verified": "3.7.2"
     }
   ]
 }

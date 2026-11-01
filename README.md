@@ -16,32 +16,47 @@ Nothing here is affiliated with Chessr.io or with any chess platform.
 
 ---
 
-## Read this first: 3.7.2 moved the analysis to the server
+## Read this first: the engines were removed upstream and put back here
 
 Through 3.4.0 the extension shipped ~184 MB of chess engines and computed everything
-locally, which is why the previous unlock could genuinely deliver full-strength analysis
-without an account.
+locally, which is why the previous unlock could deliver full-strength analysis without an
+account.
 
-**3.7.2 ships no engine.** The only wasm files left are the AI-commentary engine and a
-157 KB Rust "sealed core" that seals the WebSocket protocol. Suggestions, evaluations,
-Maia 3, server personalities and Game Review are computed by `wss://api.chessr.io` and sent
-back over that socket. The client asks; the server answers.
+**3.7.2 ships no engine.** Suggestions, evaluations, Maia 3, server personalities and Game
+Review are computed by `wss://api.chessr.io` and sent back over a sealed WebSocket; the
+client only asks and renders. Only the 26 MB AI-commentary engine and a 157 KB Rust
+"sealed core" remain.
 
-So the unlocked build gives you:
+That would leave the unlocked build unable to analyse anything, so this repository puts
+the 3.4.0 engines back — **as a documented forced measure, not as upstream code**:
 
-- ✅ no login screen, permanent **Premium** UI state
-- ✅ every engine selectable, full ELO range (400–3500), no upgrade prompts
+- `versions/3.7.2/vendor/local-engines.js` carries the Komodo/Dragon and Stockfish UCI
+  engine classes transplanted from the 3.4.0 restoration.
+- The unlock patch splices that block into `content.js` and installs it in front of the
+  server engine: if the local engine initialises, suggestions are computed in the browser.
+- `scripts/install-local-engines.sh` extracts `dragon.js/.wasm`, `stockfish.js/.wasm` and
+  `book.bin` from git history into the build (they are 54 MB and are not committed to the
+  3.7.2 tree). `scripts/build-unlocked.sh 3.7.2` runs it by default; pass
+  `--no-local-engines` to skip.
+
+With the local engines installed:
+
+- ✅ move suggestions, evaluation and the eval bar work with no account — Komodo and
+  Stockfish, depth 15 in roughly 250 ms in the headless test
+- ✅ no login screen, permanent **Premium** UI state, every engine selectable
 - ✅ no "link your account" wall, no guidelines gate
-- ✅ the overlay, board adapters, anonymous mode and fake title badge, unchanged
 
-and it does not give you:
+Still server-only:
 
-- ❌ move suggestions, evaluations or Game Review — those need a real subscription session
-  on Chessr's server
+- ❌ Maia 3, Rodent IV, Leela and the server-side personalities — their drivers are not in
+  3.7.2 and were not transplanted
+- ❌ Game Review, which streams from Chessr's backend
 - ❌ AI move explanations beyond the server's 50/day quota
 
-Treat it as an unauthenticated **UI** unlock. This is much less than the 3.4.0 build
-delivered, and the difference is upstream's design change, not a gap in the patch.
+**A build with the local engines is not a faithful copy of upstream 3.7.2.** It is the
+3.4.0 engine stack grafted onto the 3.7.2 client, and it would not exist if upstream had
+kept its engines. The `--no-local-engines` build is the honest reconstruction of the
+patched package; the default build is the one that actually analyses.
 
 ---
 
