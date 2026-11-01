@@ -79,8 +79,12 @@ locator.
 - **Newest version wins for current behavior**; older statements stay, prefixed with the
   version they describe, so the history remains readable.
 - **JSON shapes are versioned.** Changing a key in `unlock-manifest.json`, `repo-meta.json`
-  or `.regions.json` means bumping the corresponding `schema_version` and updating every
-  reader in the same commit — never an ad-hoc edit.
+  or `.regions.json` means bumping the corresponding `schema_version` **and**
+  `repo-meta.json`'s `components` entry, and updating every reader in the same commit —
+  never an ad-hoc edit. `scripts/verify.py --only schemas` fails when the two disagree.
+- **Anchors may declare `expected_count`.** When present, the verifier fails unless the
+  baseline contains exactly that many occurrences, so a locator cannot drift silently.
+  Absent means "count not pinned"; more than three matches without a pin is a warning.
 
 ## Reading order for a newcomer
 

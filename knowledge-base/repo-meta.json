@@ -5,9 +5,9 @@
     "re-config": 1,
     "region-store": 1,
     "structural-signature": 1,
-    "unlock-manifest": 1
+    "unlock-manifest": 2
   },
-  "note": "bootstrapped from pre-schema repository",
+  "note": "bootstrapped from pre-schema repository; component versions track each file's schema_version",
   "repo_schema_version": 1,
   "written_by_tool": "1.0.0"
 }

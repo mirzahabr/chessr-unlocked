@@ -10,6 +10,10 @@ Thumbs.db
 *.zip
 dist/
 
+# ── Patch layer rejects (see scripts/build-unlocked.sh) ──────────────────────
+*.rej
+*.orig
+
 # ── Python tooling ───────────────────────────────────────────────────────────
 __pycache__/
 *.pyc

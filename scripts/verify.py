@@ -221,7 +221,7 @@ def check_anchors() -> None:
             pass
     blob = "\n".join(corpus)
 
-    missing, ambiguous, checked = [], [], 0
+    missing, ambiguous, checked = [], [], 0  # 'missing' also collects count mismatches
     for unlock in manifest.get("unlocks", []):
         locate = unlock.get("locate", {})
         for anchor in locate.get("anchors", []):
@@ -231,7 +231,12 @@ def check_anchors() -> None:
                 missing.append(f"{unlock['id']}: {anchor!r}")
                 continue
             expected = locate.get("expected_count")
-            if count > 3 and expected is None:
+            if expected is not None:
+                if count != expected:
+                    missing.append(
+                        f"{unlock['id']}: {anchor!r} expected {expected}, found {count}")
+                continue
+            if count > 3:
                 ambiguous.append(f"{unlock['id']}: {anchor!r} x{count}")
     if missing:
         record(FAIL, "anchors", "; ".join(missing))
@@ -334,6 +339,43 @@ def check_patches() -> None:
         record(PASS, "patches", f"{done} version(s) round-trip")
 
 
+SCHEMA_COMPONENTS = {
+    "unlock-manifest": "knowledge-base/unlock-manifest.json",
+    "re-config": "knowledge-base/re-config.json",
+    "region-store": "knowledge-base/.regions.json",
+}
+
+
+def check_schema_versions() -> None:
+    """knowledge-base/README.md promises schema_version bumps stay in sync with repo-meta."""
+    meta_path = os.path.join(ROOT, "knowledge-base", "repo-meta.json")
+    if not os.path.isfile(meta_path):
+        record(SKIP, "schemas", "knowledge-base/repo-meta.json not found")
+        return
+    meta = json.load(open(meta_path, encoding="utf-8"))
+    declared = meta.get("components", {})
+    problems, checked = [], 0
+    for component, rel_path in SCHEMA_COMPONENTS.items():
+        fpath = os.path.join(ROOT, rel_path)
+        if not os.path.isfile(fpath):
+            continue
+        actual = json.load(open(fpath, encoding="utf-8")).get("schema_version")
+        expected = declared.get(component)
+        checked += 1
+        if expected != actual:
+            problems.append(f"{rel_path}: schema_version {actual}, repo-meta says {expected}")
+    for sig in sorted(glob.glob(os.path.join(ROOT, "knowledge-base", "signatures", "*.json"))):
+        actual = json.load(open(sig, encoding="utf-8")).get("schema_version")
+        expected = declared.get("structural-signature")
+        checked += 1
+        if expected != actual:
+            problems.append(f"{rel(os.path)}: schema_version {actual}, repo-meta says {expected}")
+    if problems:
+        record(FAIL, "schemas", "; ".join(problems[:5]))
+    else:
+        record(PASS, "schemas", f"{checked} documents agree with repo-meta.json")
+
+
 CHECKS = {
     "js-syntax": check_js_syntax,
     "json": check_json,
@@ -344,6 +386,7 @@ CHECKS = {
     "size-guard": check_sizes,
     "absolute-paths": check_absolute_paths,
     "patches": check_patches,
+    "schemas": check_schema_versions,
 }
 
 

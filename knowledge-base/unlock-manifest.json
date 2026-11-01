@@ -3,7 +3,10 @@
     "AI move-explanation (/api/explain-move) requires a real Supabase JWT; cannot work anonymously — always errors. Server-side dependency, not fixable client-side.",
     "Game Review over wss://api.chessr.io/ws?userId=anon connects without a token; whether the server treats anon as premium is server-side policy and remains unverified."
   ],
-  "schema_version": 1,
+  "schema_version": 2,
+  "schema_changelog": {
+    "2": "locate.expected_count added: an anchor may declare how many times it must occur in the baseline, so a locator cannot silently drift. Readers must treat it as optional (absent = unchecked count)."
+  },
   "unlocks": [
     {
       "applies_to": [
