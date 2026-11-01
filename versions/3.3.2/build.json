@@ -1,0 +1,9 @@
+{
+  "build": "chessr-unlocked-all-features",
+  "name": "Chessr.io Unlocked",
+  "version": "3.3.2.1",
+  "based_on": "3.3.2",
+  "patch_series": [
+    "patches/0000-unlocked.patch"
+  ]
+}

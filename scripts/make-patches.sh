@@ -45,3 +45,25 @@ fi
 
 lines=$(wc -l < "$vdir/patches/0000-unlocked.patch" | tr -d ' ')
 echo "wrote versions/$version/patches/0000-unlocked.patch ($lines lines)"
+
+# Record what the series produces, so the build's identity survives even when
+# the built folder itself is not committed.
+python3 - "$vdir" "$version" <<'PY_JSON'
+import json, os, sys
+vdir, version = sys.argv[1], sys.argv[2]
+manifest_path = os.path.join(vdir, "chessr-unlocked-all-features", "manifest.json")
+with open(manifest_path, encoding="utf-8") as fh:
+    manifest = json.load(fh)
+data = {
+    "build": "chessr-unlocked-all-features",
+    "name": manifest.get("name"),
+    "version": manifest.get("version"),
+    "based_on": version,
+    "patch_series": ["patches/0000-unlocked.patch"],
+}
+out = os.path.join(vdir, "build.json")
+with open(out, "w", encoding="utf-8") as fh:
+    json.dump(data, fh, indent=2)
+    fh.write("\n")
+print("wrote", out)
+PY_JSON

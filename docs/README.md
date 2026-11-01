@@ -7,7 +7,7 @@ internals; that lives one level down, closer to the code.
 | Document | Scope |
 |---|---|
 | [`repository-layout.md`](repository-layout.md) | Directory structure, naming rules, invariants, adding a version, release packaging, git hygiene |
-| [`code-map.md`](code-map.md) | What every file inside `chessr-original-restored/` and `chessr-unlocked-all-features/` is for |
+| [`code-map.md`](code-map.md) | What every file inside a build (the baseline, or a build generated from it) is for |
 | [`quality-audit.md`](quality-audit.md) | One-off repository audit (2026-11): scores, P0–P2 findings, improvement plan. Historical snapshot — not maintained as a living document |
 
 ## Where documentation lives

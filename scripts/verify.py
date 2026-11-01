@@ -211,14 +211,17 @@ def check_engines() -> None:
         base = os.path.join(vdir, "chessr-original-restored", "engine")
         unlocked = os.path.join(vdir, "chessr-unlocked-all-features", "engine")
         if not (os.path.isdir(base) and os.path.isdir(unlocked)):
-            continue
+            continue  # patch-layer version: engine/ exists once, guarded by check_patches
         checked += 1
         if digest_tree(base) != digest_tree(unlocked):
             problems.append(version)
     if problems:
         record(FAIL, "engines", f"engine/ differs between builds: {', '.join(problems)}")
-    else:
+    elif checked:
         record(PASS, "engines", f"{checked} version(s), byte-identical")
+    else:
+        record(SKIP, "engines",
+               "patch-layer layout: engine/ exists once per version; check_patches guards it")
 
 
 def check_anchors() -> None:
@@ -332,7 +335,8 @@ def check_patches() -> None:
         vdir = os.path.join(versions, version)
         base = os.path.join(vdir, "chessr-original-restored")
         built = os.path.join(vdir, "chessr-unlocked-all-features")
-        if not (os.path.isdir(base) and os.path.isdir(built)):
+        if not os.path.isdir(base):
+            problems.append(f"{version}: missing baseline {rel(base)}")
             continue
         tmp = tempfile.mkdtemp()
         try:
@@ -340,6 +344,18 @@ def check_patches() -> None:
             shutil.copytree(base, target)
             ok = True
             for patch_file in sorted(glob.glob(os.path.join(vdir, "patches", "*.patch"))):
+                # Only diff headers matter: engine/ paths legitimately appear in the
+                # *content* of manifest.json and content.js.
+                touched = []
+                with open(patch_file, encoding="utf-8", errors="replace") as fh:
+                    for line in fh:
+                        if line.startswith(("--- ", "+++ ")) and "/engine/" in line:
+                            touched.append(line.strip())
+                if touched:
+                    problems.append(f"{version}: {os.path.basename(patch_file)} touches engine/ "
+                                    f"({touched[0]})")
+                    ok = False
+                    break
                 r = subprocess.run([patch_bin, "-p1", "--batch", "-s", "-d", target],
                                    stdin=open(patch_file, "rb"),
                                    capture_output=True, text=True)
@@ -347,10 +363,25 @@ def check_patches() -> None:
                     problems.append(f"{version}: {os.path.basename(patch_file)} does not apply")
                     ok = False
                     break
-            if ok and digest_tree(target) != digest_tree(built):
+            if ok and os.path.isdir(built) and digest_tree(target) != digest_tree(built):
                 problems.append(f"{version}: patched tree differs from the committed build")
             if ok:
-                done += 1
+                meta_path = os.path.join(vdir, "build.json")
+                if not os.path.isfile(meta_path):
+                    problems.append(f"{version}: patches/ exists without build.json")
+                else:
+                    meta = json.load(open(meta_path, encoding="utf-8"))
+                    rebuilt = os.path.join(target, "manifest.json")
+                    if not os.path.isfile(rebuilt):
+                        problems.append(f"{version}: rebuilt tree has no manifest.json")
+                    else:
+                        manifest = json.load(open(rebuilt, encoding="utf-8"))
+                        for key in ("name", "version"):
+                            if str(manifest.get(key)) != str(meta.get(key)):
+                                problems.append(
+                                    f"{version}: build.json {key}={meta.get(key)!r} but the "
+                                    f"patched manifest says {manifest.get(key)!r}")
+            done += 1
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
     if problems:
@@ -445,6 +476,17 @@ def check_versions() -> None:
                 problems.append(f"{version}: baseline manifest says {manifest.get('version')}")
             if manifest.get("manifest_version") != 3:
                 problems.append(f"{version}: baseline is not Manifest V3")
+        if not os.path.isfile(unlocked):
+            meta_path = os.path.join(vdir, "build.json")
+            if os.path.isfile(meta_path):
+                meta = json.load(open(meta_path, encoding="utf-8"))
+                if not str(meta.get("version", "")).startswith(f"{version}."):
+                    problems.append(f"{version}: build.json version {meta.get('version')} "
+                                    f"should be {version}.N")
+                if meta.get("based_on") != version:
+                    problems.append(f"{version}: build.json based_on={meta.get('based_on')!r}")
+                newest = version
+            continue
         if os.path.isfile(unlocked):
             manifest = json.load(open(unlocked, encoding="utf-8"))
             if not str(manifest.get("version", "")).startswith(f"{version}."):
@@ -462,7 +504,13 @@ def check_versions() -> None:
         match = re.search(r"^## \[([^\]]+)\]", text, re.M)
         manifest_path = os.path.join(versions, newest,
                                      "chessr-unlocked-all-features", "manifest.json")
-        expected = json.load(open(manifest_path, encoding="utf-8")).get("version")
+        build_json = os.path.join(versions, newest, "build.json")
+        if os.path.isfile(manifest_path):
+            expected = json.load(open(manifest_path, encoding="utf-8")).get("version")
+        elif os.path.isfile(build_json):
+            expected = json.load(open(build_json, encoding="utf-8")).get("version")
+        else:
+            expected = None
         if not match:
             problems.append("CHANGELOG.md has no '## [version]' entry")
         elif match.group(1) != expected:

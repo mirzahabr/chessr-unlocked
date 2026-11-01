@@ -5,24 +5,29 @@ arrays and control flow are recovered and the code is Prettier-formatted, but id
 stay as the bundler generated them in the two large bundles. Plus a modified build with the
 account system removed and every premium feature unlocked.
 
-Every version is kept as **two parallel builds**:
+Each version is stored as a **baseline plus a patch series**, not as two copies:
 
-| Build | Purpose | Account required? | Edit it? |
+| Piece | Purpose | Account required? | Edit it? |
 |---|---|---|---|
-| [`chessr-unlocked-all-features/`](versions/3.4.0/chessr-unlocked-all-features/) | 🟢 Install this one — auth removed, all engines and limits unlocked | No | **Yes** — active development happens here |
 | [`chessr-original-restored/`](versions/3.4.0/chessr-original-restored/) | Frozen reference baseline — restored and reformatted with **zero behavior changes** | Yes | **No** — diff against it, never edit |
+| [`patches/`](versions/3.4.0/patches/) | 🟢 The unlock itself, as one reviewable diff: auth removed, all engines and limits unlocked | No | **Yes** — active development happens here |
+| `scripts/build-unlocked.sh` | Applies the series to the baseline → `dist/chessr-unlocked-all-features-<v>/`, the folder you actually load | — | — |
+
+The patch is stored instead of a second 190 MB copy because 184 MB of every build is
+vendored engines that are byte-identical to the baseline. A build you can load is one
+command away, and the repository's own verifier proves the series still reproduces it.
 
 [![Latest release](https://img.shields.io/github/v/release/mirzahabr/chessr-unlocked?label=latest%20release)](https://github.com/mirzahabr/chessr-unlocked/releases/latest)
-[![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)](versions/3.4.0/chessr-unlocked-all-features/manifest.json)
+[![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)](versions/3.4.0/chessr-original-restored/manifest.json)
 
 ---
 
 ## Versions
 
-| Version | Status | Unlocked build | Technical report |
+| Version | Status | Unlock patch | Technical report |
 |---|---|---|---|
-| **3.4.0** | 🟢 Current | [`versions/3.4.0/chessr-unlocked-all-features/`](versions/3.4.0/chessr-unlocked-all-features/) | [PROJECT_REPORT.md](versions/3.4.0/chessr-unlocked-all-features/project-documentation/PROJECT_REPORT.md) |
-| 3.3.2 | 🗄 Previous — kept as the diff baseline for 3.4.0 | [`versions/3.3.2/chessr-unlocked-all-features/`](versions/3.3.2/chessr-unlocked-all-features/) | [PROJECT_REPORT.md](versions/3.3.2/chessr-unlocked-all-features/project-documentation/PROJECT_REPORT.md) |
+| **3.4.0** | 🟢 Current — builds `3.4.0.1` | [`patches/0000-unlocked.patch`](versions/3.4.0/patches/0000-unlocked.patch) | [PROJECT_REPORT.md](versions/3.4.0/chessr-original-restored/project-documentation/PROJECT_REPORT.md) |
+| 3.3.2 | 🗄 Previous — kept as the diff baseline for 3.4.0 | [`patches/0000-unlocked.patch`](versions/3.3.2/patches/0000-unlocked.patch) | [PROJECT_REPORT.md](versions/3.3.2/chessr-original-restored/project-documentation/PROJECT_REPORT.md) |
 
 Each version folder has its own [`README.md`](versions/3.4.0/README.md) with the install
 notes, the list of what was unlocked, and the known limitation that applies to it.
@@ -43,6 +48,9 @@ notes, the list of what was unlocked, and the known limitation that applies to i
 **Known limitation:** the AI move-explanation feature calls the real Chessr.io backend
 with a genuine auth token and cannot work without a real account. This is a server-side
 dependency, not a defect in this build.
+
+The unlocked build's own report — the one with the account-removal write-up — is generated
+with the build, from `patches/0000-unlocked.patch`.
 
 ---
 
@@ -88,14 +96,17 @@ If you care what a third party can see, this is the list to review.
 
 ```bash
 git clone https://github.com/mirzahabr/chessr-unlocked.git
+cd chessr-unlocked
+scripts/build-unlocked.sh 3.4.0     # writes dist/chessr-unlocked-all-features-3.4.0/
 ```
 
-The folder is named after the **upstream** version (`3.4.0`); the modified build reports
-its own version (`3.4.0.1`), which is what `chrome://extensions/` shows.
+Needs `bash` and `patch` — both are present on macOS, Linux and Git Bash on Windows. The
+folder is named after the **upstream** version (`3.4.0`); the build it produces reports its
+own version (`3.4.0.1`), which is what `chrome://extensions/` shows.
 
 1. Open `chrome://extensions/` in Chrome.
 2. Enable **Developer mode** (top-right toggle).
-3. Click **Load unpacked** and select `versions/3.4.0/chessr-unlocked-all-features/`.
+3. Click **Load unpacked** and select `dist/chessr-unlocked-all-features-3.4.0/`.
 4. Open chess.com, lichess.org, or worldchess.com — the overlay activates automatically.
 
 > ⚠️ **Use at your own risk.** This is not an official build and it is not supported by
@@ -103,8 +114,8 @@ its own version (`3.4.0.1`), which is what `chrome://extensions/` shows.
 > banned — read the [Disclaimer](#disclaimer) before you install it.
 
 Prefer a packaged copy? Download `chessr-unlocked-all-features-*.tar.gz` from
-[Releases](https://github.com/mirzahabr/chessr-unlocked/releases/latest) and load the
-extracted folder — cloning is not required for that.
+[Releases](https://github.com/mirzahabr/chessr-unlocked/releases/latest), check it against
+`SHA256SUMS.txt`, and load the extracted folder — no clone, no tooling required.
 
 ---
 
@@ -132,8 +143,8 @@ extension clears it.
 build is now named `Chessr.io Unlocked` with version `3.4.0.1`, so it is distinguishable
 from the untouched `3.4.0` baseline.
 
-**Everything is slow to clone.** The engines are ~184 MB per build and are duplicated on
-purpose. Use a release archive instead of cloning.
+**Cloning is slow.** The engines are ~184 MB and cannot be deduplicated without breaking
+"load unpacked". Use a release archive instead of cloning.
 
 ## FAQ
 
@@ -152,9 +163,10 @@ Game Review WebSocket are still there.
 content scripts, `declarativeNetRequest`, CDP via `debugger`). Chrome and other
 Chromium-based browsers, 111+.
 
-**Why is the repository ~130 MB?** Six chess engines ship inside every build, and every
-build has to stay self-contained to remain loadable. See
-[`docs/repository-layout.md`](docs/repository-layout.md).
+**Why is the repository still large?** Six chess engines (~184 MB) ship inside the
+baseline, and a build has to stay self-contained to remain loadable — they cannot be
+symlinked away. The unlock itself is an 800 KB patch on top. See
+[`docs/repository-layout.md`](docs/repository-layout.md) §4–5.
 
 ---
 
@@ -187,17 +199,19 @@ Chessr/
 └── versions/
     ├── 3.3.2/
     │   ├── README.md
+    │   ├── build.json               What the patch series produces (name, version)
     │   ├── chessr-original-restored/
-    │   └── chessr-unlocked-all-features/
+    │   └── patches/0000-unlocked.patch
     └── 3.4.0/
         ├── README.md
+        ├── build.json
         ├── chessr-original-restored/
-        └── chessr-unlocked-all-features/
+        └── patches/0000-unlocked.patch
 ```
 
-Build folders contain **only what the browser loads** plus a `project-documentation/`
+The baseline contains **only what the browser loads** plus a `project-documentation/`
 report. Repository-level documentation lives in `docs/` and `knowledge-base/`, never
-inside a build.
+inside a build. The unlocked build is not committed; `dist/` is generated and git-ignored.
 
 ---
 
@@ -215,6 +229,8 @@ inside a build.
 
 ## Working on the repository
 
+- **Edit `patches/`, not the generated build.** Change the baseline and run
+  `scripts/make-patches.sh 3.4.0`; `scripts/build-unlocked.sh 3.4.0` regenerates the folder.
 - **Do not change behaviour in `chessr-original-restored/`.** It is the behavior-preserving
   baseline; every difference in the unlocked build must be explainable as a diff against
   it. The one exception is a **restoration fix** — when the deobfuscation pass changed what

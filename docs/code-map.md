@@ -1,8 +1,8 @@
 # Code map — what is inside a build
 
-Every version ships the same two builds with the same layout, so this map applies to
-`versions/<v>/chessr-original-restored/` and `versions/<v>/chessr-unlocked-all-features/`
-alike.
+Every version has one baseline commit and one generated build, and both have the same
+layout — so this map applies to `versions/<v>/chessr-original-restored/` and to whatever
+`scripts/build-unlocked.sh <v>` produces in `dist/` alike.
 
 **The two builds differ in three ways, and only one of them is behavioral:**
 

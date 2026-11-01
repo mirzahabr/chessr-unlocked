@@ -5,6 +5,10 @@ Thumbs.db
 .vscode/
 *.swp
 
+# ── Working copy used when folding an edit back into a patch series ─────────
+# (docs/repository-layout.md §5). Generated, ~190 MB, never committed.
+versions/*/chessr-unlocked-all-features/
+
 # ── Release artifacts (built from versions/, never committed) ────────────────
 *.tar.gz
 *.zip

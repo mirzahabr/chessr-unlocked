@@ -23,8 +23,6 @@ jobs:
         run: python3 scripts/verify.py
 
       - name: Package both builds and checksum them
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           version="${GITHUB_REF_NAME#v}"
@@ -34,10 +32,19 @@ jobs:
             echo "::error::no directory for $version at $src"
             exit 1
           fi
+
           mkdir -p dist
-          for build in chessr-original-restored chessr-unlocked-all-features; do
-            tar -czf "dist/${build}-${version}.tar.gz" -C "$src" "$build"
-          done
+          # The baseline is committed as-is.
+          tar -czf "dist/chessr-original-restored-${version}.tar.gz" -C "$src" chessr-original-restored
+
+          # The unlocked build is generated from the baseline + patches, so the
+          # archive always matches the committed series.
+          tmp="$(mktemp -d)"
+          bash scripts/build-unlocked.sh "$version" "$tmp/chessr-unlocked-all-features"
+          tar -czf "dist/chessr-unlocked-all-features-${version}.tar.gz" \
+            -C "$tmp" chessr-unlocked-all-features
+          rm -rf "$tmp"
+
           (cd dist && sha256sum ./*.tar.gz > SHA256SUMS.txt)
           cat dist/SHA256SUMS.txt
 
