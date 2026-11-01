@@ -9,5 +9,5 @@
   },
   "note": "bootstrapped from pre-schema repository",
   "repo_schema_version": 1,
-  "written_by_skill": "1.0.0"
+  "written_by_tool": "1.0.0"
 }

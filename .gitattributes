@@ -1,0 +1,19 @@
+# Binary payloads: never treat as text, never diff line-by-line, never rewrite
+# line endings. These files dominate repository size; git must store them as-is.
+*.wasm    binary
+*.onnx    binary
+*.bin     binary
+*.data    binary
+*.tar.gz  binary
+*.zip     binary
+
+# Images are binary too (GitHub renders them, diffs do not).
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.webp    binary
+*.gif     binary
+
+# Bundled chess engines are third-party, unmodified vendored code. Exclude them
+# from language statistics so the repository's own code is what shows up.
+versions/*/chessr-*/engine/** linguist-vendored

@@ -1,5 +1,22 @@
-*.tar.gz
+# ── OS / editor ──────────────────────────────────────────────────────────────
 .DS_Store
-.claude/
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# ── Release artifacts (built from versions/, never committed) ────────────────
+*.tar.gz
+*.zip
+dist/
+
+# ── Python tooling ───────────────────────────────────────────────────────────
 __pycache__/
 *.pyc
+.venv/
+
+# ── Chrome runtime cache — regenerated on load, never source ─────────────────
+**/_metadata/
+
+# ── Scratch space and checkpoints ────────────────────────────────────────────
+.chessr-re/
