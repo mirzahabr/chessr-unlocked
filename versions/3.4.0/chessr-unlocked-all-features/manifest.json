@@ -1,8 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Chessr.io — Chess assist done right!",
-  "description": "Chessr.io v3",
-  "version": "3.4.0",
+  "name": "Chessr.io Unlocked",
+  "short_name": "Chessr Unlocked",
+  "description": "Chessr.io 3.4.0 — unofficial build: account system removed, premium features unlocked. Use at your own risk.",
+  "version": "3.4.0.1",
+  "minimum_chrome_version": "111",
   "icons": {
     "16": "/icons/icon16.png",
     "48": "/icons/icon48.png",
