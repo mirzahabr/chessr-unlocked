@@ -55,21 +55,23 @@ orientation, not as a substitute for the per-version report: `architecture.md`,
 
 ## Anchor health
 
-`unlock-manifest.json` anchors are checked against the version's baseline by
-`scripts/verify.py --only anchors`. One anchor was broken (it also failed to match the
-baseline) and has been rewritten. Four remain *ambiguous* — they match many places, so they
-locate a subsystem rather than a site:
+Every anchor in `unlock-manifest.json` is checked against the version's baseline by
+`scripts/verify.py --only anchors`, and all twelve now resolve. Two kinds of anchor exist:
 
-| Entry | Anchor | Baseline occurrences |
-|---|---|---:|
-| `auth-store-initial-state` | `plan: "free"` | 10 |
-| `auth-store-initial-state` | `user: null` | 96 |
-| `auth-store-initial-state` | `session: null` | 84 |
-| `discord-store-stub` | `inGuild: null,` | 4 |
+| Kind | Rule | Example |
+|---|---|---|
+| **Unique locator** | exactly one occurrence, pinned by `expected_count: 1` | `user: null,\n    session: null,\n    plan: "free",…` (the auth store's initial-state block) |
+| **Pattern anchor** | the anchor *is* the thing being removed, and every occurrence must go | `< 2500 && !` — the ELO guard, 2 sites per bundle, `expected_count: 4` |
 
-The verifier reports these as warnings, not failures. Replacing them needs the surrounding
-`locate.role` to be narrowed first — do not "fix" them by adding a count and calling it a
-locator.
+A pattern anchor is only legitimate when the unlock deliberately applies to every match. It
+is **not** a way to silence a generic string: `user: null` occurred 96 times and identified
+nothing, which is why it was replaced rather than counted.
+
+Two anchors that were ambiguous were replaced by their contiguous multi-line blocks
+(the auth store and the Discord store initial state). Multi-line anchors are formatting
+sensitive, which is the point: the baseline is frozen, so a reformat that breaks them is a
+change nobody asked for. The stream bundle holds the same blocks at 2-space indentation and
+is covered by the same unlock, not by the anchor.
 
 ## Conventions
 
@@ -85,6 +87,8 @@ locator.
 - **Anchors may declare `expected_count`.** When present, the verifier fails unless the
   baseline contains exactly that many occurrences, so a locator cannot drift silently.
   Absent means "count not pinned"; more than three matches without a pin is a warning.
+  Pin the count for a *pattern* anchor (every match is a target) — never as a substitute
+  for a unique locator.
 
 ## Reading order for a newcomer
 

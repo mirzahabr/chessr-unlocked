@@ -81,13 +81,12 @@
       "id": "auth-store-initial-state",
       "locate": {
         "anchors": [
-          "plan: \"free\"",
-          "user: null",
-          "session: null"
+          "user: null,\n    session: null,\n    plan: \"free\",\n    planExpiry: null,\n    freetrialEndedAt: null,\n    guidelinesAcceptedAt: null,"
         ],
-        "role": "auth store initial state (pre-unlock locate anchors -- corrected in v3.4.0 pass, see notes)"
+        "role": "auth store initial state (pre-unlock locate anchors -- corrected in v3.4.0 pass, see notes) — the initial-state block, matched as a 6-line sequence so it cannot drift; the stream bundle carries the same block at 2-space indentation",
+        "expected_count": 1
       },
-      "notes": "Non-null user is the hidden switch: `if (!user) return <LoginScreen/>` forces login while user is null. locate.anchors corrected in the v3.4.0 pass: previously seeded with POST-unlock strings ('id: \"anon\"', 'plan: \"premium\"') which cannot locate the target in a fresh, not-yet-unlocked build.",
+      "notes": "Non-null user is the hidden switch: `if (!user) return <LoginScreen/>` forces login while user is null. locate.anchors corrected in the v3.4.0 pass: previously seeded with POST-unlock strings ('id: \"anon\"', 'plan: \"premium\"') which cannot locate the target in a fresh, not-yet-unlocked build. Anchors narrowed from `user: null` / `session: null` / `plan: \"free\"` (96 / 84 / 10 hits — no locator at all) to the contiguous initial-state block with expected_count 1.",
       "status": "active",
       "transform": "Set user/session to a mock anon object, plan:'premium', planLoading/initializing:false, guidelinesAcceptedAt:new Date(0).",
       "verify": [
@@ -141,12 +140,12 @@
       "id": "discord-store-stub",
       "locate": {
         "anchors": [
-          "inGuild: null,",
-          "discord/status"
+          "linked: false,\n    username: null,\n    avatar: null,\n    inGuild: null,"
         ],
-        "role": "Discord integration store (fetchStatus/fetchMembership/initLink/unlink)"
+        "role": "Discord integration store (fetchStatus/fetchMembership/initLink/unlink)",
+        "expected_count": 1
       },
-      "notes": "Formalized this version (v3.4.0) — this stub was already applied in v3.3.2's shipped chessr-unlocked-all-features build but had never been captured as its own manifest entry. v3.4.0's original endpoints use query-string params (/discord/status?userId=...) rather than path segments; wording-only difference, same neutralization.",
+      "notes": "Formalized this version (v3.4.0) — this stub was already applied in v3.3.2's shipped chessr-unlocked-all-features build but had never been captured as its own manifest entry. v3.4.0's original endpoints use query-string params (/discord/status?userId=...) rather than path segments; wording-only difference, same neutralization. Anchors narrowed from `inGuild: null,` (4 hits) to the contiguous store initial-state block with expected_count 1; the block itself survives the unlock, so this is a locate-only anchor, not an absence check.",
       "status": "active",
       "transform": "fetchStatus -> set {linked:false, username:null, avatar:null, loading:false}, no network. fetchMembership -> set {inGuild:false}, no network. initLink -> no-op. unlink -> set {linked:false, username:null, avatar:null}, no network.",
       "verify": [
@@ -172,9 +171,10 @@
         "anchors": [
           "< 2500 && !"
         ],
-        "role": "ELO enforcement (removal — verify by absence)"
+        "role": "ELO enforcement pattern (removal — verify by absence); 2 sites per bundle, 4 across the baseline build",
+        "expected_count": 4
       },
-      "notes": "Removal unlock: verify passes when the anchor is ABSENT from the unlocked build. This anchor is naturally pre-unlock-compatible (it's the enforcement code itself, not a post-unlock artifact) -- no correction needed.",
+      "notes": "Removal unlock: verify passes when the anchor is ABSENT from the unlocked build. This anchor is naturally pre-unlock-compatible (it's the enforcement code itself, not a post-unlock artifact) -- no correction needed. expected_count=4 pins the documented \"exactly 2 sites per bundle\" evidence, so a third site appearing upstream fails the check instead of passing silently.",
       "status": "active",
       "transform": "Delete both enforcement blocks so manual ELO can exceed 2500.",
       "verify": [
@@ -229,9 +229,10 @@
         "anchors": [
           "guidelinesAcceptedAt: null"
         ],
-        "role": "guidelines gate (pre-unlock locate anchor -- corrected in v3.4.0 pass, see notes)"
+        "role": "guidelines null-seed (store initial state + reset path), 2 per bundle, 4 across the baseline build",
+        "expected_count": 4
       },
-      "notes": "Second-order regression exposed once user became non-null (v3.3.2). locate.anchors corrected in the v3.4.0 pass: previously seeded with the POST-unlock value ('guidelinesAcceptedAt: new Date(0)'), which cannot locate the target in a fresh, not-yet-unlocked build.",
+      "notes": "Second-order regression exposed once user became non-null (v3.3.2). locate.anchors corrected in the v3.4.0 pass: previously seeded with the POST-unlock value ('guidelinesAcceptedAt: new Date(0)'), which cannot locate the target in a fresh, not-yet-unlocked build. expected_count=4 = 2 occurrences per bundle (initial state + reset), matching the recorded evidence.",
       "status": "active",
       "transform": "Initial state guidelinesAcceptedAt:new Date(0) so the modal's null-gate is never true.",
       "verify": [
