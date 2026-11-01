@@ -60,6 +60,14 @@ clicks the floating button, reads the panel again and writes `work/shot-<label>.
 | panel text | “chessr .io”, “Войдите в аккаунт”, “Войти”, “Забыли пароль?”, “Зарегистрироваться” | “.io”, “Premium”, “Ожидание партии”, “Партия”, “Движок”, “Auto Move”, “Дебют”, “Производительность” |
 | console | 404 for `/icons/x9110e26d-logo.png` (`ERR_FILE_NOT_FOUND`) | 404 for the same asset, plus two 401s from authenticated-looking requests made with the placeholder session |
 
+![Baseline: the sign-in form, with the upstream 404 logo](assets/panel-baseline.png)
+
+_Stock build: sign-in form, broken namespaced logo._
+
+![Unlocked: the analysis panel, badged Premium](assets/panel-unlocked.png)
+
+_Unlocked build: panel opens directly, badged Premium, no auth form._
+
 Interpretation: the restored bundle boots, React mounts, the overlay renders and the unlock
 removes the sign-in gate. The 401s are the expected consequence of the fake session and are
 the runtime evidence for the limitation described in the README — the panel works, the
