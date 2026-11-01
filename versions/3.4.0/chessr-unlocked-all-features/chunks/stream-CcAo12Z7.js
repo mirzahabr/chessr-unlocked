@@ -349,10 +349,18 @@ var u = o((_0x474fdd) => {
     var _0x8a442d = -1;
     var _0x543aa1 = 5;
     var _0x32b94f = -1;
+    // NOTE: this binding must be declared with `var`. The deobfuscation pass
+    // turned the original `var f; if (...) { f = function(){} }` into a
+    // block-scoped function declaration, which left the other two branches
+    // assigning an undeclared variable. That is a silent implicit-global in
+    // sloppy mode (how content.js is loaded) but a hard ReferenceError in an
+    // ES module (how stream.html loads this bundle) — which crashed React's
+    // scheduler at startup and rendered Stream Mode as a blank page.
+    var _0x40df63;
     if (typeof _0x26501a == "function") {
-      function _0x40df63() {
+      _0x40df63 = function () {
         _0x26501a(_0x8f1dc6);
-      }
+      };
     } else if (typeof MessageChannel !== "undefined") {
       var _0x11c134 = new MessageChannel();
       var _0x34032d = _0x11c134.port2;
@@ -52766,7 +52774,38 @@ var Ip = {
     x: 20,
     y: 20,
   },
+  widgetGroups: [],
 };
+function _0x2f0a91() {
+  return "wg-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+function _0x8f3c21(_0x2a1c04, _0x1f6a3d, _0x4c9e17) {
+  let _0x5d0b92 = (_0x2a1c04 ?? [])
+    .map((_0x3f8a21) => ({
+      ..._0x3f8a21,
+      items: _0x3f8a21.items.filter((_0x1e8b4c) =>
+        _0x1f6a3d.includes(_0x1e8b4c),
+      ),
+    }))
+    .filter((_0x2c9d17) => _0x2c9d17.items.length > 0);
+  let _0x4b2e63 = new Set(_0x5d0b92.flatMap((_0x1a7f52) => _0x1a7f52.items));
+  let _0x3d1a90 = _0x1f6a3d.filter((_0x2e6f81) => !_0x4b2e63.has(_0x2e6f81));
+  if (_0x3d1a90.length > 0) {
+    if (_0x5d0b92.length > 0) {
+      _0x5d0b92[_0x5d0b92.length - 1] = {
+        ..._0x5d0b92[_0x5d0b92.length - 1],
+        items: [..._0x5d0b92[_0x5d0b92.length - 1].items, ..._0x3d1a90],
+      };
+    } else {
+      _0x5d0b92.push({
+        id: _0x2f0a91(),
+        position: _0x4c9e17,
+        items: _0x3d1a90,
+      });
+    }
+  }
+  return _0x5d0b92;
+}
 var Lp = Zi()((_0x4113c3, _0x3d09d4) => ({
   ...Ip,
   editMode: false,
@@ -52786,14 +52825,27 @@ var Lp = Zi()((_0x4113c3, _0x3d09d4) => ({
     );
   },
   togglePin: (_0x298e90) => {
-    let { pinned: _0x4920dc } = _0x3d09d4();
+    let {
+      pinned: _0x4920dc,
+      widgetGroups: _0x1b4a72,
+      widgetPosition: _0x2a9f14,
+    } = _0x3d09d4();
     if (_0x4920dc.includes(_0x298e90)) {
+      let _0x4e8c31 = _0x4920dc.filter((_0x294b0f) => _0x294b0f !== _0x298e90);
       _0x4113c3({
-        pinned: _0x4920dc.filter((_0x294b0f) => _0x294b0f !== _0x298e90),
+        pinned: _0x4e8c31,
+        widgetGroups: _0x1b4a72
+          .map((_0x298f6d) => ({
+            ..._0x298f6d,
+            items: _0x298f6d.items.filter((_0x50c2e9) => _0x50c2e9 !== _0x298e90),
+          }))
+          .filter((_0x1c9a70) => _0x1c9a70.items.length > 0),
       });
     } else {
+      let _0x5f1a83 = [..._0x4920dc, _0x298e90];
       _0x4113c3({
-        pinned: [..._0x4920dc, _0x298e90],
+        pinned: _0x5f1a83,
+        widgetGroups: _0x8f3c21(_0x1b4a72, _0x5f1a83, _0x2a9f14),
       });
     }
   },
@@ -52808,6 +52860,21 @@ var Lp = Zi()((_0x4113c3, _0x3d09d4) => ({
         y: _0x42df4b,
       },
     }),
+  setWidgetGroups: (_0x4a2f81) =>
+    _0x4113c3({
+      widgetGroups: _0x4a2f81,
+    }),
+  setGroupPosition: (_0x1c8b57, _0x2a7dc4, _0x42df4b) =>
+    _0x4113c3({
+      widgetGroups: _0x3d09d4().widgetGroups.map((_0x2d9a41) =>
+        _0x2d9a41.id === _0x1c8b57
+          ? {
+              ..._0x2d9a41,
+              position: { x: _0x2a7dc4, y: _0x42df4b },
+            }
+          : _0x2d9a41,
+      ),
+    }),
   loadFromCloud: (_0x2b2034) => {
     let _0x1ecd02 = (_0x186bf8, _0x5ac4a3) => {
       let _0x500159 = new Set(_0x5ac4a3);
@@ -52819,11 +52886,14 @@ var Lp = Zi()((_0x4113c3, _0x3d09d4) => ({
       );
       return [..._0x4b14f3, ..._0xc86a92];
     };
+    let _0x1a9c04 = _0x2b2034.pinned ?? Ip.pinned;
+    let _0x2c8d95 = _0x2b2034.widgetPosition ?? Ip.widgetPosition;
     _0x4113c3({
       gameOrder: _0x1ecd02(_0x2b2034.gameOrder, Ip.gameOrder),
       engineOrder: _0x1ecd02(_0x2b2034.engineOrder, Ip.engineOrder),
-      pinned: _0x2b2034.pinned ?? Ip.pinned,
-      widgetPosition: _0x2b2034.widgetPosition ?? Ip.widgetPosition,
+      pinned: _0x1a9c04,
+      widgetPosition: _0x2c8d95,
+      widgetGroups: _0x8f3c21(_0x2b2034.widgetGroups ?? [], _0x1a9c04, _0x2c8d95),
     });
   },
   getConfig: () => {
@@ -52832,12 +52902,14 @@ var Lp = Zi()((_0x4113c3, _0x3d09d4) => ({
       engineOrder: _0x4dd361,
       pinned: _0x10f0f2,
       widgetPosition: _0xd61eac,
+      widgetGroups: _0x4f8a12,
     } = _0x3d09d4();
     return {
       gameOrder: _0x516970,
       engineOrder: _0x4dd361,
       pinned: _0x10f0f2,
       widgetPosition: _0xd61eac,
+      widgetGroups: _0x4f8a12,
     };
   },
   resetToDefaults: () =>
@@ -52856,7 +52928,7 @@ var Rp = [
       label: "Pick my engine",
       action: {
         kind: "open-tab",
-        tab: "settings:engine",
+        tab: "game:engine",
       },
     },
   },
@@ -53437,6 +53509,18 @@ var _m = {
   imprecision: 0,
   forceServerEngine: false,
   serverLoadThreshold: 0,
+  randomEloEnabled: false,
+  randomEloMin: 800,
+  randomEloMax: 2000,
+  randomMaiaTargetEnabled: false,
+  randomMaiaTargetMin: 1000,
+  randomMaiaTargetMax: 2000,
+  randomMaiaOppoEnabled: false,
+  randomMaiaOppoMin: 1000,
+  randomMaiaOppoMax: 2000,
+  randomImprecisionEnabled: false,
+  randomImprecisionMin: 0,
+  randomImprecisionMax: 30,
 };
 var vm = Zi()((_0x4c0fa4, _0x3f99c1) => ({
   ..._m,
@@ -53555,6 +53639,95 @@ var vm = Zi()((_0x4c0fa4, _0x3f99c1) => ({
     _0x4c0fa4({
       limitStrength: _0x305990,
     }),
+  // NOTE: enabling deliberately does NOT re-roll the ELO — the current target
+  // ELO stays untouched until the next move triggers rollRandomElo().
+  setRandomEloEnabled: (_0x2f6a11) =>
+    _0x4c0fa4({
+      randomEloEnabled: _0x2f6a11,
+    }),
+  setRandomEloMin: (_0x4a8f21) => {
+    let _0x1a2b3c = Math.max(400, Math.min(3500, Math.round(_0x4a8f21)));
+    _0x4c0fa4({
+      randomEloMin: _0x1a2b3c,
+      randomEloMax: Math.max(_0x1a2b3c, _0x3f99c1().randomEloMax),
+    });
+  },
+  setRandomEloMax: (_0x5c9d2e) => {
+    let _0x1a2b3c = Math.max(400, Math.min(3500, Math.round(_0x5c9d2e)));
+    _0x4c0fa4({
+      randomEloMax: _0x1a2b3c,
+      randomEloMin: Math.min(_0x1a2b3c, _0x3f99c1().randomEloMin),
+    });
+  },
+  setRandomEloRange: (_0x6b1a2f) => {
+    let [_0x2d3e4a, _0x1f5b6c] = _0x6b1a2f;
+    _0x4c0fa4({
+      randomEloMin: Math.max(400, Math.min(3500, Math.round(_0x2d3e4a))),
+      randomEloMax: Math.max(400, Math.min(3500, Math.round(_0x1f5b6c))),
+    });
+  },
+  setRandomMaiaTargetEnabled: (_0x2f6a11) =>
+    _0x4c0fa4({ randomMaiaTargetEnabled: _0x2f6a11 }),
+  setRandomMaiaTargetRange: (_0x6b1a2f) => {
+    let [_0x2d3e4a, _0x1f5b6c] = _0x6b1a2f;
+    _0x4c0fa4({
+      randomMaiaTargetMin: Math.max(600, Math.min(2600, Math.round(_0x2d3e4a))),
+      randomMaiaTargetMax: Math.max(600, Math.min(2600, Math.round(_0x1f5b6c))),
+    });
+  },
+  setRandomMaiaOppoEnabled: (_0x2f6a11) =>
+    _0x4c0fa4({ randomMaiaOppoEnabled: _0x2f6a11 }),
+  setRandomMaiaOppoRange: (_0x6b1a2f) => {
+    let [_0x2d3e4a, _0x1f5b6c] = _0x6b1a2f;
+    _0x4c0fa4({
+      randomMaiaOppoMin: Math.max(600, Math.min(2600, Math.round(_0x2d3e4a))),
+      randomMaiaOppoMax: Math.max(600, Math.min(2600, Math.round(_0x1f5b6c))),
+    });
+  },
+  setRandomImprecisionEnabled: (_0x2f6a11) =>
+    _0x4c0fa4({ randomImprecisionEnabled: _0x2f6a11 }),
+  setRandomImprecisionRange: (_0x6b1a2f) => {
+    let [_0x2d3e4a, _0x1f5b6c] = _0x6b1a2f;
+    _0x4c0fa4({
+      randomImprecisionMin: Math.max(0, Math.min(100, Math.round(_0x2d3e4a))),
+      randomImprecisionMax: Math.max(0, Math.min(100, Math.round(_0x1f5b6c))),
+    });
+  },
+  rollRandomElo: () => {
+    let _0x8c1d2e = _0x3f99c1();
+    let _0x7f3a1b = (_0x4e2d1a, _0x5b3c2d, _0x6a4e3f, _0x1c5d4e, _0x2e6f5a) => {
+      let _0x3a7b6c = Math.min(_0x4e2d1a, _0x5b3c2d);
+      let _0x4b8c7d = Math.max(_0x4e2d1a, _0x5b3c2d);
+      let _0x5c9d8e =
+        Math.round(
+          (_0x3a7b6c + Math.random() * (_0x4b8c7d - _0x3a7b6c)) / _0x6a4e3f,
+        ) * _0x6a4e3f;
+      return Math.max(_0x1c5d4e, Math.min(_0x2e6f5a, _0x5c9d8e));
+    };
+    let _0x9d1e2f = {};
+    if (_0x8c1d2e.randomEloEnabled) {
+      _0x9d1e2f.targetEloAuto = false;
+      _0x9d1e2f.targetEloManual = _0x7f3a1b(
+        _0x8c1d2e.randomEloMin, _0x8c1d2e.randomEloMax, 50, 400, 3500);
+    }
+    if (_0x8c1d2e.randomMaiaTargetEnabled) {
+      _0x9d1e2f.maiaTargetEloAuto = false;
+      _0x9d1e2f.maiaTargetEloManual = _0x7f3a1b(
+        _0x8c1d2e.randomMaiaTargetMin, _0x8c1d2e.randomMaiaTargetMax, 50, 600, 2600);
+    }
+    if (_0x8c1d2e.randomMaiaOppoEnabled) {
+      _0x9d1e2f.maiaOppoEloAuto = false;
+      _0x9d1e2f.maiaOppoEloManual = _0x7f3a1b(
+        _0x8c1d2e.randomMaiaOppoMin, _0x8c1d2e.randomMaiaOppoMax, 50, 600, 2600);
+    }
+    if (_0x8c1d2e.randomImprecisionEnabled) {
+      _0x9d1e2f.imprecision = _0x7f3a1b(
+        _0x8c1d2e.randomImprecisionMin, _0x8c1d2e.randomImprecisionMax, 1, 0, 100);
+    }
+    if (Object.keys(_0x9d1e2f).length > 0) {
+      _0x4c0fa4(_0x9d1e2f);
+    }
+  },
   setSearchMode: (_0x184641) =>
     _0x4c0fa4({
       searchMode: _0x184641,
@@ -54298,6 +54471,7 @@ var Lm = {
     "game.tab.engine": "Engine",
     "game.tab.automove": "Auto Move",
     "game.tab.opening": "Opening",
+    "sidebar.section.game": "Game",
     "game.status.checkmateLost": "Checkmate — You lost",
     "game.status.checkmateWon": "Checkmate — You won!",
     "game.status.stalemate": "Stalemate",
@@ -54492,6 +54666,7 @@ var Lm = {
     "settings.tab.general": "General",
     "settings.tab.engine": "Engine",
     "settings.tab.suggestions": "Suggestions",
+    "sidebar.section.settings": "Settings",
     "settings.general.language": "Language",
     "settings.general.language.auto": "Auto (browser default)",
     "settings.general.anonNames": "Anonymous names",
@@ -54795,6 +54970,7 @@ var Lm = {
     "game.tab.engine": "Motor",
     "game.tab.automove": "Auto Move",
     "game.tab.opening": "Apertura",
+    "sidebar.section.game": "Partida",
     "game.status.checkmateLost": "Jaque mate — Perdiste",
     "game.status.checkmateWon": "Jaque mate — ¡Ganaste!",
     "game.status.stalemate": "Tablas por ahogado",
@@ -54992,6 +55168,7 @@ var Lm = {
     "settings.tab.general": "General",
     "settings.tab.engine": "Motor",
     "settings.tab.suggestions": "Sugerencias",
+    "sidebar.section.settings": "Ajustes",
     "settings.general.language": "Idioma",
     "settings.general.language.auto": "Auto (idioma del navegador)",
     "settings.general.anonNames": "Nombres anónimos",
@@ -55300,6 +55477,7 @@ var Lm = {
     "game.tab.engine": "Motor",
     "game.tab.automove": "Auto Move",
     "game.tab.opening": "Abertura",
+    "sidebar.section.game": "Partida",
     "game.status.checkmateLost": "Xeque-mate — Você perdeu",
     "game.status.checkmateWon": "Xeque-mate — Você ganhou!",
     "game.status.stalemate": "Empate por afogamento",
@@ -55499,6 +55677,7 @@ var Lm = {
     "settings.tab.general": "Geral",
     "settings.tab.engine": "Motor",
     "settings.tab.suggestions": "Sugestões",
+    "sidebar.section.settings": "Configurações",
     "settings.general.language": "Idioma",
     "settings.general.language.auto": "Auto (idioma do navegador)",
     "settings.general.anonNames": "Nomes anônimos",
@@ -55805,6 +55984,7 @@ var Lm = {
     "game.tab.engine": "Движок",
     "game.tab.automove": "Auto Move",
     "game.tab.opening": "Дебют",
+    "sidebar.section.game": "Партия",
     "game.status.checkmateLost": "Мат — Вы проиграли",
     "game.status.checkmateWon": "Мат — Вы выиграли!",
     "game.status.stalemate": "Пат",
@@ -55998,6 +56178,7 @@ var Lm = {
     "settings.tab.general": "Общие",
     "settings.tab.engine": "Движок",
     "settings.tab.suggestions": "Подсказки",
+    "sidebar.section.settings": "Настройки",
     "settings.general.language": "Язык",
     "settings.general.language.auto": "Авто (язык браузера)",
     "settings.general.anonNames": "Скрыть имена",
@@ -56304,6 +56485,7 @@ var Lm = {
     "game.tab.engine": "Moteur",
     "game.tab.automove": "Auto Move",
     "game.tab.opening": "Ouverture",
+    "sidebar.section.game": "Partie",
     "game.status.checkmateLost": "Échec et mat — Vous avez perdu",
     "game.status.checkmateWon": "Échec et mat — Vous avez gagné !",
     "game.status.stalemate": "Pat",
@@ -56507,6 +56689,7 @@ var Lm = {
     "settings.tab.general": "Général",
     "settings.tab.engine": "Moteur",
     "settings.tab.suggestions": "Suggestions",
+    "sidebar.section.settings": "Paramètres",
     "settings.general.language": "Langue",
     "settings.general.language.auto": "Auto (langue du navigateur)",
     "settings.general.anonNames": "Noms anonymes",
@@ -56816,6 +56999,7 @@ var Lm = {
     "game.tab.engine": "Engine",
     "game.tab.automove": "Auto Move",
     "game.tab.opening": "Eröffnung",
+    "sidebar.section.game": "Partie",
     "game.status.checkmateLost": "Schachmatt — Du hast verloren",
     "game.status.checkmateWon": "Schachmatt — Du hast gewonnen!",
     "game.status.stalemate": "Patt",
@@ -57011,6 +57195,7 @@ var Lm = {
     "settings.tab.general": "Allgemein",
     "settings.tab.engine": "Engine",
     "settings.tab.suggestions": "Vorschläge",
+    "sidebar.section.settings": "Einstellungen",
     "settings.general.language": "Sprache",
     "settings.general.language.auto": "Auto (Browsersprache)",
     "settings.general.anonNames": "Anonyme Namen",
@@ -57318,6 +57503,7 @@ var Lm = {
     "game.tab.engine": "Motore",
     "game.tab.automove": "Auto Move",
     "game.tab.opening": "Apertura",
+    "sidebar.section.game": "Partita",
     "game.status.checkmateLost": "Scacco matto — Hai perso",
     "game.status.checkmateWon": "Scacco matto — Hai vinto!",
     "game.status.stalemate": "Stallo",
@@ -57516,6 +57702,7 @@ var Lm = {
     "settings.tab.general": "Generale",
     "settings.tab.engine": "Motore",
     "settings.tab.suggestions": "Suggerimenti",
+    "sidebar.section.settings": "Impostazioni",
     "settings.general.language": "Lingua",
     "settings.general.language.auto": "Auto (lingua del browser)",
     "settings.general.anonNames": "Nomi anonimi",
@@ -57827,6 +58014,7 @@ var Lm = {
     "game.tab.engine": "Motor",
     "game.tab.automove": "Auto Move",
     "game.tab.opening": "Açılış",
+    "sidebar.section.game": "Oyun",
     "game.status.checkmateLost": "Şah mat — Kaybettin",
     "game.status.checkmateWon": "Şah mat — Kazandın!",
     "game.status.stalemate": "Pat",
@@ -58019,6 +58207,7 @@ var Lm = {
     "settings.tab.general": "Genel",
     "settings.tab.engine": "Motor",
     "settings.tab.suggestions": "Öneriler",
+    "sidebar.section.settings": "Ayarlar",
     "settings.general.language": "Dil",
     "settings.general.language.auto": "Oto (tarayıcı dili)",
     "settings.general.anonNames": "Anonim isimler",
@@ -58394,6 +58583,18 @@ function th() {
     imprecision: _0x3836fc.imprecision,
     forceServerEngine: _0x3836fc.forceServerEngine,
     serverLoadThreshold: _0x3836fc.serverLoadThreshold,
+    randomEloEnabled: _0x3836fc.randomEloEnabled,
+    randomEloMin: _0x3836fc.randomEloMin,
+    randomEloMax: _0x3836fc.randomEloMax,
+    randomMaiaTargetEnabled: _0x3836fc.randomMaiaTargetEnabled,
+    randomMaiaTargetMin: _0x3836fc.randomMaiaTargetMin,
+    randomMaiaTargetMax: _0x3836fc.randomMaiaTargetMax,
+    randomMaiaOppoEnabled: _0x3836fc.randomMaiaOppoEnabled,
+    randomMaiaOppoMin: _0x3836fc.randomMaiaOppoMin,
+    randomMaiaOppoMax: _0x3836fc.randomMaiaOppoMax,
+    randomImprecisionEnabled: _0x3836fc.randomImprecisionEnabled,
+    randomImprecisionMin: _0x3836fc.randomImprecisionMin,
+    randomImprecisionMax: _0x3836fc.randomImprecisionMax,
   };
 }
 function nh() {
@@ -58442,21 +58643,31 @@ function rh(_0x3f429b) {
     opening: Mm.getState().getPayload(),
   };
 }
+// Local settings persistence — see the matching block in content.js. The
+// account system is stubbed out, so the Supabase write below can never
+// succeed; without a local copy every setting reset on each reload.
+var _0x10ca10 = "chessr_settings_local";
+function _0x10ca11(_0x10ca12) {
+  try {
+    v.storage.local.set({ [_0x10ca10]: _0x10ca12 }).catch(() => {});
+  } catch {}
+}
 function ih(_0xe1155) {
-  if (eh) {
-    if ($m) {
-      clearTimeout($m);
-    }
-    $m = setTimeout(() => {
-      let _0x1c1680 = rh(_0xe1155);
+  if ($m) {
+    clearTimeout($m);
+  }
+  $m = setTimeout(() => {
+    let _0x1c1680 = rh(_0xe1155);
+    _0x10ca11(_0x1c1680);
+    if (eh) {
       B.from("user_settings")
         .update({
           extension_settings: _0x1c1680,
         })
         .eq("user_id", eh)
         .then();
-    }, 1000);
-  }
+    }
+  }, 1000);
 }
 var ah = Zi((_0x366699, _0x57eafb) => ({
   ...Qm,
@@ -58623,12 +58834,21 @@ var ah = Zi((_0x366699, _0x57eafb) => ({
   loadFromCloud: async (_0x4755f7) => {
     eh = _0x4755f7;
     try {
-      let { data: _0x3af6ff } = await B.from("user_settings")
-        .select("extension_settings")
-        .eq("user_id", _0x4755f7)
-        .single();
-      if (_0x3af6ff?.extension_settings) {
-        let _0x470e43 = _0x3af6ff.extension_settings;
+      let _0x3af6ff = null;
+      try {
+        let _0x10ca13 = await B.from("user_settings")
+          .select("extension_settings")
+          .eq("user_id", _0x4755f7)
+          .single();
+        _0x3af6ff = _0x10ca13?.data ?? null;
+      } catch {}
+      let _0x10ca14 = null;
+      try {
+        _0x10ca14 = (await v.storage.local.get(_0x10ca10))[_0x10ca10] ?? null;
+      } catch {}
+      let _0x10ca15 = _0x10ca14 ?? _0x3af6ff?.extension_settings ?? null;
+      if (_0x10ca15) {
+        let _0x470e43 = _0x10ca15;
         let _0x1fa363 = _0x470e43.showTitle ?? Qm.showTitle;
         let _0x3128d3 = _0x470e43.titleType ?? Qm.titleType;
         let _0x54c838 = _0x470e43.locale;
@@ -58773,6 +58993,60 @@ var ah = Zi((_0x366699, _0x57eafb) => ({
           if (_0x4ea717.serverLoadThreshold !== undefined) {
             _0x427c34.setServerLoadThreshold(_0x4ea717.serverLoadThreshold);
           }
+          if (_0x4ea717.randomEloEnabled !== undefined) {
+            _0x427c34.setRandomEloEnabled(_0x4ea717.randomEloEnabled);
+          }
+          if (
+            _0x4ea717.randomEloMin !== undefined &&
+            _0x4ea717.randomEloMax !== undefined
+          ) {
+            _0x427c34.setRandomEloRange([
+              _0x4ea717.randomEloMin,
+              _0x4ea717.randomEloMax,
+            ]);
+          }
+          if (_0x4ea717.randomMaiaTargetEnabled !== undefined) {
+            _0x427c34.setRandomMaiaTargetEnabled(
+              _0x4ea717.randomMaiaTargetEnabled,
+            );
+          }
+          if (
+            _0x4ea717.randomMaiaTargetMin !== undefined &&
+            _0x4ea717.randomMaiaTargetMax !== undefined
+          ) {
+            _0x427c34.setRandomMaiaTargetRange([
+              _0x4ea717.randomMaiaTargetMin,
+              _0x4ea717.randomMaiaTargetMax,
+            ]);
+          }
+          if (_0x4ea717.randomMaiaOppoEnabled !== undefined) {
+            _0x427c34.setRandomMaiaOppoEnabled(
+              _0x4ea717.randomMaiaOppoEnabled,
+            );
+          }
+          if (
+            _0x4ea717.randomMaiaOppoMin !== undefined &&
+            _0x4ea717.randomMaiaOppoMax !== undefined
+          ) {
+            _0x427c34.setRandomMaiaOppoRange([
+              _0x4ea717.randomMaiaOppoMin,
+              _0x4ea717.randomMaiaOppoMax,
+            ]);
+          }
+          if (_0x4ea717.randomImprecisionEnabled !== undefined) {
+            _0x427c34.setRandomImprecisionEnabled(
+              _0x4ea717.randomImprecisionEnabled,
+            );
+          }
+          if (
+            _0x4ea717.randomImprecisionMin !== undefined &&
+            _0x4ea717.randomImprecisionMax !== undefined
+          ) {
+            _0x427c34.setRandomImprecisionRange([
+              _0x4ea717.randomImprecisionMin,
+              _0x4ea717.randomImprecisionMax,
+            ]);
+          }
         }
         if (_0x470e43.autoMove) {
           Em.setState(_0x470e43.autoMove);
@@ -58801,25 +59075,32 @@ var ah = Zi((_0x366699, _0x57eafb) => ({
 }));
 var oh = null;
 function sh() {
-  if (eh) {
-    if (oh) {
-      clearTimeout(oh);
-    }
-    oh = setTimeout(() => {
-      let _0x3eb770 = rh(ah.getState());
+  if (oh) {
+    clearTimeout(oh);
+  }
+  oh = setTimeout(() => {
+    let _0x3eb770 = rh(ah.getState());
+    _0x10ca11(_0x3eb770);
+    if (eh) {
       B.from("user_settings")
         .update({
           extension_settings: _0x3eb770,
         })
         .eq("user_id", eh)
         .then();
-    }, 1000);
-  }
+    }
+  }, 1000);
 }
 Lp.subscribe(sh);
 vm.subscribe(sh);
 Em.subscribe(sh);
 Mm.subscribe(sh);
+// Stream Mode never restored settings at all upstream (nothing calls
+// loadFromCloud here). Pull in the locally-saved copy on load so this page
+// shows the same configuration as the in-page overlay.
+ah.getState()
+  .loadFromCloud(null)
+  .catch(() => {});
 var ch = o((_0x5eaf4c) => {
   (function () {
     function _0x4ff555(_0x4f456c) {
@@ -60603,38 +60884,6 @@ function Sh({
                   U.Fragment,
                   {
                     children: [
-                      (0, U.jsxDEV)(
-                        "span",
-                        {
-                          className: "panel-header-title",
-                          children: [
-                            "chessr",
-                            (0, U.jsxDEV)(
-                              "span",
-                              {
-                                className: "panel-header-title-dot",
-                                children: ".io",
-                              },
-                              undefined,
-                              false,
-                              {
-                                fileName: bh,
-                                lineNumber: 64,
-                                columnNumber: 56,
-                              },
-                              this,
-                            ),
-                          ],
-                        },
-                        undefined,
-                        true,
-                        {
-                          fileName: bh,
-                          lineNumber: 64,
-                          columnNumber: 13,
-                        },
-                        this,
-                      ),
                       _0x89b0ce
                         ? (0, U.jsxDEV)(
                             "span",
@@ -60942,78 +61191,6 @@ function Sh({
                   {
                     fileName: bh,
                     lineNumber: 112,
-                    columnNumber: 11,
-                  },
-                  this,
-                ),
-              !_0x58d9b4 &&
-                !_0x10ba6b &&
-                (0, U.jsxDEV)(
-                  "button",
-                  {
-                    className: "panel-header-btn",
-                    onClick: _0x255a68,
-                    "data-tooltip": _0x24c983("panel.settings"),
-                    disabled: _0x20358b,
-                    children: (0, U.jsxDEV)(
-                      "svg",
-                      {
-                        width: "14",
-                        height: "14",
-                        viewBox: "0 0 24 24",
-                        fill: "none",
-                        stroke: "currentColor",
-                        strokeWidth: "2",
-                        strokeLinecap: "round",
-                        strokeLinejoin: "round",
-                        children: [
-                          (0, U.jsxDEV)(
-                            "path",
-                            {
-                              d: "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z",
-                            },
-                            undefined,
-                            false,
-                            {
-                              fileName: bh,
-                              lineNumber: 132,
-                              columnNumber: 15,
-                            },
-                            this,
-                          ),
-                          (0, U.jsxDEV)(
-                            "circle",
-                            {
-                              cx: "12",
-                              cy: "12",
-                              r: "3",
-                            },
-                            undefined,
-                            false,
-                            {
-                              fileName: bh,
-                              lineNumber: 133,
-                              columnNumber: 15,
-                            },
-                            this,
-                          ),
-                        ],
-                      },
-                      undefined,
-                      true,
-                      {
-                        fileName: bh,
-                        lineNumber: 131,
-                        columnNumber: 13,
-                      },
-                      this,
-                    ),
-                  },
-                  undefined,
-                  false,
-                  {
-                    fileName: bh,
-                    lineNumber: 130,
                     columnNumber: 11,
                   },
                   this,
@@ -65885,67 +66062,67 @@ function ay() {
       key: "best",
       label: "Best",
       full: _0x4ec886("perf.cls.best"),
-      color: "#81B64C",
+      color: "#3b83d9",
     },
     {
       key: "brilliant",
       label: "Brill",
       full: _0x4ec886("perf.cls.brilliant"),
-      color: "#26C2A3",
+      color: "#3b83d9",
     },
     {
       key: "great",
       label: "Great",
       full: _0x4ec886("perf.cls.great"),
-      color: "#749BBF",
+      color: "#3b83d9",
     },
     {
       key: "excellent",
       label: "Exce",
       full: _0x4ec886("perf.cls.excellent"),
-      color: "#6ee7b7",
+      color: "#3b83d9",
     },
     {
       key: "good",
       label: "Good",
       full: _0x4ec886("perf.cls.good"),
-      color: "#95B776",
+      color: "#3b83d9",
     },
     {
       key: "book",
       label: "Book",
       full: _0x4ec886("perf.cls.book"),
-      color: "#D5A47D",
+      color: "#3b83d9",
     },
     {
       key: "forced",
       label: "Frcd",
       full: _0x4ec886("perf.cls.forced"),
-      color: "#96AF8B",
+      color: "#3b83d9",
     },
     {
       key: "inaccuracy",
       label: "Inacc",
       full: _0x4ec886("perf.cls.inaccuracy"),
-      color: "#F7C631",
+      color: "#3b83d9",
     },
     {
       key: "mistake",
       label: "Mist",
       full: _0x4ec886("perf.cls.mistake"),
-      color: "#FFA459",
+      color: "#3b83d9",
     },
     {
       key: "miss",
       label: "Miss",
       full: _0x4ec886("perf.cls.miss"),
-      color: "#FF7769",
+      color: "#3b83d9",
     },
     {
       key: "blunder",
       label: "Blund",
       full: _0x4ec886("perf.cls.blunder"),
-      color: "#FA412D",
+      color: "#3b83d9",
     },
   ];
 }
@@ -66459,21 +66636,52 @@ function fy() {
                           "data-tooltip": _0x382444,
                           children: [
                             (0, U.jsxDEV)(
-                              "span",
+                              "div",
                               {
-                                className: "perf-cls-count",
-                                style: {
-                                  color: _0x5bf55f
-                                    ? "hsl(var(--muted-foreground) / 0.4)"
-                                    : _0xf28b94,
-                                },
-                                children: _0x5e98,
+                                className: "perf-cls-head",
+                                children: [
+                                  (0, U.jsxDEV)(
+                                    "span",
+                                    {
+                                      className: "perf-cls-count",
+                                      style: {
+                                        color: _0x5bf55f
+                                          ? "hsl(var(--muted-foreground) / 0.4)"
+                                          : _0xf28b94,
+                                      },
+                                      children: _0x5e98,
+                                    },
+                                    undefined,
+                                    false,
+                                    {
+                                      fileName: iy,
+                                      lineNumber: 262,
+                                      columnNumber: 17,
+                                    },
+                                    this,
+                                  ),
+                                  (0, U.jsxDEV)(
+                                    eS,
+                                    {
+                                      type: _0x49f95e,
+                                      size: 16,
+                                    },
+                                    undefined,
+                                    false,
+                                    {
+                                      fileName: iy,
+                                      lineNumber: 268,
+                                      columnNumber: 17,
+                                    },
+                                    this,
+                                  ),
+                                ],
                               },
                               undefined,
-                              false,
+                              true,
                               {
                                 fileName: iy,
-                                lineNumber: 262,
+                                lineNumber: 261,
                                 columnNumber: 17,
                               },
                               this,
@@ -66481,14 +66689,20 @@ function fy() {
                             (0, U.jsxDEV)(
                               "span",
                               {
-                                className: "perf-cls-label",
-                                children: _0x449cdc,
+                                style: {
+                                  fontSize: "9px",
+                                  color: _0x5bf55f
+                                    ? "hsl(var(--muted-foreground) / 0.4)"
+                                    : _0xf28b94,
+                                  marginTop: "2px",
+                                },
+                                children: _0x382444,
                               },
                               undefined,
                               false,
                               {
                                 fileName: iy,
-                                lineNumber: 268,
+                                lineNumber: 270,
                                 columnNumber: 17,
                               },
                               this,
@@ -66626,17 +66840,17 @@ function Oy() {
   return Ey;
 }
 var ky = {
-  best: "#81B64C",
-  brilliant: "#26C2A3",
-  great: "#749BBF",
-  excellent: "#6ee7b7",
-  good: "#95B776",
-  book: "#D5A47D",
-  forced: "#96AF8B",
-  inaccuracy: "#F7C631",
-  mistake: "#FFA459",
-  miss: "#FF7769",
-  blunder: "#FA412D",
+  best: "#3b83d9",
+  brilliant: "#3b83d9",
+  great: "#3b83d9",
+  excellent: "#3b83d9",
+  good: "#3b83d9",
+  book: "#3b83d9",
+  forced: "#3b83d9",
+  inaccuracy: "#3b83d9",
+  mistake: "#3b83d9",
+  miss: "#3b83d9",
+  blunder: "#3b83d9",
 };
 var Ay = {
   best: "Best",
@@ -66694,15 +66908,25 @@ function nb(_0x321a56) {
   let _0x469df1 = _0x321a56.getBoundingClientRect();
   Fy = _0x469df1.width / 8;
   let _0x4d4497 = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  // Badges straddle the squares' corners and so overhang the board on the
+  // outer files and ranks. An <svg> clips to its own viewport, which used to
+  // cut them off, so the overlay is grown by a margin on every side. Board
+  // coordinates stay 0..width because the viewBox origin moves with it.
+  let _0x2a3f19 = Fy * 0.4;
+  let _0x1b7e04 = _0x469df1.width + _0x2a3f19 * 2;
   _0x4d4497.setAttribute("class", "chessr-arrow-overlay");
-  _0x4d4497.setAttribute("width", "" + _0x469df1.width);
-  _0x4d4497.setAttribute("height", "" + _0x469df1.width);
+  _0x4d4497.setAttribute("width", "" + _0x1b7e04);
+  _0x4d4497.setAttribute("height", "" + _0x1b7e04);
   _0x4d4497.setAttribute(
     "viewBox",
-    "0 0 " + _0x469df1.width + " " + _0x469df1.width,
+    -_0x2a3f19 + " " + -_0x2a3f19 + " " + _0x1b7e04 + " " + _0x1b7e04,
   );
   _0x4d4497.style.cssText =
-    "position:absolute;top:0;left:0;pointer-events:none;z-index:100;";
+    "position:absolute;top:" +
+    -_0x2a3f19 +
+    "px;left:" +
+    -_0x2a3f19 +
+    "px;pointer-events:none;z-index:100;overflow:visible;";
   let _0x3f2551 = document.createElementNS(
     "http://www.w3.org/2000/svg",
     "defs",
@@ -66779,53 +67003,69 @@ function ob(_0x460454, _0x28478a) {
     };
   }
 }
-function sb(_0x54ddc8, _0x3e407e, _0x54ec17, _0x2dabab, _0x2c2d4f) {
-  let _0x159ee3 = Math.max(6, Fy / 11);
-  let _0x15b4b5 = _0x159ee3 * 0.6;
-  let _0xc20bf8 = _0x159ee3 * 0.2;
-  let _0x4c6baa = _0x3e407e.length * _0x159ee3 * 0.65 + _0x15b4b5 * 2;
-  let _0x2519d4 = _0x159ee3 + _0xc20bf8 * 2;
-  let _0x2d89cd = _0x54ddc8.x + Fy / 2 - _0x4c6baa / 2 - 8;
+// Reverse map: classification short name (as shown in Ay) → classification key.
+// Used to resolve which SVG icon a badge should render.
+var _0xf3c1e1 = Object.fromEntries(
+  Object.entries(Ay).map(([_0x1f7a01, _0x2c8b44]) => [_0x2c8b44, _0x1f7a01]),
+);
+// Only classification badges are drawn on the board. Anything without an icon
+// (opening theory / deviation labels, check, capture, promotion, premove, ...)
+// renders nothing instead of an empty badge.
+function sb(_0x54ddc8, _0x3e407e, _0x54ec17, _0x2dabab, _0x2c2d4f, _0x2fd41e) {
+  let _0x3b8c71 = _0xf3c1e1[_0x3e407e];
+  if (!_0x3b8c71) {
+    return null;
+  }
+  // The 6px floor must not outgrow the square itself, or on small boards the
+  // icon and the rank badge stop fitting side by side.
+  let _0x159ee3 = Math.min(Math.max(6, Fy / 11), Fy * 0.11) * 3.75;
+  let _0x3b5c22 = _0x159ee3 * 0.6;
+  let _0x2519d4 = _0x3b5c22 * 2;
+  let _0x4c6baa = _0x159ee3 * 2.2;
+  // Sits on the corner shared by the neighbouring squares.
+  let _0x2d89cd = _0x54ddc8.x + Fy / 2 - _0x4c6baa / 2 + Fy / 3;
   let _0x1202b2 =
-    _0x54ddc8.y - Fy / 2 + _0x2519d4 / 2 + 8 + _0x2dabab * (_0x2519d4 + 2);
+    _0x54ddc8.y - Fy / 2 + _0x4c6baa / 2 - Fy / 3 + _0x2dabab * (_0x2519d4 + 2);
   let _0x35ab0c = document.createElementNS("http://www.w3.org/2000/svg", "g");
   _0x35ab0c.setAttribute(
     "transform",
     "translate(" + _0x2d89cd + ", " + _0x1202b2 + ")",
   );
+  _0x35ab0c.style.zIndex = "999";
   let _0x17bad5 = document.createElementNS(
     "http://www.w3.org/2000/svg",
-    "rect",
+    "circle",
   );
-  _0x17bad5.setAttribute("x", "" + -_0x4c6baa / 2);
-  _0x17bad5.setAttribute("y", "" + -_0x2519d4 / 2);
-  _0x17bad5.setAttribute("width", "" + _0x4c6baa);
-  _0x17bad5.setAttribute("height", "" + _0x2519d4);
-  _0x17bad5.setAttribute("rx", "" + _0x159ee3 * 0.3);
+  _0x17bad5.setAttribute("cx", "0");
+  _0x17bad5.setAttribute("cy", "0");
+  _0x17bad5.setAttribute("r", "" + _0x3b5c22);
   let _0x143c2d = parseInt(_0x54ec17.slice(1, 3), 16);
   let _0x45cf67 = parseInt(_0x54ec17.slice(3, 5), 16);
   let _0x2183dc = parseInt(_0x54ec17.slice(5, 7), 16);
   _0x17bad5.setAttribute(
     "fill",
-    "rgba(" + _0x143c2d + ", " + _0x45cf67 + ", " + _0x2183dc + ", 0.85)",
+    "rgba(" + _0x143c2d + ", " + _0x45cf67 + ", " + _0x2183dc + ", 0.6)",
   );
+  // Opponent's move: fully opaque red ring so it reads apart from our own
+  // suggestions at a glance.
+  if (_0x2fd41e) {
+    _0x17bad5.setAttribute("stroke", "#ef4444");
+    _0x17bad5.setAttribute("stroke-opacity", "1");
+    _0x17bad5.setAttribute("stroke-width", "" + Math.max(2, _0x159ee3 * 0.11));
+  }
   _0x35ab0c.appendChild(_0x17bad5);
   let _0x7bbbbe = document.createElementNS(
     "http://www.w3.org/2000/svg",
-    "text",
+    "image",
   );
-  _0x7bbbbe.setAttribute("x", "0");
-  _0x7bbbbe.setAttribute("y", "" + _0x159ee3 * 0.35);
-  _0x7bbbbe.setAttribute("text-anchor", "middle");
-  _0x7bbbbe.setAttribute("font-size", "" + _0x159ee3);
-  _0x7bbbbe.setAttribute("font-weight", "700");
   _0x7bbbbe.setAttribute(
-    "font-family",
-    "-apple-system, BlinkMacSystemFont, sans-serif",
+    "href",
+    v.runtime.getURL("/icons/cls-" + _0x3b8c71 + ".svg"),
   );
-  _0x7bbbbe.setAttribute("letter-spacing", "0.04em");
-  _0x7bbbbe.setAttribute("fill", "white");
-  _0x7bbbbe.textContent = _0x3e407e.toUpperCase();
+  _0x7bbbbe.setAttribute("x", "" + -_0x159ee3 * 0.5);
+  _0x7bbbbe.setAttribute("y", "" + -_0x159ee3 * 0.5);
+  _0x7bbbbe.setAttribute("width", "" + _0x159ee3);
+  _0x7bbbbe.setAttribute("height", "" + _0x159ee3);
   _0x35ab0c.appendChild(_0x7bbbbe);
   if (_0x2c2d4f) {
     Gi.fromTo(
@@ -66856,7 +67096,11 @@ function cb(_0x3136bd, _0x3921a6) {
       _0x490e07.isConnected &&
       _0xb19363.slice(2, 4) === _0x3136bd
     ) {
-      _0x169e3c += _0x490e07.childElementCount;
+      _0x169e3c += Array.from(_0x490e07.children).filter(
+        (_0x3f1a7c) =>
+          !_0x3f1a7c.hasAttribute("data-rank-badge") &&
+          !_0x3f1a7c.hasAttribute("data-sq-outline"),
+      ).length;
     }
   }
   let _0x3b1b05 = [
@@ -66881,7 +67125,108 @@ function cb(_0x3136bd, _0x3921a6) {
   }
   return _0x169e3c;
 }
-function lb(_0x58b807, _0x47a2f7) {
+// Rank badge ("#1", "#2", ...) drawn in the bottom-LEFT corner of the
+// destination square, 30% smaller than the classification icon. The bottom
+// corner keeps it clear of the icons of the neighbouring squares, which sit
+// on the shared TOP corners and overhang into this square.
+function _0x7c4e11(_0x54ddc8, _0x3a99e2, _0x2dabab, _0x2c2d4f) {
+  let _0x159ee3 = Math.min(Math.max(6, Fy / 11), Fy * 0.11) * 2.625;
+  let _0x3b5c22 = _0x159ee3 * 0.55;
+  let _0x2519d4 = _0x3b5c22 * 2;
+  let _0x5f2a13 = Fy * 0.04;
+  let _0x2d89cd = _0x54ddc8.x - Fy / 2 + _0x3b5c22 + _0x5f2a13;
+  let _0x1202b2 =
+    _0x54ddc8.y + Fy / 2 - _0x3b5c22 - _0x5f2a13 - _0x2dabab * (_0x2519d4 + 2);
+  let _0x35ab0c = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  _0x35ab0c.setAttribute(
+    "transform",
+    "translate(" + _0x2d89cd + ", " + _0x1202b2 + ")",
+  );
+  _0x35ab0c.style.zIndex = "999";
+  _0x35ab0c.setAttribute("data-rank-badge", "1");
+  let _0x17bad5 = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "circle",
+  );
+  _0x17bad5.setAttribute("cx", "0");
+  _0x17bad5.setAttribute("cy", "0");
+  _0x17bad5.setAttribute("r", "" + _0x3b5c22);
+  _0x17bad5.setAttribute("fill", "rgba(24, 24, 27, 0.82)");
+  _0x17bad5.setAttribute("stroke", "rgba(255, 255, 255, 0.55)");
+  _0x17bad5.setAttribute("stroke-width", "" + Math.max(1, _0x159ee3 * 0.05));
+  _0x35ab0c.appendChild(_0x17bad5);
+  let _0x2c6d18 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+  _0x2c6d18.setAttribute("x", "0");
+  _0x2c6d18.setAttribute("y", "0");
+  _0x2c6d18.setAttribute("text-anchor", "middle");
+  _0x2c6d18.setAttribute("dominant-baseline", "central");
+  _0x2c6d18.setAttribute("font-size", "" + _0x159ee3 * 0.6);
+  _0x2c6d18.setAttribute("font-weight", "700");
+  _0x2c6d18.setAttribute(
+    "font-family",
+    "-apple-system, BlinkMacSystemFont, sans-serif",
+  );
+  _0x2c6d18.setAttribute("fill", "#ffffff");
+  _0x2c6d18.textContent = "#" + _0x3a99e2;
+  _0x35ab0c.appendChild(_0x2c6d18);
+  if (_0x2c2d4f) {
+    Gi.fromTo(
+      _0x35ab0c,
+      {
+        attr: {
+          transform: "translate(" + _0x2d89cd + ", " + _0x1202b2 + ") scale(0)",
+        },
+        opacity: 0,
+      },
+      {
+        attr: {
+          transform: "translate(" + _0x2d89cd + ", " + _0x1202b2 + ") scale(1)",
+        },
+        opacity: 1,
+        duration: 0.2,
+        ease: "back.out(2)",
+      },
+    );
+  }
+  return _0x35ab0c;
+}
+// All square outlines live in one layer kept first in document order, i.e.
+// painted beneath every badge group. Without it a badge that overhangs into a
+// neighbouring square would be covered by that square's own outline, since
+// SVG has no z-index and paints strictly in document order.
+function _0x5d9c31() {
+  if (!Ny) {
+    return null;
+  }
+  let _0x2b8e91 = Ny.querySelector(":scope > [data-sq-outlines]");
+  if (!_0x2b8e91) {
+    _0x2b8e91 = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    _0x2b8e91.setAttribute("data-sq-outlines", "");
+  }
+  if (Ny.firstChild !== _0x2b8e91) {
+    Ny.insertBefore(_0x2b8e91, Ny.firstChild);
+  }
+  return _0x2b8e91;
+}
+// Semi-transparent outline around a suggestion's destination square, tinted
+// with that suggestion's arrow colour so rank #1/#2/#3 stay distinguishable.
+function _0x8ad2f4(_0x54ddc8, _0x3a99e2) {
+  let { arrowColors: _0x3a9337 } = ah.getState();
+  let _0x326742 = _0x3a9337[_0x3a99e2 - 1] || _0x3a9337[_0x3a9337.length - 1];
+  let _0x2d0b19 = Math.max(2, Fy * 0.045);
+  let _0x1ceb4d = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+  _0x1ceb4d.setAttribute("x", "" + (_0x54ddc8.x - Fy / 2 + _0x2d0b19 / 2));
+  _0x1ceb4d.setAttribute("y", "" + (_0x54ddc8.y - Fy / 2 + _0x2d0b19 / 2));
+  _0x1ceb4d.setAttribute("width", "" + (Fy - _0x2d0b19));
+  _0x1ceb4d.setAttribute("height", "" + (Fy - _0x2d0b19));
+  _0x1ceb4d.setAttribute("rx", "" + Fy * 0.06);
+  _0x1ceb4d.setAttribute("fill", "none");
+  _0x1ceb4d.setAttribute("stroke", _0x326742);
+  _0x1ceb4d.setAttribute("stroke-width", "" + _0x2d0b19);
+  _0x1ceb4d.setAttribute("stroke-opacity", "0.55");
+  return _0x1ceb4d;
+}
+function lb(_0x58b807, _0x47a2f7, _0x3a99e2) {
   let _0x8be9d5 = _0x58b807.move.slice(2, 4);
   let _0x430fa8 = tb(_0x8be9d5);
   if (!_0x430fa8) {
@@ -66890,29 +67235,23 @@ function lb(_0x58b807, _0x47a2f7) {
   let _0x24a7b7 = document.createElementNS("http://www.w3.org/2000/svg", "g");
   _0x24a7b7.setAttribute("data-badges-for", _0x58b807.move);
   let _0x2f37df = cb(_0x8be9d5);
-  if (Wy && Hy === _0x58b807.move) {
-    _0x24a7b7.appendChild(
-      sb(_0x430fa8, Wy.slice(0, 5), Uy, _0x2f37df++, _0x47a2f7),
-    );
-  }
-  if (Jy && Ky === _0x58b807.move) {
-    _0x24a7b7.appendChild(
-      sb(_0x430fa8, Jy.slice(0, 5), qy, _0x2f37df++, _0x47a2f7),
-    );
-  }
-  if (_0x58b807.class) {
+  let _0x4d7e0a = _0x2f37df;
+  if (_0x58b807.class && Ay[_0x58b807.class]) {
     let _0x38ec65 = _0x58b807.class;
-    _0x24a7b7.appendChild(
-      sb(_0x430fa8, Ay[_0x38ec65], ky[_0x38ec65], _0x2f37df++, _0x47a2f7),
+    let _0x2a7d19 = sb(
+      _0x430fa8,
+      Ay[_0x38ec65],
+      ky[_0x38ec65],
+      _0x2f37df++,
+      _0x47a2f7,
     );
+    if (_0x2a7d19) {
+      _0x24a7b7.appendChild(_0x2a7d19);
+    }
   }
-  for (let _0x3a6b9b of _0x58b807.labels ?? []) {
-    let { displayText: _0x57860c, badgeColor: _0x176919 } = ob(
-      _0x3a6b9b,
-      _0x58b807.mateScore,
-    );
+  if (_0x3a99e2) {
     _0x24a7b7.appendChild(
-      sb(_0x430fa8, _0x57860c, _0x176919, _0x2f37df++, _0x47a2f7),
+      _0x7c4e11(_0x430fa8, _0x3a99e2, _0x4d7e0a, _0x47a2f7),
     );
   }
   return _0x24a7b7;
@@ -66928,8 +67267,24 @@ function ub(_0x600081, _0x43313c) {
       $y.delete(_0x1a2574);
     }
   }
+  let _0x2b8e91 = _0x5d9c31();
+  if (_0x2b8e91) {
+    _0x2b8e91.textContent = "";
+    let _0x3d81f5 = new Set();
+    for (let [_0x1c7a04, _0x4e2b93] of _0x600081.entries()) {
+      let _0x2fa7c8 = _0x4e2b93.move.slice(2, 4);
+      if (_0x3d81f5.has(_0x2fa7c8)) {
+        continue;
+      }
+      _0x3d81f5.add(_0x2fa7c8);
+      let _0x5a90e7 = tb(_0x2fa7c8);
+      if (_0x5a90e7) {
+        _0x2b8e91.appendChild(_0x8ad2f4(_0x5a90e7, _0x1c7a04 + 1));
+      }
+    }
+  }
   let _0x824c1 = new Set();
-  for (let _0x1c2fa7 of _0x600081) {
+  for (let [_0x6b3f0d, _0x1c2fa7] of _0x600081.entries()) {
     let _0x2d12bf = _0x1c2fa7.move.slice(2, 4);
     let _0x891660 = (_0x1c2fa7.labels ?? []).some((_0x1abc4b) =>
       _0x1abc4b.startsWith("promotion:"),
@@ -66953,7 +67308,9 @@ function ub(_0x600081, _0x43313c) {
       "|" +
       _0x8a7272.join(",") +
       "|" +
-      (_0x1c2fa7.mateScore ?? "-");
+      (_0x1c2fa7.mateScore ?? "-") +
+      "|#" +
+      (_0x6b3f0d + 1);
     let _0x240831 = $y.get(_0x1c2fa7.move);
     if (_0x240831 && _0x240831.getAttribute("data-state") === _0x5c9f12) {
       continue;
@@ -66968,6 +67325,7 @@ function ub(_0x600081, _0x43313c) {
         labels: _0x8a7272,
       },
       _0x43313c,
+      _0x6b3f0d + 1,
     );
     if (_0x1109cc) {
       _0x1109cc.setAttribute("data-state", _0x5c9f12);
@@ -67394,10 +67752,14 @@ function mb(_0x299d3a) {
       ky[_0x299d3a.classification],
       cb(_0x1e037a),
       false,
+      true,
     );
-    _0x17a0c3.appendChild(_0x2a2252);
+    if (_0x2a2252) {
+      _0x17a0c3.appendChild(_0x2a2252);
+    }
   }
-  Ny.insertBefore(_0x17a0c3, Ny.firstChild);
+  let _0x4b1c93 = _0x5d9c31();
+  Ny.insertBefore(_0x17a0c3, _0x4b1c93 ? _0x4b1c93.nextSibling : Ny.firstChild);
   K = _0x17a0c3;
 }
 function hb(_0x19fe9d) {
@@ -67467,9 +67829,12 @@ function hb(_0x19fe9d) {
       cb(_0x25a492),
       false,
     );
-    _0x47c6d5.appendChild(_0x2db23c);
+    if (_0x2db23c) {
+      _0x47c6d5.appendChild(_0x2db23c);
+    }
   }
-  Ny.insertBefore(_0x47c6d5, Ny.firstChild);
+  let _0x2e7f61 = _0x5d9c31();
+  Ny.insertBefore(_0x47c6d5, _0x2e7f61 ? _0x2e7f61.nextSibling : Ny.firstChild);
   Vy = _0x47c6d5;
 }
 function gb(_0x465d99, _0x69121c, _0x19a563, _0x3721ca, _0x276769) {
@@ -67542,9 +67907,16 @@ function gb(_0x465d99, _0x69121c, _0x19a563, _0x3721ca, _0x276769) {
   _0x34d3d7.setAttribute("marker-end", "url(#" + _0x19a563 + ")");
   _0x5ac947.appendChild(_0x34d3d7);
   if (_0x276769) {
-    _0x5ac947.appendChild(
-      sb(_0x5bf510, _0x276769.slice(0, 5), _0x69121c, cb(_0x727d85), false),
+    let _0x3e91c7 = sb(
+      _0x5bf510,
+      _0x276769.slice(0, 5),
+      _0x69121c,
+      cb(_0x727d85),
+      false,
     );
+    if (_0x3e91c7) {
+      _0x5ac947.appendChild(_0x3e91c7);
+    }
   }
   Ny.appendChild(_0x5ac947);
   return _0x5ac947;
@@ -67658,9 +68030,10 @@ function bb(_0x4a462f) {
   _0xef15df.setAttribute("opacity", "0.85");
   _0xef15df.setAttribute("marker-end", "url(#" + _0x392700 + ")");
   _0x2d1809.appendChild(_0xef15df);
-  _0x2d1809.appendChild(
-    sb(_0x48db89, "Premove", _0x457823, cb(_0x363000), false),
-  );
+  let _0x1d5c8a = sb(_0x48db89, "Premove", _0x457823, cb(_0x363000), false);
+  if (_0x1d5c8a) {
+    _0x2d1809.appendChild(_0x1d5c8a);
+  }
   Ny.appendChild(_0x2d1809);
   Zy = _0x2d1809;
 }
@@ -67971,17 +68344,17 @@ var Pb = {
   },
 };
 var Fb = {
-  best: "#81B64C",
-  brilliant: "#26C2A3",
-  great: "#749BBF",
-  excellent: "#6ee7b7",
-  good: "#95B776",
-  book: "#D5A47D",
-  forced: "#96AF8B",
-  inaccuracy: "#F7C631",
-  mistake: "#FFA459",
-  miss: "#FF7769",
-  blunder: "#FA412D",
+  best: "#3b83d9",
+  brilliant: "#3b83d9",
+  great: "#3b83d9",
+  excellent: "#3b83d9",
+  good: "#3b83d9",
+  book: "#3b83d9",
+  forced: "#3b83d9",
+  inaccuracy: "#3b83d9",
+  mistake: "#3b83d9",
+  miss: "#3b83d9",
+  blunder: "#3b83d9",
 };
 var Ib = {
   best: "Best",
@@ -69106,6 +69479,273 @@ function Yb({ checked: _0x541e8d, onChange: _0x2d535b, disabled: _0xb3fb1a }) {
       columnNumber: 5,
     },
     this,
+  );
+}
+function _0x9f4a1e({ options: _0x1a2b3d, value: _0x4c5d6e, onChange: _0x7f8a9b, disabled: _0xb1c2d4 }) {
+  let [_0xe3f405, _0x516273] = (0, y.useState)(false);
+  let [_0x6d2e8f, _0x8c4f2a] = (0, y.useState)(null);
+  let _0x829a0b = (0, y.useRef)(null);
+  let _0x3a7b1c = (0, y.useRef)(null);
+  (0, y.useEffect)(() => {
+    if (!_0xe3f405) {
+      return;
+    }
+    let _0xc4d5e6 = (_0xf708a9) => {
+      // The panel renders inside a shadow root: once a click reaches
+      // document its target is retargeted to the host, so contains()
+      // always reported "outside" and closed the menu on the very click
+      // that opened it. composedPath still carries the real inner path.
+      let _0x2b8d15 =
+        typeof _0xf708a9.composedPath === "function"
+          ? _0xf708a9.composedPath()
+          : [];
+      if (
+        _0x829a0b.current &&
+        !_0x2b8d15.includes(_0x829a0b.current) &&
+        !_0x829a0b.current.contains(_0xf708a9.target)
+      ) {
+        _0x516273(false);
+      }
+    };
+    // pointerdown (not click) so the press that opened the menu can never
+    // be the same event that closes it: that press's pointerdown already
+    // fired before this listener existed, so only a later press can match.
+    document.addEventListener("pointerdown", _0xc4d5e6, true);
+    return () => document.removeEventListener("pointerdown", _0xc4d5e6, true);
+  }, [_0xe3f405]);
+  // Both the panel body and the section scroll, and either would clip an
+  // absolutely-positioned popup. Pin the menu to the viewport instead,
+  // measuring the trigger on open. offsetWidth vs getBoundingClientRect
+  // recovers an ancestor `zoom` (font-size small/big), which scales the
+  // coordinate space fixed positioning resolves against.
+  (0, y.useEffect)(() => {
+    if (!_0xe3f405 || !_0x3a7b1c.current) {
+      _0x8c4f2a(null);
+      return;
+    }
+    let _0x5f9c20 = _0x3a7b1c.current;
+    let _0x7e1a34 = _0x5f9c20.getBoundingClientRect();
+    let _0x9b3d57 = _0x5f9c20.offsetWidth
+      ? _0x7e1a34.width / _0x5f9c20.offsetWidth
+      : 1;
+    if (!_0x9b3d57 || !isFinite(_0x9b3d57)) {
+      _0x9b3d57 = 1;
+    }
+    _0x8c4f2a({
+      position: "fixed",
+      top: (_0x7e1a34.bottom + 6) / _0x9b3d57,
+      left: _0x7e1a34.left / _0x9b3d57,
+      right: "auto",
+      width: "auto",
+      minWidth: _0x7e1a34.width / _0x9b3d57,
+    });
+  }, [_0xe3f405]);
+  let _0x1b2c3d = _0x1a2b3d.find((_0x2d3e4f) => _0x2d3e4f.value === _0x4c5d6e);
+  return (0, U.jsxDEV)(
+    "div",
+    {
+      ref: _0x829a0b,
+      className: "nl-dropdown " + (_0xe3f405 ? "nl-open" : ""),
+      children: [
+        (0, U.jsxDEV)(
+          "button",
+          {
+            type: "button",
+            className: "nl-dd-btn " + (_0xb1c2d4 ? "nl-dd-btn--disabled" : ""),
+            disabled: _0xb1c2d4,
+            ref: _0x3a7b1c,
+            onClick: () => !_0xb1c2d4 && _0x516273((_0x3e4f5a) => !_0x3e4f5a),
+            children: [
+              (0, U.jsxDEV)(
+                "span",
+                { className: "nl-dd-label", children: _0x1b2c3d?.label ?? "" },
+                undefined,
+                false,
+              ),
+              (0, U.jsxDEV)(
+                "span",
+                { className: "nl-dd-arrow" },
+                undefined,
+                false,
+              ),
+            ],
+          },
+          undefined,
+          true,
+        ),
+        (0, U.jsxDEV)(
+          "div",
+          {
+            className: "nl-dd-menu",
+            style: _0x6d2e8f ?? undefined,
+            children: _0x1a2b3d.map((_0x4d5e6f) =>
+              (0, U.jsxDEV)(
+                "button",
+                {
+                  type: "button",
+                  key: _0x4d5e6f.value,
+                  disabled: _0x4d5e6f.disabled,
+                  className:
+                    "nl-dd-option " +
+                    (_0x4d5e6f.value === _0x4c5d6e ? "nl-selected" : ""),
+                  onClick: () => {
+                    if (!_0x4d5e6f.disabled) {
+                      _0x7f8a9b(_0x4d5e6f.value);
+                      _0x516273(false);
+                    }
+                  },
+                  children: _0x4d5e6f.label,
+                },
+                _0x4d5e6f.value,
+                false,
+              ),
+            ),
+          },
+          undefined,
+          false,
+        ),
+      ],
+    },
+    undefined,
+    true,
+  );
+}
+function _0x2e8f61(_0x1a) {
+  return _0x1a >= 0 ? "translateY(100%)" : "translateY(-100%)";
+}
+function _0x5d1b74(_0x1a) {
+  return _0x1a >= 0 ? "translateY(-100%)" : "translateY(100%)";
+}
+function _0x7c3d92({ value: _0x8a9b0c }) {
+  let _0x1c2d3e = String(_0x8a9b0c);
+  let _0x4e5f60 = (0, y.useRef)(_0x1c2d3e);
+  let _0x1f4a90 = (0, y.useRef)(0);
+  let [_0x718293, _0xa4b5c6] = (0, y.useState)(() =>
+    _0x1c2d3e
+      .split("")
+      .map((_0xd7e8f9) => ({ cur: _0xd7e8f9, prev: null, dir: 0, settled: true })),
+  );
+  (0, y.useEffect)(() => {
+    let _0x0a1b2c = _0x4e5f60.current;
+    if (_0x0a1b2c === _0x1c2d3e) {
+      return;
+    }
+    _0x4e5f60.current = _0x1c2d3e;
+    let _0x2c9d61 = Date.now();
+    let _0x8b6e12 = _0x2c9d61 - _0x1f4a90.current;
+    _0x1f4a90.current = _0x2c9d61;
+    if (_0x8b6e12 < 220) {
+      // Values arriving faster than the flip settles (e.g. while dragging
+      // the paired slider) would restart the slide mid-flight, stacking
+      // the old and new digit on top of each other. Snap instantly instead;
+      // only a change that stands on its own gets the animated flip.
+      _0xa4b5c6(
+        _0x1c2d3e
+          .split("")
+          .map((_0xd7e8f9) => ({
+            cur: _0xd7e8f9,
+            prev: null,
+            dir: 0,
+            settled: true,
+          })),
+      );
+      return;
+    }
+    let _0x3d4e5f = parseFloat(_0x0a1b2c.replace(/[^0-9.-]/g, ""));
+    let _0x6a7b8c = parseFloat(_0x1c2d3e.replace(/[^0-9.-]/g, ""));
+    let _0x9d0e1f =
+      !Number.isNaN(_0x3d4e5f) && !Number.isNaN(_0x6a7b8c)
+        ? _0x6a7b8c > _0x3d4e5f
+          ? 1
+          : _0x6a7b8c < _0x3d4e5f
+            ? -1
+            : 0
+        : 0;
+    let _0x2f3a4b = _0x0a1b2c.split("");
+    let _0x5c6d7e = _0x1c2d3e.split("");
+    let _0x8f9a0b = Math.max(_0x2f3a4b.length, _0x5c6d7e.length);
+    let _0xb1c2d3 = [];
+    for (let _0x4d5e = 0; _0x4d5e < _0x8f9a0b; _0x4d5e++) {
+      let _0x6f7a8 = _0x5c6d7e[_0x4d5e] ?? "";
+      let _0x9b0c1d = _0x2f3a4b[_0x4d5e] ?? "";
+      _0xb1c2d3.push(
+        _0x6f7a8 !== _0x9b0c1d
+          ? { cur: _0x6f7a8, prev: _0x9b0c1d, dir: _0x9d0e1f, settled: false }
+          : { cur: _0x6f7a8, prev: null, dir: 0, settled: true },
+      );
+    }
+    _0xa4b5c6(_0xb1c2d3);
+    let _0x2e3f40 = requestAnimationFrame(() => {
+      _0x1a2b30 = requestAnimationFrame(() => {
+        _0xa4b5c6((_0x3b4c5d) =>
+          _0x3b4c5d.map((_0x6e7f8) => ({ ..._0x6e7f8, settled: true })),
+        );
+      });
+    });
+    var _0x1a2b30;
+    let _0x4c5d6e = setTimeout(() => {
+      _0xa4b5c6((_0x7f8a9b) =>
+        _0x7f8a9b.map((_0xb0c1d2) => ({ ..._0xb0c1d2, prev: null })),
+      );
+    }, 190);
+    return () => {
+      cancelAnimationFrame(_0x2e3f40);
+      if (_0x1a2b30) {
+        cancelAnimationFrame(_0x1a2b30);
+      }
+      clearTimeout(_0x4c5d6e);
+    };
+  }, [_0x1c2d3e]);
+  return (0, U.jsxDEV)(
+    "span",
+    {
+      className: "nl-odometer",
+      children: _0x718293.map((_0xd1e2f3, _0x4a5b6c) =>
+        (0, U.jsxDEV)(
+          "span",
+          {
+            className: "nl-digit-col",
+            children: [
+              (0, U.jsxDEV)(
+                "span",
+                {
+                  className: "nl-digit",
+                  style: {
+                    transform: _0xd1e2f3.settled
+                      ? "translateY(0)"
+                      : _0x2e8f61(_0xd1e2f3.dir),
+                    opacity: _0xd1e2f3.settled ? 1 : 0,
+                  },
+                  children: _0xd1e2f3.cur,
+                },
+                "cur",
+                false,
+              ),
+              _0xd1e2f3.prev !== null &&
+                (0, U.jsxDEV)(
+                  "span",
+                  {
+                    className: "nl-digit",
+                    style: {
+                      transform: _0xd1e2f3.settled
+                        ? _0x5d1b74(_0xd1e2f3.dir)
+                        : "translateY(0)",
+                      opacity: _0xd1e2f3.settled ? 0 : 1,
+                    },
+                    children: _0xd1e2f3.prev,
+                  },
+                  "prev",
+                  false,
+                ),
+            ],
+          },
+          _0x4a5b6c,
+          true,
+        ),
+      ),
+    },
+    undefined,
+    false,
   );
 }
 var Xb =
@@ -71707,6 +72347,248 @@ function yx({ tabs: _0x7d77ce, active: _0x26a0c3, onChange: _0x418900 }) {
     this,
   );
 }
+function _0x3d5e08({ type: _0x1a2c9e, size: _0x2b3d0f = 14 }) {
+  let _0x4c5e1a = {
+    width: _0x2b3d0f,
+    height: _0x2b3d0f,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "2",
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+  };
+  let _0x5d6e2b;
+  switch (_0x1a2c9e) {
+    case "play":
+      _0x5d6e2b = (0, U.jsxDEV)(
+        "polygon",
+        { points: "5 3 19 12 5 21 5 3" },
+        undefined,
+        false,
+      );
+      break;
+    case "cpu":
+      _0x5d6e2b = (0, U.jsxDEV)(
+        U.Fragment,
+        {
+          children: [
+            (0, U.jsxDEV)(
+              "rect",
+              { x: "4", y: "4", width: "16", height: "16", rx: "2" },
+              undefined,
+              false,
+            ),
+            (0, U.jsxDEV)(
+              "rect",
+              { x: "9", y: "9", width: "6", height: "6" },
+              undefined,
+              false,
+            ),
+          ],
+        },
+        undefined,
+        true,
+      );
+      break;
+    case "zap":
+      _0x5d6e2b = (0, U.jsxDEV)(
+        "polygon",
+        { points: "13 2 3 14 12 14 11 22 21 10 12 10 13 2" },
+        undefined,
+        false,
+      );
+      break;
+    case "book":
+      _0x5d6e2b = (0, U.jsxDEV)(
+        U.Fragment,
+        {
+          children: [
+            (0, U.jsxDEV)(
+              "path",
+              { d: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20" },
+              undefined,
+              false,
+            ),
+            (0, U.jsxDEV)(
+              "path",
+              {
+                d: "M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",
+              },
+              undefined,
+              false,
+            ),
+          ],
+        },
+        undefined,
+        true,
+      );
+      break;
+    case "user":
+      _0x5d6e2b = (0, U.jsxDEV)(
+        U.Fragment,
+        {
+          children: [
+            (0, U.jsxDEV)(
+              "path",
+              { d: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" },
+              undefined,
+              false,
+            ),
+            (0, U.jsxDEV)(
+              "circle",
+              { cx: "12", cy: "7", r: "4" },
+              undefined,
+              false,
+            ),
+          ],
+        },
+        undefined,
+        true,
+      );
+      break;
+    case "list":
+      _0x5d6e2b = (0, U.jsxDEV)(
+        U.Fragment,
+        {
+          children: [
+            (0, U.jsxDEV)(
+              "line",
+              { x1: "8", y1: "6", x2: "21", y2: "6" },
+              undefined,
+              false,
+            ),
+            (0, U.jsxDEV)(
+              "line",
+              { x1: "8", y1: "12", x2: "21", y2: "12" },
+              undefined,
+              false,
+            ),
+            (0, U.jsxDEV)(
+              "line",
+              { x1: "8", y1: "18", x2: "21", y2: "18" },
+              undefined,
+              false,
+            ),
+            (0, U.jsxDEV)(
+              "line",
+              { x1: "3", y1: "6", x2: "3.01", y2: "6" },
+              undefined,
+              false,
+            ),
+            (0, U.jsxDEV)(
+              "line",
+              { x1: "3", y1: "12", x2: "3.01", y2: "12" },
+              undefined,
+              false,
+            ),
+            (0, U.jsxDEV)(
+              "line",
+              { x1: "3", y1: "18", x2: "3.01", y2: "18" },
+              undefined,
+              false,
+            ),
+          ],
+        },
+        undefined,
+        true,
+      );
+      break;
+    default:
+      _0x5d6e2b = (0, U.jsxDEV)(
+        U.Fragment,
+        {
+          children: [
+            (0, U.jsxDEV)(
+              "circle",
+              { cx: "12", cy: "12", r: "10" },
+              undefined,
+              false,
+            ),
+            (0, U.jsxDEV)(
+              "path",
+              { d: "M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" },
+              undefined,
+              false,
+            ),
+            (0, U.jsxDEV)(
+              "line",
+              { x1: "12", y1: "17", x2: "12.01", y2: "17" },
+              undefined,
+              false,
+            ),
+          ],
+        },
+        undefined,
+        true,
+      );
+  }
+  return (0, U.jsxDEV)(
+    "svg",
+    { ..._0x4c5e1a, className: "dbs-tab-icon", children: _0x5d6e2b },
+    undefined,
+    false,
+  );
+}
+function _0x7c1a92({ sections: _0x6e7f28, active: _0x8f906c, onChange: _0x9a0e5d }) {
+  return (0, U.jsxDEV)(
+    "div",
+    {
+      className: "dbs-sidebar",
+      children: _0x6e7f28.map((_0xb1c2d3) =>
+        (0, U.jsxDEV)(
+          "div",
+          {
+            className: "dbs-tab-group",
+            children: [
+              _0xb1c2d3.title &&
+                (0, U.jsxDEV)(
+                  "div",
+                  { className: "dbs-tab-title", children: _0xb1c2d3.title },
+                  undefined,
+                  false,
+                ),
+              ..._0xb1c2d3.items.map((_0xd4e5f6) =>
+                (0, U.jsxDEV)(
+                  "div",
+                  {
+                    className:
+                      "dbs-tab-item " +
+                      (_0x8f906c === _0xd4e5f6.id ? "dbs-tab-item--active" : ""),
+                    onClick: () => _0x9a0e5d(_0xd4e5f6.id),
+                    children: [
+                      (0, U.jsxDEV)(
+                        _0x3d5e08,
+                        { type: _0xd4e5f6.icon },
+                        undefined,
+                        false,
+                      ),
+                      _0xd4e5f6.label,
+                    ],
+                  },
+                  _0xd4e5f6.id,
+                  true,
+                ),
+              ),
+            ],
+          },
+          _0xb1c2d3.title ?? "ungrouped",
+          true,
+        ),
+      ),
+    },
+    undefined,
+    false,
+  );
+}
+var _0x6f7a8b = {
+  engine: "cpu",
+  automove: "zap",
+};
+var _0x9c0d1e = {
+  general: "list",
+  suggestions: "help",
+};
 var bx =
   "/Users/timothe/dev/chess/chessr-v3/extension/entrypoints/content/components/GameSummaryCard.tsx";
 var xx = new Map();
@@ -72655,13 +73537,13 @@ function $x(_0x3e2494) {
     return (Math.floor(_0x3e2494 * 10) / 10).toFixed(1);
   }
 }
-function eS({ type: _0x113742 }) {
+function eS({ type: _0x113742, size: _0x9f0a1c = 20 }) {
   return (0, U.jsxDEV)(
     "img",
     {
       src: v.runtime.getURL("/icons/cls-" + _0x113742 + ".svg"),
-      width: 20,
-      height: 20,
+      width: _0x9f0a1c,
+      height: _0x9f0a1c,
       alt: _0x113742,
       style: {
         display: "block",
@@ -80154,17 +81036,17 @@ function yC() {
 var Z =
   "/Users/timothe/dev/chess/chessr-v3/extension/entrypoints/content/components/GameScreen.tsx";
 var bC = {
-  best: "#81B64C",
-  brilliant: "#26C2A3",
-  great: "#749BBF",
-  excellent: "#6ee7b7",
-  good: "#95B776",
-  book: "#D5A47D",
-  forced: "#96AF8B",
-  inaccuracy: "#F7C631",
-  mistake: "#FFA459",
-  miss: "#FF7769",
-  blunder: "#FA412D",
+  best: "#3b83d9",
+  brilliant: "#3b83d9",
+  great: "#3b83d9",
+  excellent: "#3b83d9",
+  good: "#3b83d9",
+  book: "#3b83d9",
+  forced: "#3b83d9",
+  inaccuracy: "#3b83d9",
+  mistake: "#3b83d9",
+  miss: "#3b83d9",
+  blunder: "#3b83d9",
 };
 var xC = {
   best: "Best",
@@ -80530,20 +81412,12 @@ function wC() {
   let { t: _0x4c4831 } = Zm();
   return [
     {
-      id: "game",
-      label: _0x4c4831("game.tab.game"),
-    },
-    {
       id: "engine",
       label: _0x4c4831("game.tab.engine"),
     },
     {
       id: "automove",
       label: _0x4c4831("game.tab.automove"),
-    },
-    {
-      id: "opening",
-      label: _0x4c4831("game.tab.opening"),
     },
   ];
 }
@@ -81223,7 +82097,6 @@ function OC({ gameId: _0x4cb89b, playerColor: _0x38c0f0 }) {
 }
 function kC({ activeTab: _0x33f618, setActiveTab: _0x3e8834 }) {
   let { t: _0x48f986 } = Zm();
-  let _0x5ca1fb = wC();
   let {
     isPlaying: _0x38566d,
     playerColor: _0x56ae37,
@@ -81818,28 +82691,12 @@ function kC({ activeTab: _0x33f618, setActiveTab: _0x3e8834 }) {
           this,
         ),
         (0, U.jsxDEV)(
-          yx,
-          {
-            tabs: _0x5ca1fb,
-            active: _0x33f618,
-            onChange: _0x3e8834,
-          },
-          undefined,
-          false,
-          {
-            fileName: Z,
-            lineNumber: 498,
-            columnNumber: 7,
-          },
-          this,
-        ),
-        (0, U.jsxDEV)(
           "div",
           {
             ref: _0x1ee922,
             className: "game-tab-content",
             children: [
-              _0x33f618 === "game" &&
+              _0x33f618 === "engine" &&
                 (0, U.jsxDEV)(
                   Ov,
                   {
@@ -81868,32 +82725,18 @@ function kC({ activeTab: _0x33f618, setActiveTab: _0x3e8834 }) {
                                 TC,
                                 {
                                   id: _0x12c048,
-                                  children: [
-                                    (0, U.jsxDEV)(
-                                      fy,
-                                      {},
-                                      undefined,
-                                      false,
-                                      {
-                                        fileName: Z,
-                                        lineNumber: 508,
-                                        columnNumber: 21,
-                                      },
-                                      this,
-                                    ),
-                                    (0, U.jsxDEV)(
-                                      hC,
-                                      {},
-                                      undefined,
-                                      false,
-                                      {
-                                        fileName: Z,
-                                        lineNumber: 509,
-                                        columnNumber: 21,
-                                      },
-                                      this,
-                                    ),
-                                  ],
+                                  children: (0, U.jsxDEV)(
+                                    fy,
+                                    {},
+                                    undefined,
+                                    false,
+                                    {
+                                      fileName: Z,
+                                      lineNumber: 508,
+                                      columnNumber: 21,
+                                    },
+                                    this,
+                                  ),
                                 },
                                 _0x12c048,
                                 true,
@@ -82385,30 +83228,42 @@ function kC({ activeTab: _0x33f618, setActiveTab: _0x3e8834 }) {
                 ),
               _0x33f618 === "engine" &&
                 (0, U.jsxDEV)(
-                  RC,
+                  "div",
                   {
-                    onDragEnd: (_0x5f4b81) => {
-                      let { active: _0x452a8c, over: _0x58b46b } = _0x5f4b81;
-                      if (_0x58b46b && _0x452a8c.id !== _0x58b46b.id) {
-                        _0x41974b(
-                          "engine",
-                          Lv(
-                            _0x1e7d3f,
-                            _0x1e7d3f.indexOf(_0x452a8c.id),
-                            _0x1e7d3f.indexOf(_0x58b46b.id),
-                          ),
-                        );
-                      }
-                    },
+                    className: "nl-engine-grid",
+                    children: [
+                      (0, U.jsxDEV)(pw, {}, undefined, false),
+                      (0, U.jsxDEV)(
+                        RC,
+                        {
+                          onDragEnd: (_0x5f4b81) => {
+                            let { active: _0x452a8c, over: _0x58b46b } =
+                              _0x5f4b81;
+                            if (_0x58b46b && _0x452a8c.id !== _0x58b46b.id) {
+                              _0x41974b(
+                                "engine",
+                                Lv(
+                                  _0x1e7d3f,
+                                  _0x1e7d3f.indexOf(_0x452a8c.id),
+                                  _0x1e7d3f.indexOf(_0x58b46b.id),
+                                ),
+                              );
+                            }
+                          },
+                        },
+                        undefined,
+                        false,
+                        {
+                          fileName: Z,
+                          lineNumber: 573,
+                          columnNumber: 9,
+                        },
+                        this,
+                      ),
+                    ],
                   },
                   undefined,
-                  false,
-                  {
-                    fileName: Z,
-                    lineNumber: 573,
-                    columnNumber: 9,
-                  },
-                  this,
+                  true,
                 ),
               _0x33f618 === "automove" &&
                 (0, U.jsxDEV)(
@@ -82419,19 +83274,6 @@ function kC({ activeTab: _0x33f618, setActiveTab: _0x3e8834 }) {
                   {
                     fileName: Z,
                     lineNumber: 577,
-                    columnNumber: 9,
-                  },
-                  this,
-                ),
-              _0x33f618 === "opening" &&
-                (0, U.jsxDEV)(
-                  yC,
-                  {},
-                  undefined,
-                  false,
-                  {
-                    fileName: Z,
-                    lineNumber: 581,
                     columnNumber: 9,
                   },
                   this,
@@ -82457,6 +83299,82 @@ function kC({ activeTab: _0x33f618, setActiveTab: _0x3e8834 }) {
       columnNumber: 5,
     },
     this,
+  );
+}
+// Reusable "randomise this value after every move" control (toggle + range).
+function _0xfffe01({
+  label: _0xr1, desc: _0xr2, enabled: _0xr3, onToggle: _0xr4,
+  min: _0xr5, max: _0xr6, step: _0xr7, range: _0xr8, onRange: _0xr9, allowed: _0xr10,
+}) {
+  return (0, U.jsxDEV)(
+    U.Fragment,
+    {
+      children: [
+        (0, U.jsxDEV)(
+          "div",
+          {
+            className: "engine-force-row",
+            children: [
+              (0, U.jsxDEV)(
+                "div",
+                {
+                  className: "engine-force-text",
+                  children: [
+                    (0, U.jsxDEV)("span", { className: "engine-force-label", children: _0xr1 }, undefined, false),
+                    (0, U.jsxDEV)("span", { className: "engine-force-desc", children: _0xr2 }, undefined, false),
+                  ],
+                },
+                undefined,
+                true,
+              ),
+              (0, U.jsxDEV)(
+                Yb,
+                {
+                  checked: !!_0xr3 && !!_0xr10,
+                  onChange: (_0xr11) => { if (_0xr10) { _0xr4(_0xr11); } },
+                  disabled: !_0xr10,
+                },
+                undefined,
+                false,
+              ),
+            ],
+          },
+          undefined,
+          true,
+        ),
+        _0xr3 && _0xr10 &&
+          (0, U.jsxDEV)(
+            U.Fragment,
+            {
+              children: [
+                (0, U.jsxDEV)(
+                  "div",
+                  {
+                    className: "engine-section-header",
+                    style: { marginTop: 6 },
+                    children: [
+                      (0, U.jsxDEV)("span", { className: "engine-hint", children: "От " + _0xr8[0] }, undefined, false),
+                      (0, U.jsxDEV)("span", { className: "engine-hint", children: "До " + _0xr8[1] }, undefined, false),
+                    ],
+                  },
+                  undefined,
+                  true,
+                ),
+                (0, U.jsxDEV)(
+                  qb,
+                  { min: _0xr5, max: _0xr6, step: _0xr7, value: _0xr8, onChange: _0xr9, color: "#a855f7" },
+                  undefined,
+                  false,
+                ),
+              ],
+            },
+            undefined,
+            true,
+          ),
+      ],
+    },
+    undefined,
+    true,
   );
 }
 function AC() {
@@ -83134,7 +84052,9 @@ function AC() {
               (0, U.jsxDEV)(
                 Yb,
                 {
-                  checked: !_0x2400cb.limitStrength && _0x1f5e6a,
+                  checked:
+                    !_0x2400cb.limitStrength &&
+                    _0x1f5e6a,
                   onChange: (_0x32a153) => {
                     if (_0x1f5e6a) {
                       _0x2400cb.setLimitStrength(!_0x32a153);
@@ -83161,6 +84081,25 @@ function AC() {
             columnNumber: 7,
           },
           this,
+        ),
+        (0, U.jsxDEV)(
+          _0xfffe01,
+          {
+            label: "Random ELO",
+            desc: _0x1f5e6a
+              ? "Подбирает новый целевой ELO из диапазона после каждого хода."
+              : _0x32171b("engine.upgradeUnlock"),
+            enabled: _0x2400cb.randomEloEnabled,
+            onToggle: _0x2400cb.setRandomEloEnabled,
+            min: 400,
+            max: 3500,
+            step: 50,
+            range: [_0x2400cb.randomEloMin, _0x2400cb.randomEloMax],
+            onRange: _0x2400cb.setRandomEloRange,
+            allowed: _0x1f5e6a,
+          },
+          undefined,
+          false,
         ),
       ],
     },
@@ -84379,6 +85318,23 @@ function zC() {
                         },
                         this,
                       ),
+                  (0, U.jsxDEV)(
+                    _0xfffe01,
+                    {
+                      label: "Random ELO",
+                      desc: "Подбирает новый целевой ELO из диапазона после каждого хода.",
+                      enabled: _0x1a2841.randomMaiaTargetEnabled,
+                      onToggle: _0x1a2841.setRandomMaiaTargetEnabled,
+                      min: 600,
+                      max: 2600,
+                      step: 50,
+                      range: [_0x1a2841.randomMaiaTargetMin, _0x1a2841.randomMaiaTargetMax],
+                      onRange: _0x1a2841.setRandomMaiaTargetRange,
+                      allowed: true,
+                    },
+                    undefined,
+                    false,
+                  ),
                 ],
               },
               undefined,
@@ -84536,6 +85492,23 @@ function zC() {
                         },
                         this,
                       ),
+                  (0, U.jsxDEV)(
+                    _0xfffe01,
+                    {
+                      label: "Random ELO соперника",
+                      desc: "Подбирает новый ELO соперника из диапазона после каждого хода.",
+                      enabled: _0x1a2841.randomMaiaOppoEnabled,
+                      onToggle: _0x1a2841.setRandomMaiaOppoEnabled,
+                      min: 600,
+                      max: 2600,
+                      step: 50,
+                      range: [_0x1a2841.randomMaiaOppoMin, _0x1a2841.randomMaiaOppoMax],
+                      onRange: _0x1a2841.setRandomMaiaOppoRange,
+                      allowed: true,
+                    },
+                    undefined,
+                    false,
+                  ),
                 ],
               },
               undefined,
@@ -84745,6 +85718,23 @@ function BC() {
                       columnNumber: 11,
                     },
                     this,
+                  ),
+                  (0, U.jsxDEV)(
+                    _0xfffe01,
+                    {
+                      label: "Random неточность",
+                      desc: "Подбирает новую неточность из диапазона после каждого хода.",
+                      enabled: _0x3847d5.randomImprecisionEnabled,
+                      onToggle: _0x3847d5.setRandomImprecisionEnabled,
+                      min: 0,
+                      max: 100,
+                      step: 1,
+                      range: [_0x3847d5.randomImprecisionMin, _0x3847d5.randomImprecisionMax],
+                      onRange: _0x3847d5.setRandomImprecisionRange,
+                      allowed: true,
+                    },
+                    undefined,
+                    false,
                   ),
                 ],
               },
@@ -85340,16 +86330,8 @@ function nw() {
   let { t: _0x2e57dc } = Zm();
   return [
     {
-      id: "account",
-      label: _0x2e57dc("settings.tab.account"),
-    },
-    {
       id: "general",
       label: _0x2e57dc("settings.tab.general"),
-    },
-    {
-      id: "engine",
-      label: _0x2e57dc("settings.tab.engine"),
     },
     {
       id: "suggestions",
@@ -85513,48 +86495,23 @@ function cw() {
                 this,
               ),
               (0, U.jsxDEV)(
-                "select",
+                _0x9f4a1e,
                 {
-                  className: "settings-select",
-                  value: _0x3c6e28,
-                  onChange: (_0x2324e7) => _0x237582(_0x2324e7.target.value),
-                  children: [
-                    (0, U.jsxDEV)(
-                      "option",
-                      {
-                        value: "auto",
-                        children: _0x181e7c("settings.general.language.auto"),
-                      },
-                      undefined,
-                      false,
-                      {
-                        fileName: Q,
-                        lineNumber: 142,
-                        columnNumber: 11,
-                      },
-                      this,
-                    ),
-                    Rm.map((_0x1cf5d7) =>
-                      (0, U.jsxDEV)(
-                        "option",
-                        {
-                          value: _0x1cf5d7,
-                          children: zm[_0x1cf5d7],
-                        },
-                        _0x1cf5d7,
-                        false,
-                        {
-                          fileName: Q,
-                          lineNumber: 144,
-                          columnNumber: 13,
-                        },
-                        this,
-                      ),
-                    ),
+                  options: [
+                    {
+                      value: "auto",
+                      label: _0x181e7c("settings.general.language.auto"),
+                    },
+                    ...Rm.map((_0x1cf5d7) => ({
+                      value: _0x1cf5d7,
+                      label: zm[_0x1cf5d7],
+                    })),
                   ],
+                  value: _0x3c6e28,
+                  onChange: _0x237582,
                 },
                 undefined,
-                true,
+                false,
                 {
                   fileName: Q,
                   lineNumber: 137,
@@ -85692,29 +86649,11 @@ function cw() {
                         this,
                       ),
                       (0, U.jsxDEV)(
-                        "select",
+                        _0x9f4a1e,
                         {
-                          className: "settings-select",
+                          options: sw,
                           value: _0x564f69,
-                          onChange: (_0x423588) =>
-                            _0x515254(_0x423588.target.value),
-                          children: sw.map((_0xb14b2a) =>
-                            (0, U.jsxDEV)(
-                              "option",
-                              {
-                                value: _0xb14b2a.value,
-                                children: _0xb14b2a.label,
-                              },
-                              _0xb14b2a.value,
-                              false,
-                              {
-                                fileName: Q,
-                                lineNumber: 166,
-                                columnNumber: 17,
-                              },
-                              this,
-                            ),
-                          ),
+                          onChange: _0x515254,
                         },
                         undefined,
                         false,
@@ -85860,61 +86799,27 @@ function cw() {
                 this,
               ),
               (0, U.jsxDEV)(
-                "select",
+                _0x9f4a1e,
                 {
-                  className: "settings-select",
-                  value: _0x229ed4,
-                  onChange: (_0x57d3c3) => _0x13fab6(_0x57d3c3.target.value),
-                  children: [
-                    (0, U.jsxDEV)(
-                      "option",
-                      {
-                        value: "small",
-                        children: _0x181e7c("settings.general.fontSize.small"),
-                      },
-                      undefined,
-                      false,
-                      {
-                        fileName: Q,
-                        lineNumber: 187,
-                        columnNumber: 11,
-                      },
-                      this,
-                    ),
-                    (0, U.jsxDEV)(
-                      "option",
-                      {
-                        value: "normal",
-                        children: _0x181e7c("settings.general.fontSize.normal"),
-                      },
-                      undefined,
-                      false,
-                      {
-                        fileName: Q,
-                        lineNumber: 188,
-                        columnNumber: 11,
-                      },
-                      this,
-                    ),
-                    (0, U.jsxDEV)(
-                      "option",
-                      {
-                        value: "big",
-                        children: _0x181e7c("settings.general.fontSize.big"),
-                      },
-                      undefined,
-                      false,
-                      {
-                        fileName: Q,
-                        lineNumber: 189,
-                        columnNumber: 11,
-                      },
-                      this,
-                    ),
+                  options: [
+                    {
+                      value: "small",
+                      label: _0x181e7c("settings.general.fontSize.small"),
+                    },
+                    {
+                      value: "normal",
+                      label: _0x181e7c("settings.general.fontSize.normal"),
+                    },
+                    {
+                      value: "big",
+                      label: _0x181e7c("settings.general.fontSize.big"),
+                    },
                   ],
+                  value: _0x229ed4,
+                  onChange: _0x13fab6,
                 },
                 undefined,
-                true,
+                false,
                 {
                   fileName: Q,
                   lineNumber: 182,
@@ -86783,7 +87688,6 @@ function lw() {
 }
 function uw({ activeTab: _0x3800c8, setActiveTab: _0x1b8cb4 }) {
   let { t: _0x5774eb } = Zm();
-  let _0x24c9ec = nw();
   let _0x1ef316 = rw();
   let [_0x387d29, _0x723273] = (0, y.useState)(false);
   let {
@@ -86854,1133 +87758,11 @@ function uw({ activeTab: _0x3800c8, setActiveTab: _0x1b8cb4 }) {
       className: "settings-screen",
       children: [
         (0, U.jsxDEV)(
-          yx,
-          {
-            tabs: _0x24c9ec,
-            active: _0x3800c8,
-            onChange: _0x1b8cb4,
-          },
-          undefined,
-          false,
-          {
-            fileName: Q,
-            lineNumber: 380,
-            columnNumber: 7,
-          },
-          this,
-        ),
-        (0, U.jsxDEV)(
           "div",
           {
             ref: _0x674416,
             className: "settings-tab-content",
             children: [
-              _0x3800c8 === "account" &&
-                (0, U.jsxDEV)(
-                  "div",
-                  {
-                    className: "settings-section",
-                    children: [
-                      (0, U.jsxDEV)(
-                        "div",
-                        {
-                          className: "settings-item settings-item--column",
-                          children: [
-                            (0, U.jsxDEV)(
-                              "div",
-                              {
-                                className: "settings-item-row",
-                                children: [
-                                  (0, U.jsxDEV)(
-                                    "span",
-                                    {
-                                      className: "settings-label",
-                                      children: _0x5774eb(
-                                        "settings.account.title",
-                                      ),
-                                    },
-                                    undefined,
-                                    false,
-                                    {
-                                      fileName: Q,
-                                      lineNumber: 387,
-                                      columnNumber: 15,
-                                    },
-                                    this,
-                                  ),
-                                  _0x4d05a3?.email_confirmed_at
-                                    ? (0, U.jsxDEV)(
-                                        "span",
-                                        {
-                                          className: "settings-verified",
-                                          children: _0x5774eb(
-                                            "settings.account.verified",
-                                          ),
-                                        },
-                                        undefined,
-                                        false,
-                                        {
-                                          fileName: Q,
-                                          lineNumber: 389,
-                                          columnNumber: 17,
-                                        },
-                                        this,
-                                      )
-                                    : (0, U.jsxDEV)(
-                                        "span",
-                                        {
-                                          className: "settings-unverified",
-                                          children: _0x5774eb(
-                                            "settings.account.unverified",
-                                          ),
-                                        },
-                                        undefined,
-                                        false,
-                                        {
-                                          fileName: Q,
-                                          lineNumber: 391,
-                                          columnNumber: 17,
-                                        },
-                                        this,
-                                      ),
-                                ],
-                              },
-                              undefined,
-                              true,
-                              {
-                                fileName: Q,
-                                lineNumber: 386,
-                                columnNumber: 13,
-                              },
-                              this,
-                            ),
-                            (0, U.jsxDEV)(
-                              "div",
-                              {
-                                className: "settings-account-email",
-                                children: _0x4d05a3?.email || "—",
-                              },
-                              undefined,
-                              false,
-                              {
-                                fileName: Q,
-                                lineNumber: 394,
-                                columnNumber: 13,
-                              },
-                              this,
-                            ),
-                            _0x4d05a3?.created_at &&
-                              (0, U.jsxDEV)(
-                                "div",
-                                {
-                                  className: "settings-account-joined",
-                                  children: _0x5774eb(
-                                    "settings.account.joined",
-                                    {
-                                      date: new Date(
-                                        _0x4d05a3.created_at,
-                                      ).toLocaleDateString(undefined, {
-                                        year: "numeric",
-                                        month: "short",
-                                        day: "numeric",
-                                      }),
-                                    },
-                                  ),
-                                },
-                                undefined,
-                                false,
-                                {
-                                  fileName: Q,
-                                  lineNumber: 396,
-                                  columnNumber: 15,
-                                },
-                                this,
-                              ),
-                          ],
-                        },
-                        undefined,
-                        true,
-                        {
-                          fileName: Q,
-                          lineNumber: 385,
-                          columnNumber: 11,
-                        },
-                        this,
-                      ),
-                      (0, U.jsxDEV)(
-                        "div",
-                        {
-                          className: "settings-item",
-                          children: [
-                            (0, U.jsxDEV)(
-                              "span",
-                              {
-                                className: "settings-label",
-                                children: _0x5774eb("settings.account.server"),
-                              },
-                              undefined,
-                              false,
-                              {
-                                fileName: Q,
-                                lineNumber: 402,
-                                columnNumber: 13,
-                              },
-                              this,
-                            ),
-                            (0, U.jsxDEV)(
-                              "span",
-                              {
-                                className: "settings-value",
-                                children: [
-                                  (0, U.jsxDEV)(
-                                    "span",
-                                    {
-                                      className: "settings-value--dim",
-                                      children: tw,
-                                    },
-                                    undefined,
-                                    false,
-                                    {
-                                      fileName: Q,
-                                      lineNumber: 404,
-                                      columnNumber: 15,
-                                    },
-                                    this,
-                                  ),
-                                  " ",
-                                  (0, U.jsxDEV)(
-                                    "span",
-                                    {
-                                      style: {
-                                        color:
-                                          _0x2ba5fb === null
-                                            ? undefined
-                                            : _0x2ba5fb < 200
-                                              ? "#22c55e"
-                                              : _0x2ba5fb < 500
-                                                ? "#fbbf24"
-                                                : "#f87171",
-                                      },
-                                      children:
-                                        _0x2ba5fb === null
-                                          ? "—"
-                                          : _0x2ba5fb + "ms",
-                                    },
-                                    undefined,
-                                    false,
-                                    {
-                                      fileName: Q,
-                                      lineNumber: 406,
-                                      columnNumber: 15,
-                                    },
-                                    this,
-                                  ),
-                                ],
-                              },
-                              undefined,
-                              true,
-                              {
-                                fileName: Q,
-                                lineNumber: 403,
-                                columnNumber: 13,
-                              },
-                              this,
-                            ),
-                          ],
-                        },
-                        undefined,
-                        true,
-                        {
-                          fileName: Q,
-                          lineNumber: 401,
-                          columnNumber: 11,
-                        },
-                        this,
-                      ),
-                      (0, U.jsxDEV)(
-                        "div",
-                        {
-                          className: "settings-plan-card",
-                          children: [
-                            (0, U.jsxDEV)(
-                              "div",
-                              {
-                                className: "settings-plan-row",
-                                children: [
-                                  (0, U.jsxDEV)(
-                                    "span",
-                                    {
-                                      className: "settings-label",
-                                      children: _0x5774eb(
-                                        "settings.account.plan",
-                                      ),
-                                    },
-                                    undefined,
-                                    false,
-                                    {
-                                      fileName: Q,
-                                      lineNumber: 413,
-                                      columnNumber: 15,
-                                    },
-                                    this,
-                                  ),
-                                  (0, U.jsxDEV)(
-                                    "span",
-                                    {
-                                      className: "settings-plan-badge",
-                                      style: {
-                                        background: _0x40008c.bg,
-                                        color: _0x40008c.color,
-                                      },
-                                      children: _0x40008c.label,
-                                    },
-                                    undefined,
-                                    false,
-                                    {
-                                      fileName: Q,
-                                      lineNumber: 414,
-                                      columnNumber: 15,
-                                    },
-                                    this,
-                                  ),
-                                ],
-                              },
-                              undefined,
-                              true,
-                              {
-                                fileName: Q,
-                                lineNumber: 412,
-                                columnNumber: 13,
-                              },
-                              this,
-                            ),
-                            _0x4b3119 &&
-                              (0, U.jsxDEV)(
-                                "span",
-                                {
-                                  className: "settings-plan-expiry",
-                                  children: iw(_0x200100),
-                                },
-                                undefined,
-                                false,
-                                {
-                                  fileName: Q,
-                                  lineNumber: 419,
-                                  columnNumber: 15,
-                                },
-                                this,
-                              ),
-                            _0x40008c.cta &&
-                              (0, U.jsxDEV)(
-                                "button",
-                                {
-                                  className: "settings-plan-cta",
-                                  onClick: () => yh(),
-                                  children: _0x40008c.cta,
-                                },
-                                undefined,
-                                false,
-                                {
-                                  fileName: Q,
-                                  lineNumber: 422,
-                                  columnNumber: 15,
-                                },
-                                this,
-                              ),
-                          ],
-                        },
-                        undefined,
-                        true,
-                        {
-                          fileName: Q,
-                          lineNumber: 411,
-                          columnNumber: 11,
-                        },
-                        this,
-                      ),
-                      (0, U.jsxDEV)(
-                        "div",
-                        {
-                          className: "settings-discord-card",
-                          children: [
-                            (0, U.jsxDEV)(
-                              "div",
-                              {
-                                className: "settings-discord-row",
-                                children: [
-                                  (0, U.jsxDEV)(
-                                    "div",
-                                    {
-                                      className: "settings-discord-left",
-                                      children: [
-                                        (0, U.jsxDEV)(
-                                          "span",
-                                          {
-                                            className: "settings-discord-icon",
-                                            children: (0, U.jsxDEV)(
-                                              HC,
-                                              {},
-                                              undefined,
-                                              false,
-                                              {
-                                                fileName: Q,
-                                                lineNumber: 428,
-                                                columnNumber: 57,
-                                              },
-                                              this,
-                                            ),
-                                          },
-                                          undefined,
-                                          false,
-                                          {
-                                            fileName: Q,
-                                            lineNumber: 428,
-                                            columnNumber: 17,
-                                          },
-                                          this,
-                                        ),
-                                        (0, U.jsxDEV)(
-                                          "span",
-                                          {
-                                            className: "settings-label",
-                                            children: _0x5774eb(
-                                              "settings.account.discord",
-                                            ),
-                                          },
-                                          undefined,
-                                          false,
-                                          {
-                                            fileName: Q,
-                                            lineNumber: 429,
-                                            columnNumber: 17,
-                                          },
-                                          this,
-                                        ),
-                                      ],
-                                    },
-                                    undefined,
-                                    true,
-                                    {
-                                      fileName: Q,
-                                      lineNumber: 427,
-                                      columnNumber: 15,
-                                    },
-                                    this,
-                                  ),
-                                  _0x215216.loading
-                                    ? (0, U.jsxDEV)(
-                                        "span",
-                                        {
-                                          className: "settings-discord-status",
-                                          children: "...",
-                                        },
-                                        undefined,
-                                        false,
-                                        {
-                                          fileName: Q,
-                                          lineNumber: 432,
-                                          columnNumber: 17,
-                                        },
-                                        this,
-                                      )
-                                    : _0x215216.linked
-                                      ? (0, U.jsxDEV)(
-                                          "div",
-                                          {
-                                            className: "settings-discord-user",
-                                            children: [
-                                              _0x215216.avatar &&
-                                                (0, U.jsxDEV)(
-                                                  "img",
-                                                  {
-                                                    className:
-                                                      "settings-discord-avatar",
-                                                    src: _0x215216.avatar,
-                                                    alt: "",
-                                                  },
-                                                  undefined,
-                                                  false,
-                                                  {
-                                                    fileName: Q,
-                                                    lineNumber: 435,
-                                                    columnNumber: 38,
-                                                  },
-                                                  this,
-                                                ),
-                                              (0, U.jsxDEV)(
-                                                "span",
-                                                {
-                                                  className:
-                                                    "settings-discord-username",
-                                                  children: _0x215216.username,
-                                                },
-                                                undefined,
-                                                false,
-                                                {
-                                                  fileName: Q,
-                                                  lineNumber: 436,
-                                                  columnNumber: 19,
-                                                },
-                                                this,
-                                              ),
-                                              (0, U.jsxDEV)(
-                                                "button",
-                                                {
-                                                  className:
-                                                    "settings-discord-unlink-icon",
-                                                  onClick: () =>
-                                                    _0x4d05a3 &&
-                                                    _0x215216.unlink(
-                                                      _0x4d05a3.id,
-                                                    ),
-                                                  title: _0x5774eb(
-                                                    "settings.account.discord.unlink",
-                                                  ),
-                                                  children: [
-                                                    (0, U.jsxDEV)(
-                                                      "span",
-                                                      {
-                                                        className:
-                                                          "settings-discord-link-state",
-                                                        children: (0, U.jsxDEV)(
-                                                          WC,
-                                                          {},
-                                                          undefined,
-                                                          false,
-                                                          {
-                                                            fileName: Q,
-                                                            lineNumber: 438,
-                                                            columnNumber: 67,
-                                                          },
-                                                          this,
-                                                        ),
-                                                      },
-                                                      undefined,
-                                                      false,
-                                                      {
-                                                        fileName: Q,
-                                                        lineNumber: 438,
-                                                        columnNumber: 21,
-                                                      },
-                                                      this,
-                                                    ),
-                                                    (0, U.jsxDEV)(
-                                                      "span",
-                                                      {
-                                                        className:
-                                                          "settings-discord-unlink-state",
-                                                        children: (0, U.jsxDEV)(
-                                                          KC,
-                                                          {},
-                                                          undefined,
-                                                          false,
-                                                          {
-                                                            fileName: Q,
-                                                            lineNumber: 439,
-                                                            columnNumber: 69,
-                                                          },
-                                                          this,
-                                                        ),
-                                                      },
-                                                      undefined,
-                                                      false,
-                                                      {
-                                                        fileName: Q,
-                                                        lineNumber: 439,
-                                                        columnNumber: 21,
-                                                      },
-                                                      this,
-                                                    ),
-                                                  ],
-                                                },
-                                                undefined,
-                                                true,
-                                                {
-                                                  fileName: Q,
-                                                  lineNumber: 437,
-                                                  columnNumber: 19,
-                                                },
-                                                this,
-                                              ),
-                                            ],
-                                          },
-                                          undefined,
-                                          true,
-                                          {
-                                            fileName: Q,
-                                            lineNumber: 434,
-                                            columnNumber: 17,
-                                          },
-                                          this,
-                                        )
-                                      : (0, U.jsxDEV)(
-                                          "span",
-                                          {
-                                            className:
-                                              "settings-discord-status",
-                                            children: _0x5774eb(
-                                              "settings.account.discord.notLinked",
-                                            ),
-                                          },
-                                          undefined,
-                                          false,
-                                          {
-                                            fileName: Q,
-                                            lineNumber: 443,
-                                            columnNumber: 17,
-                                          },
-                                          this,
-                                        ),
-                                ],
-                              },
-                              undefined,
-                              true,
-                              {
-                                fileName: Q,
-                                lineNumber: 426,
-                                columnNumber: 13,
-                              },
-                              this,
-                            ),
-                            !_0x215216.linked &&
-                              !_0x215216.loading &&
-                              (0, U.jsxDEV)(
-                                "button",
-                                {
-                                  className: "settings-discord-link-btn",
-                                  onClick: () =>
-                                    _0x4d05a3 &&
-                                    _0x215216.initLink(_0x4d05a3.id),
-                                  children: _0x291290
-                                    ? (0, U.jsxDEV)(
-                                        U.Fragment,
-                                        {
-                                          children: [
-                                            (0, U.jsxDEV)(
-                                              "span",
-                                              {
-                                                style: {
-                                                  fontSize: 13,
-                                                  lineHeight: 1,
-                                                },
-                                                children: "🎁",
-                                              },
-                                              undefined,
-                                              false,
-                                              {
-                                                fileName: Q,
-                                                lineNumber: 450,
-                                                columnNumber: 33,
-                                              },
-                                              this,
-                                            ),
-                                            _0x5774eb("trial.modal.ctaLink"),
-                                          ],
-                                        },
-                                        undefined,
-                                        true,
-                                      )
-                                    : _0x5774eb(
-                                        "settings.account.discord.linkBtn",
-                                      ),
-                                },
-                                undefined,
-                                false,
-                                {
-                                  fileName: Q,
-                                  lineNumber: 449,
-                                  columnNumber: 15,
-                                },
-                                this,
-                              ),
-                          ],
-                        },
-                        undefined,
-                        true,
-                        {
-                          fileName: Q,
-                          lineNumber: 425,
-                          columnNumber: 11,
-                        },
-                        this,
-                      ),
-                      (0, U.jsxDEV)(
-                        "div",
-                        {
-                          className: "settings-accounts-card",
-                          children: [
-                            (0, U.jsxDEV)(
-                              "button",
-                              {
-                                className: "settings-accounts-toggle",
-                                onClick: () => _0x723273(!_0x387d29),
-                                children: [
-                                  (0, U.jsxDEV)(
-                                    "div",
-                                    {
-                                      className:
-                                        "settings-accounts-toggle-left",
-                                      children: [
-                                        (0, U.jsxDEV)(
-                                          "svg",
-                                          {
-                                            width: "16",
-                                            height: "16",
-                                            viewBox: "0 0 24 24",
-                                            fill: "none",
-                                            stroke: "currentColor",
-                                            strokeWidth: "2",
-                                            strokeLinecap: "round",
-                                            strokeLinejoin: "round",
-                                            children: [
-                                              (0, U.jsxDEV)(
-                                                "path",
-                                                {
-                                                  d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2",
-                                                },
-                                                undefined,
-                                                false,
-                                                {
-                                                  fileName: Q,
-                                                  lineNumber: 458,
-                                                  columnNumber: 19,
-                                                },
-                                                this,
-                                              ),
-                                              (0, U.jsxDEV)(
-                                                "circle",
-                                                {
-                                                  cx: "9",
-                                                  cy: "7",
-                                                  r: "4",
-                                                },
-                                                undefined,
-                                                false,
-                                                {
-                                                  fileName: Q,
-                                                  lineNumber: 459,
-                                                  columnNumber: 19,
-                                                },
-                                                this,
-                                              ),
-                                              (0, U.jsxDEV)(
-                                                "path",
-                                                {
-                                                  d: "M22 21v-2a4 4 0 0 0-3-3.87",
-                                                },
-                                                undefined,
-                                                false,
-                                                {
-                                                  fileName: Q,
-                                                  lineNumber: 460,
-                                                  columnNumber: 19,
-                                                },
-                                                this,
-                                              ),
-                                              (0, U.jsxDEV)(
-                                                "path",
-                                                {
-                                                  d: "M16 3.13a4 4 0 0 1 0 7.75",
-                                                },
-                                                undefined,
-                                                false,
-                                                {
-                                                  fileName: Q,
-                                                  lineNumber: 461,
-                                                  columnNumber: 19,
-                                                },
-                                                this,
-                                              ),
-                                            ],
-                                          },
-                                          undefined,
-                                          true,
-                                          {
-                                            fileName: Q,
-                                            lineNumber: 457,
-                                            columnNumber: 17,
-                                          },
-                                          this,
-                                        ),
-                                        (0, U.jsxDEV)(
-                                          "span",
-                                          {
-                                            children: _0x5774eb(
-                                              "settings.account.chessAccounts",
-                                            ),
-                                          },
-                                          undefined,
-                                          false,
-                                          {
-                                            fileName: Q,
-                                            lineNumber: 463,
-                                            columnNumber: 17,
-                                          },
-                                          this,
-                                        ),
-                                      ],
-                                    },
-                                    undefined,
-                                    true,
-                                    {
-                                      fileName: Q,
-                                      lineNumber: 456,
-                                      columnNumber: 15,
-                                    },
-                                    this,
-                                  ),
-                                  (0, U.jsxDEV)(
-                                    "div",
-                                    {
-                                      className:
-                                        "settings-accounts-toggle-right",
-                                      children: [
-                                        (0, U.jsxDEV)(
-                                          "span",
-                                          {
-                                            className:
-                                              "settings-accounts-count",
-                                            children: _0x527b41
-                                              ? "..."
-                                              : _0x2b597f.length,
-                                          },
-                                          undefined,
-                                          false,
-                                          {
-                                            fileName: Q,
-                                            lineNumber: 466,
-                                            columnNumber: 17,
-                                          },
-                                          this,
-                                        ),
-                                        (0, U.jsxDEV)(
-                                          "svg",
-                                          {
-                                            className:
-                                              "settings-accounts-chevron " +
-                                              (_0x387d29
-                                                ? "settings-accounts-chevron--open"
-                                                : ""),
-                                            width: "14",
-                                            height: "14",
-                                            viewBox: "0 0 24 24",
-                                            fill: "none",
-                                            stroke: "currentColor",
-                                            strokeWidth: "2",
-                                            strokeLinecap: "round",
-                                            strokeLinejoin: "round",
-                                            children: (0, U.jsxDEV)(
-                                              "polyline",
-                                              {
-                                                points: "6 9 12 15 18 9",
-                                              },
-                                              undefined,
-                                              false,
-                                              {
-                                                fileName: Q,
-                                                lineNumber: 468,
-                                                columnNumber: 19,
-                                              },
-                                              this,
-                                            ),
-                                          },
-                                          undefined,
-                                          false,
-                                          {
-                                            fileName: Q,
-                                            lineNumber: 467,
-                                            columnNumber: 17,
-                                          },
-                                          this,
-                                        ),
-                                      ],
-                                    },
-                                    undefined,
-                                    true,
-                                    {
-                                      fileName: Q,
-                                      lineNumber: 465,
-                                      columnNumber: 15,
-                                    },
-                                    this,
-                                  ),
-                                ],
-                              },
-                              undefined,
-                              true,
-                              {
-                                fileName: Q,
-                                lineNumber: 455,
-                                columnNumber: 13,
-                              },
-                              this,
-                            ),
-                            _0x387d29 &&
-                              (0, U.jsxDEV)(
-                                "div",
-                                {
-                                  className: "settings-accounts-list",
-                                  children:
-                                    _0x2b597f.length === 0
-                                      ? (0, U.jsxDEV)(
-                                          "p",
-                                          {
-                                            className:
-                                              "settings-accounts-empty",
-                                            children: "No accounts linked",
-                                          },
-                                          undefined,
-                                          false,
-                                          {
-                                            fileName: Q,
-                                            lineNumber: 475,
-                                            columnNumber: 19,
-                                          },
-                                          this,
-                                        )
-                                      : Object.entries(
-                                          _0x2b597f.reduce(
-                                            (_0x45e553, _0x5d2efb) => {
-                                              (_0x45e553[_0x5d2efb.platform] ??=
-                                                []).push(_0x5d2efb);
-                                              return _0x45e553;
-                                            },
-                                            {},
-                                          ),
-                                        ).map(([_0x28150c, _0x487a28]) => {
-                                          let _0x1ec796 = aw[_0x28150c];
-                                          return (0, U.jsxDEV)(
-                                            "div",
-                                            {
-                                              className:
-                                                "settings-accounts-group",
-                                              children: [
-                                                (0, U.jsxDEV)(
-                                                  "div",
-                                                  {
-                                                    className:
-                                                      "settings-accounts-group-header",
-                                                    children: [
-                                                      (0, U.jsxDEV)(
-                                                        _0x1ec796,
-                                                        {
-                                                          size: 16,
-                                                        },
-                                                        undefined,
-                                                        false,
-                                                        {
-                                                          fileName: Q,
-                                                          lineNumber: 487,
-                                                          columnNumber: 27,
-                                                        },
-                                                        this,
-                                                      ),
-                                                      (0, U.jsxDEV)(
-                                                        "span",
-                                                        {
-                                                          children:
-                                                            ow[_0x28150c] ||
-                                                            _0x28150c,
-                                                        },
-                                                        undefined,
-                                                        false,
-                                                        {
-                                                          fileName: Q,
-                                                          lineNumber: 488,
-                                                          columnNumber: 27,
-                                                        },
-                                                        this,
-                                                      ),
-                                                      (0, U.jsxDEV)(
-                                                        "span",
-                                                        {
-                                                          className:
-                                                            "settings-accounts-group-count",
-                                                          children:
-                                                            _0x487a28.length,
-                                                        },
-                                                        undefined,
-                                                        false,
-                                                        {
-                                                          fileName: Q,
-                                                          lineNumber: 489,
-                                                          columnNumber: 27,
-                                                        },
-                                                        this,
-                                                      ),
-                                                    ],
-                                                  },
-                                                  undefined,
-                                                  true,
-                                                  {
-                                                    fileName: Q,
-                                                    lineNumber: 486,
-                                                    columnNumber: 25,
-                                                  },
-                                                  this,
-                                                ),
-                                                _0x487a28.map((_0x50b05c) =>
-                                                  (0, U.jsxDEV)(
-                                                    "div",
-                                                    {
-                                                      className:
-                                                        "settings-accounts-item",
-                                                      children: [
-                                                        (0, U.jsxDEV)(
-                                                          "span",
-                                                          {
-                                                            className:
-                                                              "settings-accounts-username",
-                                                            children:
-                                                              _0x50b05c.username,
-                                                          },
-                                                          undefined,
-                                                          false,
-                                                          {
-                                                            fileName: Q,
-                                                            lineNumber: 493,
-                                                            columnNumber: 29,
-                                                          },
-                                                          this,
-                                                        ),
-                                                        (0, U.jsxDEV)(
-                                                          "button",
-                                                          {
-                                                            className:
-                                                              "settings-discord-unlink-icon",
-                                                            onClick: () =>
-                                                              _0x4d05a3 &&
-                                                              _0x472dab(
-                                                                _0x50b05c.id,
-                                                                _0x4d05a3.id,
-                                                              ),
-                                                            title: "Unlink",
-                                                            children: [
-                                                              (0, U.jsxDEV)(
-                                                                "span",
-                                                                {
-                                                                  className:
-                                                                    "settings-discord-link-state",
-                                                                  children: (0,
-                                                                  U.jsxDEV)(
-                                                                    WC,
-                                                                    {},
-                                                                    undefined,
-                                                                    false,
-                                                                    {
-                                                                      fileName:
-                                                                        Q,
-                                                                      lineNumber: 495,
-                                                                      columnNumber: 77,
-                                                                    },
-                                                                    this,
-                                                                  ),
-                                                                },
-                                                                undefined,
-                                                                false,
-                                                                {
-                                                                  fileName: Q,
-                                                                  lineNumber: 495,
-                                                                  columnNumber: 31,
-                                                                },
-                                                                this,
-                                                              ),
-                                                              (0, U.jsxDEV)(
-                                                                "span",
-                                                                {
-                                                                  className:
-                                                                    "settings-discord-unlink-state",
-                                                                  children: (0,
-                                                                  U.jsxDEV)(
-                                                                    KC,
-                                                                    {},
-                                                                    undefined,
-                                                                    false,
-                                                                    {
-                                                                      fileName:
-                                                                        Q,
-                                                                      lineNumber: 496,
-                                                                      columnNumber: 79,
-                                                                    },
-                                                                    this,
-                                                                  ),
-                                                                },
-                                                                undefined,
-                                                                false,
-                                                                {
-                                                                  fileName: Q,
-                                                                  lineNumber: 496,
-                                                                  columnNumber: 31,
-                                                                },
-                                                                this,
-                                                              ),
-                                                            ],
-                                                          },
-                                                          undefined,
-                                                          true,
-                                                          {
-                                                            fileName: Q,
-                                                            lineNumber: 494,
-                                                            columnNumber: 29,
-                                                          },
-                                                          this,
-                                                        ),
-                                                      ],
-                                                    },
-                                                    _0x50b05c.id,
-                                                    true,
-                                                    {
-                                                      fileName: Q,
-                                                      lineNumber: 492,
-                                                      columnNumber: 27,
-                                                    },
-                                                    this,
-                                                  ),
-                                                ),
-                                              ],
-                                            },
-                                            _0x28150c,
-                                            true,
-                                            {
-                                              fileName: Q,
-                                              lineNumber: 485,
-                                              columnNumber: 23,
-                                            },
-                                            this,
-                                          );
-                                        }),
-                                },
-                                undefined,
-                                false,
-                                {
-                                  fileName: Q,
-                                  lineNumber: 473,
-                                  columnNumber: 15,
-                                },
-                                this,
-                              ),
-                          ],
-                        },
-                        undefined,
-                        true,
-                        {
-                          fileName: Q,
-                          lineNumber: 454,
-                          columnNumber: 11,
-                        },
-                        this,
-                      ),
-                    ],
-                  },
-                  undefined,
-                  true,
-                  {
-                    fileName: Q,
-                    lineNumber: 384,
-                    columnNumber: 9,
-                  },
-                  this,
-                ),
               _0x3800c8 === "general" &&
                 (0, U.jsxDEV)(
                   cw,
@@ -87990,19 +87772,6 @@ function uw({ activeTab: _0x3800c8, setActiveTab: _0x1b8cb4 }) {
                   {
                     fileName: Q,
                     lineNumber: 511,
-                    columnNumber: 9,
-                  },
-                  this,
-                ),
-              _0x3800c8 === "engine" &&
-                (0, U.jsxDEV)(
-                  pw,
-                  {},
-                  undefined,
-                  false,
-                  {
-                    fileName: Q,
-                    lineNumber: 515,
                     columnNumber: 9,
                   },
                   this,
@@ -88561,44 +88330,29 @@ function pw() {
                       this,
                     ),
                     (0, U.jsxDEV)(
-                      "select",
+                      _0x9f4a1e,
                       {
-                        className: "settings-select",
+                        options: _0x4fa2e0.map((_0xdf9e8a) => {
+                          let _0x2e6290 = !_0x5221a5 && !fw.includes(_0xdf9e8a);
+                          return {
+                            value: _0xdf9e8a,
+                            disabled: _0x2e6290,
+                            label:
+                              om[_0xdf9e8a].label +
+                              (om[_0xdf9e8a].beta ? " (beta)" : "") +
+                              (_0x2e6290
+                                ? " — " + _0xedddb5("settings.engine.premiumTag")
+                                : ""),
+                          };
+                        }),
                         value: _0x211717,
-                        onChange: (_0x57b27e) => {
-                          let _0x5c2d3e = _0x57b27e.target.value;
+                        onChange: (_0x5c2d3e) => {
                           if (!_0x5221a5 && !fw.includes(_0x5c2d3e)) {
                             _0x22fa30("komodo");
                             return;
                           }
                           _0x22fa30(_0x5c2d3e);
                         },
-                        children: _0x4fa2e0.map((_0xdf9e8a) => {
-                          let _0x2e6290 = !_0x5221a5 && !fw.includes(_0xdf9e8a);
-                          return (0, U.jsxDEV)(
-                            "option",
-                            {
-                              value: _0xdf9e8a,
-                              disabled: _0x2e6290,
-                              children: [
-                                om[_0xdf9e8a].label,
-                                om[_0xdf9e8a].beta ? " (beta)" : "",
-                                _0x2e6290
-                                  ? " — " +
-                                    _0xedddb5("settings.engine.premiumTag")
-                                  : "",
-                              ],
-                            },
-                            _0xdf9e8a,
-                            true,
-                            {
-                              fileName: Q,
-                              lineNumber: 663,
-                              columnNumber: 17,
-                            },
-                            this,
-                          );
-                        }),
                       },
                       undefined,
                       false,
@@ -88673,25 +88427,6 @@ function pw() {
                       },
                       this,
                     ),
-                    (0, U.jsxDEV)(
-                      "span",
-                      {
-                        className: "settings-engine-desc",
-                        children: _0xedddb5(
-                          "engine.info." +
-                            (om[_0x211717] ? _0x211717 : _0x4fa2e0[0]) +
-                            ".desc",
-                        ),
-                      },
-                      undefined,
-                      false,
-                      {
-                        fileName: Q,
-                        lineNumber: 677,
-                        columnNumber: 11,
-                      },
-                      this,
-                    ),
                   ],
                 },
                 undefined,
@@ -88717,51 +88452,20 @@ function pw() {
         (0, U.jsxDEV)(
           "div",
           {
-            className: "settings-item settings-item--column",
+            className: "settings-item settings-item-row--slider",
             children: [
               (0, U.jsxDEV)(
-                "div",
+                "span",
                 {
-                  className: "settings-item-row",
-                  children: [
-                    (0, U.jsxDEV)(
-                      "span",
-                      {
-                        className: "settings-label",
-                        children: _0xedddb5("settings.engine.autoEloBoost"),
-                      },
-                      undefined,
-                      false,
-                      {
-                        fileName: Q,
-                        lineNumber: 683,
-                        columnNumber: 11,
-                      },
-                      this,
-                    ),
-                    (0, U.jsxDEV)(
-                      "span",
-                      {
-                        className: "settings-slider-value",
-                        children: ["+", _0x4ece9c],
-                      },
-                      undefined,
-                      true,
-                      {
-                        fileName: Q,
-                        lineNumber: 684,
-                        columnNumber: 11,
-                      },
-                      this,
-                    ),
-                  ],
+                  className: "settings-label",
+                  children: _0xedddb5("settings.engine.autoEloBoost"),
                 },
                 undefined,
-                true,
+                false,
                 {
                   fileName: Q,
-                  lineNumber: 682,
-                  columnNumber: 9,
+                  lineNumber: 683,
+                  columnNumber: 11,
                 },
                 this,
               ),
@@ -88773,9 +88477,7 @@ function pw() {
                   step: 10,
                   value: _0x4ece9c,
                   onChange: _0x43b4af,
-                  trackColor: "linear-gradient(90deg, #22c55e, #3b82f6)",
-                  thumbColor: "#22c55e",
-                  thumbColorEnd: "#3b82f6",
+                  thumbColor: "#006491",
                 },
                 undefined,
                 false,
@@ -88787,17 +88489,14 @@ function pw() {
                 this,
               ),
               (0, U.jsxDEV)(
-                "span",
-                {
-                  className: "settings-engine-desc",
-                  children: _0xedddb5("settings.engine.autoEloBoost.desc"),
-                },
+                _0x7c3d92,
+                { value: "+" + _0x4ece9c },
                 undefined,
                 false,
                 {
                   fileName: Q,
-                  lineNumber: 687,
-                  columnNumber: 9,
+                  lineNumber: 684,
+                  columnNumber: 11,
                 },
                 this,
               ),
@@ -88808,18 +88507,6 @@ function pw() {
           {
             fileName: Q,
             lineNumber: 681,
-            columnNumber: 7,
-          },
-          this,
-        ),
-        (0, U.jsxDEV)(
-          dw,
-          {},
-          undefined,
-          false,
-          {
-            fileName: Q,
-            lineNumber: 690,
             columnNumber: 7,
           },
           this,
@@ -90424,7 +90111,9 @@ function Aw() {
             (0, U.jsxDEV)(
               Yb,
               {
-                checked: !_0x4d06f5.limitStrength && _0x197f4c,
+                checked:
+                  !_0x4d06f5.limitStrength &&
+                  _0x197f4c,
                 onChange: (_0xa0867) => {
                   if (_0x197f4c) {
                     _0x4d06f5.setLimitStrength(!_0xa0867);
@@ -90492,7 +90181,9 @@ function jw() {
         (0, U.jsxDEV)(
           Yb,
           {
-            checked: !_0x247f0e.limitStrength && _0x41e8b0,
+            checked:
+              !_0x247f0e.limitStrength &&
+              _0x41e8b0,
             onChange: (_0x3d906a) => {
               if (_0x41e8b0) {
                 _0x247f0e.setLimitStrength(!_0x3d906a);
@@ -92473,7 +92164,9 @@ function Ww() {
               (0, U.jsxDEV)(
                 Yb,
                 {
-                  checked: !_0x2f4e86.limitStrength && _0x318641,
+                  checked:
+                    !_0x2f4e86.limitStrength &&
+                    _0x318641,
                   onChange: (_0x406f39) => {
                     if (_0x318641) {
                       _0x2f4e86.setLimitStrength(!_0x406f39);
@@ -92966,7 +92659,7 @@ function Yw({ id: _0x25ac61, children: _0x36fa21 }) {
       style: {
         transform: vg.Translate.toString(_0x3fa140),
         transition: _0x1fa08d,
-        opacity: _0x5adf11 ? 0.4 : 1,
+        opacity: _0x5adf11 ? 0.92 : 1,
         position: "relative",
         zIndex: _0x5adf11 ? 10 : undefined,
       },
@@ -93007,323 +92700,460 @@ function Yw({ id: _0x25ac61, children: _0x36fa21 }) {
     this,
   );
 }
-function Xw() {
-  let _0x3721be = Lp((_0x1b39a5) => _0x1b39a5.pinned);
-  let _0x4f6749 = Lp((_0x2d1a6a) => _0x2d1a6a.editMode);
-  let _0x4e05f8 = vm((_0x5915d5) => _0x5915d5.engineId);
-  let _0x13511c = Lp((_0x4b3c50) => _0x4b3c50.setEditMode);
-  let _0x4728c0 = Lp((_0x288a28) => _0x288a28.reorderPinned);
-  let _0x1ba51f = Lp((_0x5db53d) => _0x5db53d.widgetPosition);
-  let _0x166cce = Lp((_0x593669) => _0x593669.setWidgetPosition);
-  let _0x1ec1fe = (0, y.useRef)(null);
-  let _0x1f100f = (0, y.useRef)(false);
-  let _0x2943d3 = (0, y.useRef)({
-    x: 0,
-    y: 0,
-  });
-  let _0x41a946 = (0, y.useCallback)(
-    (_0xef5148) => {
-      _0x1f100f.current = true;
-      _0x2943d3.current = {
-        x: _0xef5148.clientX - _0x1ba51f.x,
-        y: _0xef5148.clientY - _0x1ba51f.y,
+function _0x2e9c74({ editMode: _0x1d8a05, onToggle: _0x2e7b16 }) {
+  return (0, U.jsxDEV)(
+    "button",
+    {
+      className: "floating-widget-edit",
+      onClick: _0x2e7b16,
+      title: _0x1d8a05 ? "Done editing" : "Edit layout",
+      children: _0x1d8a05
+        ? (0, U.jsxDEV)(
+            "svg",
+            {
+              width: "16",
+              height: "16",
+              viewBox: "0 0 24 24",
+              fill: "none",
+              stroke: "currentColor",
+              strokeWidth: "2",
+              strokeLinecap: "round",
+              strokeLinejoin: "round",
+              children: (0, U.jsxDEV)(
+                "polyline",
+                { points: "20 6 9 17 4 12" },
+                undefined,
+                false,
+              ),
+            },
+            undefined,
+            false,
+          )
+        : (0, U.jsxDEV)(
+            "svg",
+            {
+              width: "16",
+              height: "16",
+              viewBox: "0 0 24 24",
+              fill: "none",
+              stroke: "currentColor",
+              strokeWidth: "2",
+              strokeLinecap: "round",
+              strokeLinejoin: "round",
+              children: [
+                (0, U.jsxDEV)(
+                  "path",
+                  {
+                    d: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7",
+                  },
+                  undefined,
+                  false,
+                ),
+                (0, U.jsxDEV)(
+                  "path",
+                  {
+                    d: "M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z",
+                  },
+                  undefined,
+                  false,
+                ),
+              ],
+            },
+            undefined,
+            true,
+          ),
+    },
+    undefined,
+    false,
+  );
+}
+function _0x9a4d17({
+  group: _0x1f4a02,
+  editMode: _0x2c8b91,
+  isMergeTarget: _0x3e9c17,
+  engineId: _0x4a1d63,
+  onItemDragEnd: _0x5b2e84,
+  onItemDragMove: _0x1a2b91,
+  onPositionCommit: _0x6c3f05,
+  onHoverTarget: _0x7d4a16,
+  onMerge: _0x8e5b27,
+  registerRef: _0x9f6c38,
+  onToggleEdit: _0xa07d49,
+}) {
+  let _0xb18e50 = (0, y.useRef)(null);
+  let _0xc29f61 = (0, y.useRef)(false);
+  let _0xd3a072 = (0, y.useRef)({ x: 0, y: 0 });
+  let _0xe4b183 = (0, y.useCallback)(
+    (_0xf5c294) => {
+      _0xc29f61.current = true;
+      _0xd3a072.current = {
+        x: _0xf5c294.clientX - _0x1f4a02.position.x,
+        y: _0xf5c294.clientY - _0x1f4a02.position.y,
       };
-      _0xef5148.target.setPointerCapture(_0xef5148.pointerId);
+      _0xf5c294.target.setPointerCapture(_0xf5c294.pointerId);
     },
-    [_0x1ba51f],
+    [_0x1f4a02.position],
   );
-  let _0x1cba25 = (0, y.useCallback)((_0x5780e8) => {
-    if (!_0x1f100f.current || !_0x1ec1fe.current) {
-      return;
-    }
-    let _0x4b5f25 = Math.max(
-      0,
-      Math.min(
-        window.innerWidth - 180,
-        _0x5780e8.clientX - _0x2943d3.current.x,
-      ),
-    );
-    let _0x289f2e = Math.max(
-      0,
-      Math.min(
-        window.innerHeight - 60,
-        _0x5780e8.clientY - _0x2943d3.current.y,
-      ),
-    );
-    _0x1ec1fe.current.style.left = _0x4b5f25 + "px";
-    _0x1ec1fe.current.style.top = _0x289f2e + "px";
-  }, []);
-  let _0x525fd3 = (0, y.useCallback)(
-    (_0x24eec3) => {
-      if (_0x1f100f.current) {
-        _0x1f100f.current = false;
-        _0x166cce(
-          Math.max(
-            0,
-            Math.min(
-              window.innerWidth - 180,
-              _0x24eec3.clientX - _0x2943d3.current.x,
-            ),
-          ),
-          Math.max(
-            0,
-            Math.min(
-              window.innerHeight - 60,
-              _0x24eec3.clientY - _0x2943d3.current.y,
-            ),
-          ),
-        );
-      }
-    },
-    [_0x166cce],
-  );
-  (0, y.useEffect)(() => {
-    let _0xe88799 = () => {
-      if (!_0x1ec1fe.current) {
+  let _0x06d295 = (0, y.useCallback)(
+    (_0x17e3a6) => {
+      if (!_0xc29f61.current || !_0xb18e50.current) {
         return;
       }
-      let _0x479994 = _0x1ec1fe.current.getBoundingClientRect();
-      let _0x2763e8 = Math.min(
-        _0x479994.left,
-        window.innerWidth - _0x479994.width,
+      let _0x28f4b7 = Math.max(
+        0,
+        Math.min(window.innerWidth - 180, _0x17e3a6.clientX - _0xd3a072.current.x),
       );
-      let _0x592573 = Math.min(
-        _0x479994.top,
-        window.innerHeight - _0x479994.height,
+      let _0x39a5c8 = Math.max(
+        0,
+        Math.min(window.innerHeight - 60, _0x17e3a6.clientY - _0xd3a072.current.y),
       );
-      if (_0x2763e8 !== _0x479994.left || _0x592573 !== _0x479994.top) {
-        _0x166cce(Math.max(0, _0x2763e8), Math.max(0, _0x592573));
-      }
-    };
-    window.addEventListener("resize", _0xe88799);
-    return () => window.removeEventListener("resize", _0xe88799);
-  }, [_0x166cce]);
-  if (_0x3721be.length === 0) {
-    return null;
-  }
-  let _0x3d6a6d = _0x3721be.filter(
-    (_0x2c40f8) => qw(_0x2c40f8, _0x4e05f8) !== null,
+      _0xb18e50.current.style.left = _0x28f4b7 + "px";
+      _0xb18e50.current.style.top = _0x39a5c8 + "px";
+      _0xb18e50.current.style.zIndex = "2147483647";
+      let _0x4ab6d9 = _0xb18e50.current.getBoundingClientRect();
+      _0x7d4a16(
+        _0x1f4a02.id,
+        _0x4ab6d9.left + _0x4ab6d9.width / 2,
+        _0x4ab6d9.top + _0x4ab6d9.height / 2,
+      );
+    },
+    [_0x1f4a02.id, _0x7d4a16],
   );
-  if (_0x3d6a6d.length === 0) {
-    return null;
-  }
-  let _0xfdd23e = _0x4f6749
+  let _0x5bc7d0 = (0, y.useCallback)(
+    (_0x6ce8f1) => {
+      if (!_0xc29f61.current || !_0xb18e50.current) {
+        return;
+      }
+      _0xc29f61.current = false;
+      _0xb18e50.current.style.zIndex = "";
+      let _0x7df9a2 = _0xb18e50.current.getBoundingClientRect();
+      let _0x8e0ab3 = _0x7d4a16(
+        _0x1f4a02.id,
+        _0x7df9a2.left + _0x7df9a2.width / 2,
+        _0x7df9a2.top + _0x7df9a2.height / 2,
+      );
+      if (_0x8e0ab3) {
+        _0x8e5b27(_0x1f4a02.id, _0x8e0ab3);
+      } else {
+        _0x6c3f05(_0x1f4a02.id, _0x7df9a2.left, _0x7df9a2.top);
+      }
+    },
+    [_0x1f4a02.id, _0x6c3f05, _0x7d4a16, _0x8e5b27],
+  );
+  let _0x9f1c82 = (0, y.useCallback)(
+    (_0xa02d93) => {
+      _0xb18e50.current = _0xa02d93;
+      _0x9f6c38(_0x1f4a02.id, _0xa02d93);
+    },
+    [_0x1f4a02.id, _0x9f6c38],
+  );
+  let _0xb13e04 = _0x2c8b91
     ? (0, U.jsxDEV)(
         Ov,
         {
           collisionDetection: zg,
-          onDragEnd: (_0x3dfb2) => {
-            let { active: _0x358b1e, over: _0x20bc32 } = _0x3dfb2;
-            if (_0x20bc32 && _0x358b1e.id !== _0x20bc32.id) {
-              _0x4728c0(
-                Lv(
-                  _0x3721be,
-                  _0x3721be.indexOf(_0x358b1e.id),
-                  _0x3721be.indexOf(_0x20bc32.id),
-                ),
-              );
-            }
-          },
+          onDragMove: _0x1a2b91,
+          onDragEnd: _0x5b2e84,
           children: (0, U.jsxDEV)(
             Jv,
             {
-              items: _0x3d6a6d,
+              items: _0x1f4a02.items,
               strategy: Wv,
-              children: _0x3d6a6d.map((_0x11fbb7, _0x25c209) =>
+              children: _0x1f4a02.items.map((_0xc24f15) =>
                 (0, U.jsxDEV)(
                   Yw,
                   {
-                    id: _0x11fbb7,
-                    children: qw(_0x11fbb7, _0x4e05f8),
+                    id: _0xc24f15,
+                    children: qw(_0xc24f15, _0x4a1d63),
                   },
-                  _0x11fbb7,
+                  _0xc24f15,
                   false,
-                  {
-                    fileName: Jw,
-                    lineNumber: 101,
-                    columnNumber: 11,
-                  },
-                  this,
                 ),
               ),
             },
             undefined,
             false,
-            {
-              fileName: Jw,
-              lineNumber: 99,
-              columnNumber: 7,
-            },
-            this,
           ),
         },
         undefined,
         false,
-        {
-          fileName: Jw,
-          lineNumber: 98,
-          columnNumber: 5,
-        },
-        this,
       )
-    : _0x3d6a6d.map((_0x1a4adf) =>
+    : _0x1f4a02.items.map((_0xd35a26) =>
         (0, U.jsxDEV)(
           "div",
-          {
-            children: qw(_0x1a4adf, _0x4e05f8),
-          },
-          _0x1a4adf,
+          { children: qw(_0xd35a26, _0x4a1d63) },
+          _0xd35a26,
           false,
-          {
-            fileName: Jw,
-            lineNumber: 109,
-            columnNumber: 7,
-          },
-          this,
         ),
       );
   return (0, U.jsxDEV)(
     "div",
     {
-      ref: _0x1ec1fe,
+      ref: _0x9f1c82,
       className:
-        "floating-widget " + (_0x4f6749 ? "floating-widget--edit" : ""),
+        "floating-widget " +
+        (_0x2c8b91 ? "floating-widget--edit " : "") +
+        (_0x3e9c17 ? "floating-widget--merge-target" : ""),
       style: {
-        left: _0x1ba51f.x,
-        top: _0x1ba51f.y,
+        left: _0x1f4a02.position.x,
+        top: _0x1f4a02.position.y,
       },
       children: [
         (0, U.jsxDEV)(
           "div",
           {
             className: "floating-widget-drag",
-            onPointerDown: _0x41a946,
-            onPointerMove: _0x1cba25,
-            onPointerUp: _0x525fd3,
+            onPointerDown: _0xe4b183,
+            onPointerMove: _0x06d295,
+            onPointerUp: _0x5bc7d0,
           },
           undefined,
           false,
-          {
-            fileName: Jw,
-            lineNumber: 121,
-            columnNumber: 7,
-          },
-          this,
         ),
         (0, U.jsxDEV)(
-          "button",
-          {
-            className: "floating-widget-edit",
-            onClick: () => _0x13511c(!_0x4f6749),
-            title: _0x4f6749 ? "Done editing" : "Edit layout",
-            children: _0x4f6749
-              ? (0, U.jsxDEV)(
-                  "svg",
-                  {
-                    width: "16",
-                    height: "16",
-                    viewBox: "0 0 24 24",
-                    fill: "none",
-                    stroke: "currentColor",
-                    strokeWidth: "2",
-                    strokeLinecap: "round",
-                    strokeLinejoin: "round",
-                    children: (0, U.jsxDEV)(
-                      "polyline",
-                      {
-                        points: "20 6 9 17 4 12",
-                      },
-                      undefined,
-                      false,
-                      {
-                        fileName: Jw,
-                        lineNumber: 134,
-                        columnNumber: 13,
-                      },
-                      this,
-                    ),
-                  },
-                  undefined,
-                  false,
-                  {
-                    fileName: Jw,
-                    lineNumber: 133,
-                    columnNumber: 11,
-                  },
-                  this,
-                )
-              : (0, U.jsxDEV)(
-                  "svg",
-                  {
-                    width: "16",
-                    height: "16",
-                    viewBox: "0 0 24 24",
-                    fill: "none",
-                    stroke: "currentColor",
-                    strokeWidth: "2",
-                    strokeLinecap: "round",
-                    strokeLinejoin: "round",
-                    children: [
-                      (0, U.jsxDEV)(
-                        "path",
-                        {
-                          d: "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7",
-                        },
-                        undefined,
-                        false,
-                        {
-                          fileName: Jw,
-                          lineNumber: 138,
-                          columnNumber: 13,
-                        },
-                        this,
-                      ),
-                      (0, U.jsxDEV)(
-                        "path",
-                        {
-                          d: "M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z",
-                        },
-                        undefined,
-                        false,
-                        {
-                          fileName: Jw,
-                          lineNumber: 139,
-                          columnNumber: 13,
-                        },
-                        this,
-                      ),
-                    ],
-                  },
-                  undefined,
-                  true,
-                  {
-                    fileName: Jw,
-                    lineNumber: 137,
-                    columnNumber: 11,
-                  },
-                  this,
-                ),
-          },
+          _0x2e9c74,
+          { editMode: _0x2c8b91, onToggle: _0xa07d49 },
           undefined,
           false,
-          {
-            fileName: Jw,
-            lineNumber: 127,
-            columnNumber: 7,
-          },
-          this,
         ),
-        _0xfdd23e,
+        _0xb13e04,
       ],
     },
     undefined,
     true,
-    {
-      fileName: Jw,
-      lineNumber: 116,
-      columnNumber: 5,
+  );
+}
+function Xw() {
+  let _0x3721be = Lp((_0x1b39a5) => _0x1b39a5.pinned);
+  let _0x2a91f6 = Lp((_0x8b6e35) => _0x8b6e35.widgetGroups);
+  let _0x4f6749 = Lp((_0x2d1a6a) => _0x2d1a6a.editMode);
+  let _0x4e05f8 = vm((_0x5915d5) => _0x5915d5.engineId);
+  let _0x13511c = Lp((_0x4b3c50) => _0x4b3c50.setEditMode);
+  let _0x2b4c86 = Lp((_0x1e5a09) => _0x1e5a09.setWidgetGroups);
+  let _0x3c5d97 = Lp((_0x2f6b18) => _0x2f6b18.setGroupPosition);
+  let _0x4d6ea8 = (0, y.useRef)(new Map());
+  let [_0x5e7fb9, _0x6f80ca] = (0, y.useState)(null);
+  let _0x7091db = (0, y.useMemo)(
+    () => _0x8f3c21(_0x2a91f6, _0x3721be, { x: 20, y: 20 }),
+    [_0x2a91f6, _0x3721be],
+  );
+  let _0x81a2ec = (0, y.useCallback)((_0x1c2d3e, _0x92e3f4, _0xa4f506) => {
+    let _0xb60718 = null;
+    for (let [_0x2c9d, _0x1a7f] of _0x4d6ea8.current) {
+      if (_0x2c9d === _0x1c2d3e || !_0x1a7f) {
+        continue;
+      }
+      let _0x3e8c = _0x1a7f.getBoundingClientRect();
+      if (
+        _0x92e3f4 >= _0x3e8c.left &&
+        _0x92e3f4 <= _0x3e8c.right &&
+        _0xa4f506 >= _0x3e8c.top &&
+        _0xa4f506 <= _0x3e8c.bottom
+      ) {
+        _0xb60718 = _0x2c9d;
+        break;
+      }
+    }
+    _0x6f80ca(_0xb60718);
+    return _0xb60718;
+  }, []);
+  let _0xc718e2 = (0, y.useCallback)(
+    (_0x1c8b5a, _0x2d9a41) => {
+      _0x6f80ca(null);
+      let _0x3f7a92 = _0x7091db.find((_0x4a1c) => _0x4a1c.id === _0x1c8b5a);
+      if (!_0x3f7a92) {
+        return;
+      }
+      _0x2b4c86(
+        _0x7091db
+          .filter((_0x5b2d) => _0x5b2d.id !== _0x1c8b5a)
+          .map((_0x6c3e) =>
+            _0x6c3e.id === _0x2d9a41
+              ? { ..._0x6c3e, items: [..._0x6c3e.items, ..._0x3f7a92.items] }
+              : _0x6c3e,
+          ),
+      );
     },
-    this,
+    [_0x7091db, _0x2b4c86],
+  );
+  let _0xd829f3 = (0, y.useCallback)(
+    (_0x1c8b57, _0x85b996, _0x1fa961) => {
+      _0x6f80ca(null);
+      _0x3c5d97(_0x1c8b57, _0x85b996, _0x1fa961);
+    },
+    [_0x3c5d97],
+  );
+  let _0xe93a04 = (0, y.useCallback)((_0x1c8b58, _0x0a1b2c) => {
+    if (_0x0a1b2c) {
+      _0x4d6ea8.current.set(_0x1c8b58, _0x0a1b2c);
+    } else {
+      _0x4d6ea8.current.delete(_0x1c8b58);
+    }
+  }, []);
+  let _0x1d2934 = (0, y.useCallback)(
+    (_0x3a5e17) => {
+      let { active: _0x4b6f28, delta: _0x5c7a39 } = _0x3a5e17;
+      let _0x6d8b40 = _0x7091db.find((_0x7e9c51) =>
+        _0x7e9c51.items.includes(_0x4b6f28.id),
+      );
+      let _0x8fa051 = _0x4b6f28.rect.current.initial;
+      if (!_0x6d8b40 || !_0x8fa051 || !_0x5c7a39) {
+        return;
+      }
+      _0x81a2ec(
+        _0x6d8b40.id,
+        _0x8fa051.left + _0x5c7a39.x + _0x8fa051.width / 2,
+        _0x8fa051.top + _0x5c7a39.y + _0x8fa051.height / 2,
+      );
+    },
+    [_0x7091db, _0x81a2ec],
+  );
+  let _0xf04b15 = (0, y.useCallback)(
+    (_0x3dfb2) => {
+      let { active: _0x358b1e, over: _0x20bc32, delta: _0x9e0c72 } = _0x3dfb2;
+      _0x6f80ca(null);
+      let _0x2f6a81 = _0x7091db.find((_0x3d9c) =>
+        _0x3d9c.items.includes(_0x358b1e.id),
+      );
+      if (!_0x2f6a81) {
+        return;
+      }
+      if (
+        _0x20bc32 &&
+        _0x2f6a81.items.includes(_0x20bc32.id) &&
+        _0x358b1e.id !== _0x20bc32.id
+      ) {
+        _0x2b4c86(
+          _0x7091db.map((_0x1b7c) =>
+            _0x1b7c.id === _0x2f6a81.id
+              ? {
+                  ..._0x1b7c,
+                  items: Lv(
+                    _0x1b7c.items,
+                    _0x1b7c.items.indexOf(_0x358b1e.id),
+                    _0x1b7c.items.indexOf(_0x20bc32.id),
+                  ),
+                }
+              : _0x1b7c,
+          ),
+        );
+        return;
+      }
+      let _0x9f8d63 = _0x358b1e.rect.current.initial;
+      let _0x5c8a12 =
+        _0x9f8d63 && _0x9e0c72
+          ? {
+              ..._0x9f8d63,
+              left: _0x9f8d63.left + _0x9e0c72.x,
+              top: _0x9f8d63.top + _0x9e0c72.y,
+            }
+          : (_0x358b1e.rect.current.translated ?? _0x9f8d63);
+      if (!_0x5c8a12) {
+        return;
+      }
+      let _0x6d9b23 = _0x5c8a12.left + _0x5c8a12.width / 2;
+      let _0x7ea034 = _0x5c8a12.top + _0x5c8a12.height / 2;
+      let _0x2a5f19 = _0x4d6ea8.current.get(_0x2f6a81.id);
+      if (_0x2a5f19) {
+        let _0x3b6c20 = _0x2a5f19.getBoundingClientRect();
+        if (
+          _0x6d9b23 >= _0x3b6c20.left &&
+          _0x6d9b23 <= _0x3b6c20.right &&
+          _0x7ea034 >= _0x3b6c20.top &&
+          _0x7ea034 <= _0x3b6c20.bottom
+        ) {
+          return;
+        }
+      }
+      let _0x8fb145 = null;
+      for (let [_0x9ac2, _0xa0d3] of _0x4d6ea8.current) {
+        if (_0x9ac2 === _0x2f6a81.id || !_0xa0d3) {
+          continue;
+        }
+        let _0xb1e4 = _0xa0d3.getBoundingClientRect();
+        if (
+          _0x6d9b23 >= _0xb1e4.left &&
+          _0x6d9b23 <= _0xb1e4.right &&
+          _0x7ea034 >= _0xb1e4.top &&
+          _0x7ea034 <= _0xb1e4.bottom
+        ) {
+          _0x8fb145 = _0x9ac2;
+          break;
+        }
+      }
+      let _0xc2f506 = _0x7091db
+        .map((_0xd3a6) =>
+          _0xd3a6.id === _0x2f6a81.id
+            ? {
+                ..._0xd3a6,
+                items: _0xd3a6.items.filter((_0xe4b7) => _0xe4b7 !== _0x358b1e.id),
+              }
+            : _0xd3a6,
+        )
+        .filter((_0xf5c8) => _0xf5c8.items.length > 0);
+      let _0x06d917 = _0x8fb145
+        ? _0xc2f506.map((_0x17ea) =>
+            _0x17ea.id === _0x8fb145
+              ? { ..._0x17ea, items: [..._0x17ea.items, _0x358b1e.id] }
+              : _0x17ea,
+          )
+        : [
+            ..._0xc2f506,
+            {
+              id: _0x2f0a91(),
+              position: {
+                x: Math.max(0, Math.min(window.innerWidth - 180, _0x5c8a12.left)),
+                y: Math.max(0, Math.min(window.innerHeight - 60, _0x5c8a12.top)),
+              },
+              items: [_0x358b1e.id],
+            },
+          ];
+      _0x2b4c86(_0x06d917);
+    },
+    [_0x7091db, _0x2b4c86],
+  );
+  let _0x28b719 = (0, y.useCallback)(
+    () => _0x13511c(!_0x4f6749),
+    [_0x13511c, _0x4f6749],
+  );
+  if (_0x3721be.length === 0) {
+    return null;
+  }
+  let _0x3d6a6d = _0x7091db
+    .map((_0x39ac) => ({
+      ..._0x39ac,
+      items: _0x39ac.items.filter((_0x4bd1) => qw(_0x4bd1, _0x4e05f8) !== null),
+    }))
+    .filter((_0x5ce2) => _0x5ce2.items.length > 0);
+  if (_0x3d6a6d.length === 0) {
+    return null;
+  }
+  return (0, U.jsxDEV)(
+    U.Fragment,
+    {
+      children: _0x3d6a6d.map((_0x6df3) =>
+        (0, U.jsxDEV)(
+          _0x9a4d17,
+          {
+            group: _0x6df3,
+            editMode: _0x4f6749,
+            isMergeTarget: _0x5e7fb9 === _0x6df3.id,
+            engineId: _0x4e05f8,
+            onItemDragEnd: _0xf04b15,
+            onItemDragMove: _0x1d2934,
+            onPositionCommit: _0xd829f3,
+            onHoverTarget: _0x81a2ec,
+            onMerge: _0xc718e2,
+            registerRef: _0xe93a04,
+            onToggleEdit: _0x28b719,
+          },
+          _0x6df3.id,
+          false,
+        ),
+      ),
+    },
+    undefined,
+    true,
   );
 }
 var Zw =
@@ -97506,8 +97336,30 @@ function aE({ streamMode: _0x568406 = false } = {}) {
     }
   });
   let [_0xb28536, _0x3d1bbd] = (0, y.useState)(false);
-  let [_0xb2cf44, _0x4eba8d] = (0, y.useState)("account");
-  let [_0x40b205, _0x4c304a] = (0, y.useState)("game");
+  let [_0xb2cf44, _0x4eba8d] = (0, y.useState)("general");
+  let [_0x40b205, _0x4c304a] = (0, y.useState)("engine");
+  let { t: _0x9d8e7c } = Zm();
+  let _0x7d8e9f = (0, y.useMemo)(
+    () => [
+      {
+        title: _0x9d8e7c("sidebar.section.game"),
+        items: wC().map((_0x1e2b3c) => ({
+          id: "game:" + _0x1e2b3c.id,
+          label: _0x1e2b3c.label,
+          icon: _0x6f7a8b[_0x1e2b3c.id],
+        })),
+      },
+      {
+        title: _0x9d8e7c("sidebar.section.settings"),
+        items: nw().map((_0x4f5a6b) => ({
+          id: "settings:" + _0x4f5a6b.id,
+          label: _0x4f5a6b.label,
+          icon: _0x9c0d1e[_0x4f5a6b.id],
+        })),
+      },
+    ],
+    [_0x9d8e7c],
+  );
   let _0x5641d7 = (0, y.useRef)(null);
   let {
     user: _0x4c75e3,
@@ -97543,7 +97395,6 @@ function aE({ streamMode: _0x568406 = false } = {}) {
     let _0x20cb1b = setTimeout(_0xbc7508, _0x42ac2e + 1500);
     return () => clearTimeout(_0x20cb1b);
   }, [_0x4429e7, _0x65ca3a]);
-  fC();
   let _0x44811f = (0, y.useRef)(_0x22488d);
   (0, y.useEffect)(() => {
     if (_0x58d45a && _0x22488d && !_0x44811f.current) {
@@ -97619,7 +97470,7 @@ function aE({ streamMode: _0x568406 = false } = {}) {
           label: "Open Settings",
           action: {
             kind: "open-tab",
-            tab: "settings:engine",
+            tab: "game:engine",
           },
         },
         ttl: 12000,
@@ -97957,7 +97808,15 @@ function aE({ streamMode: _0x568406 = false } = {}) {
             "div",
             {
               className:
-                "chessr-panel " + (_0x568406 ? "chessr-panel--stream" : ""),
+                "chessr-panel " +
+                (_0x568406 ? "chessr-panel--stream " : "") +
+                (!_0x416c06 &&
+                !_0x312b45 &&
+                _0x4c75e3 &&
+                !_0x1c1b7d &&
+                !(_0x2142ca && _0x1e6507)
+                  ? "chessr-panel--sidebar"
+                  : ""),
               ref: _0x5641d7,
               style:
                 _0x4661d4 === "small"
@@ -98091,96 +97950,128 @@ function aE({ streamMode: _0x568406 = false } = {}) {
                             undefined,
                             true,
                           )
-                        : (0, U.jsxDEV)(
-                            U.Fragment,
-                            {
-                              children: [
-                                (0, U.jsxDEV)(
-                                  Sh,
-                                  {
-                                    showSettings: _0xb28536,
-                                    onToggleSettings: () =>
-                                      _0x3d1bbd(!_0xb28536),
-                                  },
-                                  undefined,
-                                  false,
-                                  {
-                                    fileName: tE,
-                                    lineNumber: 484,
-                                    columnNumber: 17,
-                                  },
-                                  this,
-                                ),
-                                (0, U.jsxDEV)(
-                                  "div",
-                                  {
-                                    className: "chessr-panel-body",
-                                    children: (() => {
-                                      let _0x571317 = nE();
-                                      if (_0xb28536) {
-                                        return (0, U.jsxDEV)(
-                                          uw,
-                                          {
-                                            activeTab: _0xb2cf44,
-                                            setActiveTab: _0x4eba8d,
-                                          },
-                                          undefined,
-                                          false,
-                                          {
-                                            fileName: tE,
-                                            lineNumber: 488,
-                                            columnNumber: 46,
-                                          },
-                                          this,
-                                        );
-                                      } else if (_0x571317 && !_0x29707b) {
-                                        return (0, U.jsxDEV)(
+                        : (() => {
+                            let _0x571317 = nE();
+                            if (!_0xb28536 && _0x571317 && !_0x29707b) {
+                              return (0, U.jsxDEV)(
+                                U.Fragment,
+                                {
+                                  children: [
+                                    (0, U.jsxDEV)(
+                                      Sh,
+                                      {
+                                        showSettings: _0xb28536,
+                                        onToggleSettings: () =>
+                                          _0x3d1bbd(!_0xb28536),
+                                      },
+                                      undefined,
+                                      false,
+                                    ),
+                                    (0, U.jsxDEV)(
+                                      "div",
+                                      {
+                                        className: "chessr-panel-body",
+                                        children: (0, U.jsxDEV)(
                                           oS,
                                           {
                                             gameId: _0x571317,
                                           },
                                           undefined,
                                           false,
+                                        ),
+                                      },
+                                      undefined,
+                                      false,
+                                    ),
+                                  ],
+                                },
+                                undefined,
+                                true,
+                              );
+                            }
+                            let _0x6c7d8e = _0xb28536
+                              ? "settings:" + _0xb2cf44
+                              : "game:" + _0x40b205;
+                            let _0x3e4f5a = (_0x2d3e4f) => {
+                              let [_0x1f2e3d, _0x4b5c6d] =
+                                _0x2d3e4f.split(":");
+                              if (_0x1f2e3d === "settings") {
+                                _0x3d1bbd(true);
+                                _0x4eba8d(_0x4b5c6d);
+                              } else {
+                                _0x3d1bbd(false);
+                                _0x4c304a(_0x4b5c6d);
+                              }
+                            };
+                            return (0, U.jsxDEV)(
+                              "div",
+                              {
+                                className:
+                                  "chessr-panel-body chessr-panel-body--sidebar",
+                                children: [
+                                  (0, U.jsxDEV)(
+                                    _0x7c1a92,
+                                    {
+                                      sections: _0x7d8e9f,
+                                      active: _0x6c7d8e,
+                                      onChange: _0x3e4f5a,
+                                    },
+                                    undefined,
+                                    false,
+                                  ),
+                                  (0, U.jsxDEV)(
+                                    "div",
+                                    {
+                                      className: "chessr-panel-main",
+                                      children: [
+                                        (0, U.jsxDEV)(
+                                          Sh,
                                           {
-                                            fileName: tE,
-                                            lineNumber: 493,
-                                            columnNumber: 56,
-                                          },
-                                          this,
-                                        );
-                                      } else {
-                                        return (0, U.jsxDEV)(
-                                          kC,
-                                          {
-                                            activeTab: _0x40b205,
-                                            setActiveTab: _0x4c304a,
+                                            showSettings: _0xb28536,
+                                            onToggleSettings: () =>
+                                              _0x3d1bbd(!_0xb28536),
                                           },
                                           undefined,
                                           false,
+                                        ),
+                                        (0, U.jsxDEV)(
+                                          "div",
                                           {
-                                            fileName: tE,
-                                            lineNumber: 494,
-                                            columnNumber: 28,
+                                            className: "chessr-panel-content",
+                                            children: _0xb28536
+                                              ? (0, U.jsxDEV)(
+                                                  uw,
+                                                  {
+                                                    activeTab: _0xb2cf44,
+                                                    setActiveTab: _0x4eba8d,
+                                                  },
+                                                  undefined,
+                                                  false,
+                                                )
+                                              : (0, U.jsxDEV)(
+                                                  kC,
+                                                  {
+                                                    activeTab: _0x40b205,
+                                                    setActiveTab: _0x4c304a,
+                                                  },
+                                                  undefined,
+                                                  false,
+                                                ),
                                           },
-                                          this,
-                                        );
-                                      }
-                                    })(),
-                                  },
-                                  undefined,
-                                  false,
-                                  {
-                                    fileName: tE,
-                                    lineNumber: 485,
-                                    columnNumber: 17,
-                                  },
-                                  this,
-                                ),
-                              ],
-                            },
-                            undefined,
-                            true,
-                          )
+                                          undefined,
+                                          false,
+                                        ),
+                                      ],
+                                    },
+                                    undefined,
+                                    true,
+                                  ),
+                                ],
+                              },
+                              undefined,
+                              true,
+                            );
+                          })()
                     : (0, U.jsxDEV)(
                         "div",
                         {
@@ -98372,17 +98263,17 @@ function lE(_0x4a2596, _0x4b5aaf) {
   }
 }
 var uE = {
-  best: "#81B64C",
-  brilliant: "#26C2A3",
-  great: "#749BBF",
-  excellent: "#6ee7b7",
-  good: "#95B776",
-  book: "#D5A47D",
-  forced: "#96AF8B",
-  inaccuracy: "#F7C631",
-  mistake: "#FFA459",
-  miss: "#FF7769",
-  blunder: "#FA412D",
+  best: "#3b83d9",
+  brilliant: "#3b83d9",
+  great: "#3b83d9",
+  excellent: "#3b83d9",
+  good: "#3b83d9",
+  book: "#3b83d9",
+  forced: "#3b83d9",
+  inaccuracy: "#3b83d9",
+  mistake: "#3b83d9",
+  miss: "#3b83d9",
+  blunder: "#3b83d9",
 };
 var dE = {
   best: "Best",

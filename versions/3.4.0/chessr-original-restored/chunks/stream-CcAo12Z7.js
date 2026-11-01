@@ -349,10 +349,11 @@ var u = o((_0x474fdd) => {
     var _0x8a442d = -1;
     var _0x543aa1 = 5;
     var _0x32b94f = -1;
+    var _0x40df63;
     if (typeof _0x26501a == "function") {
-      function _0x40df63() {
+      _0x40df63 = function () {
         _0x26501a(_0x8f1dc6);
-      }
+      };
     } else if (typeof MessageChannel !== "undefined") {
       var _0x11c134 = new MessageChannel();
       var _0x34032d = _0x11c134.port2;
