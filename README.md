@@ -55,6 +55,10 @@ git clone https://github.com/mirzahabr/chessr-unlocked.git
 3. Click **Load unpacked** and select `versions/3.4.0/chessr-unlocked-all-features/`.
 4. Open chess.com, lichess.org, or worldchess.com — the overlay activates automatically.
 
+> ⚠️ **Use at your own risk.** This is not an official build and it is not supported by
+> Chessr.io or by any chess platform. Using it in live games can get your accounts
+> banned — read the [Disclaimer](#disclaimer) before you install it.
+
 Prefer a packaged copy? Download `chessr-unlocked-all-features-*.tar.gz` from
 [Releases](https://github.com/mirzahabr/chessr-unlocked/releases/latest) and load the
 extracted folder — cloning is not required for that.
@@ -123,7 +127,25 @@ inside a build.
 
 ## Disclaimer
 
-This project is a reverse-engineering and modification exercise against a commercial
+> ⚠️ **Use at your own risk.**
+>
+> This is an unofficial, reverse-engineered modification of a commercial product. It is
+> not affiliated with, endorsed by, or supported by Chessr.io or any chess platform.
+
+Installing it means you accept that:
+
+- **Your accounts can be banned.** The extension modifies what chess.com, lichess.org and
+  worldchess.com see, in live games. That breaks their terms of service, and enforcement
+  is entirely up to them. Rated accounts, paid memberships and titles can be lost.
+- **There is no warranty and no support.** No guarantee that it works on your Chrome
+  version, that an upstream update will not break it, or that an unlocked feature will
+  keep working. Fixes arrive when they arrive.
+- **Your local data is your problem.** The account/cloud sync path is stubbed out, so
+  settings live in `chrome.storage.local` and disappear if the extension is removed.
+- **You install it at your own risk.** The author is not liable for account loss, data
+  loss, or any consequence of using this software.
+
+The project is a reverse-engineering and modification exercise against a commercial
 browser extension you must have legitimately obtained. It is provided for
 research/educational purposes. You are responsible for complying with Chessr.io's terms
 of service, and the terms of service of any chess platform you use it on, in your

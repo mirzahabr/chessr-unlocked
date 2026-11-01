@@ -1,3 +1,9 @@
+# ── Text normalization ──────────────────────────────────────────────────────
+# Store and check out LF for every text file. Without this, a Windows editor or
+# a stray CRLF produces a whole-file diff that hides the real change. Applies to
+# the repository's own files; the vendored engines are opted out just below.
+* text=auto eol=lf
+
 # Binary payloads: never treat as text, never diff line-by-line, never rewrite
 # line endings. These files dominate repository size; git must store them as-is.
 *.wasm    binary
@@ -15,5 +21,7 @@
 *.gif     binary
 
 # Bundled chess engines are third-party, unmodified vendored code. Exclude them
-# from language statistics so the repository's own code is what shows up.
-versions/*/chessr-*/engine/** linguist-vendored
+# from language statistics so the repository's own code is what shows up, and
+# keep their line endings exactly as shipped — pretty-printing a vendored binary
+# or its JS glue is the one thing the repository forbids.
+versions/*/chessr-*/engine/** linguist-vendored -text

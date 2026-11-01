@@ -47,6 +47,17 @@ the next version is [`../3.4.0/`](../3.4.0/README.md).
 
 ---
 
+## Disclaimer
+
+> ⚠️ **Use at your own risk.**
+
+This is an unofficial, reverse-engineered modification, not affiliated with or supported
+by Chessr.io. Using it in live games modifies what chess.com / lichess.org / worldchess.com
+see and breaks their terms of service — **your accounts can be banned**. There is no
+warranty and no support, and account/cloud sync is stubbed out, so settings live only in
+`chrome.storage.local`.
+
+The full wording is in the [repository README's Disclaimer](../../README.md#disclaimer).
 This project is a reverse-engineering and modification exercise against a commercial
 browser extension you must have legitimately obtained, provided for research/educational
 purposes. You are responsible for complying with Chessr.io's terms of service and with the

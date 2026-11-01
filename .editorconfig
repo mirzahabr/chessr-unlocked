@@ -1,0 +1,28 @@
+# Defaults for every editor. Mirrors .gitattributes: LF in the working tree,
+# final newline, no trailing spaces. Vendored engines are excluded because their
+# bytes are shipped as-is and must never be rewritten.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.md]
+# Two trailing spaces are a hard line break in Markdown.
+trim_trailing_whitespace = false
+max_line_length = 92
+
+[*.{yml,yaml}]
+indent_size = 2
+
+[{Makefile,*.mk}]
+indent_style = tab
+
+[versions/**/engine/**]
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
