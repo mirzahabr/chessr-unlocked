@@ -12,8 +12,8 @@ body:
     id: version
     attributes:
       label: Extension version
-      description: Exactly as shown on chrome://extensions/ (e.g. 3.4.0.1)
-      placeholder: 3.4.0.1
+      description: Exactly as shown on chrome://extensions/ (e.g. 3.7.2.1)
+      placeholder: 3.7.2.1
     validations:
       required: true
   - type: input
