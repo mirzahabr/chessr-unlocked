@@ -484,10 +484,12 @@ processed by the version-update pipeline, which:
 4. Re-applied the known account/premium unlocks from the cross-version
    `unlock-manifest.json` (see §10) to `chessr-unlocked-all-features/` only.
 
-- **Fully hand-refactored** (every identifier renamed, logic reorganized,
-  header comments added in a prior version's pass; carried forward
-  unchanged since the structure is byte-identical to v3.3.2) — safe to treat
-  as authoritative, readable source:
+- **Prettified and deobfuscated, not hand-refactored** — these four files are
+  small enough to read, and their string literals, branches and property names
+  are genuine, but their identifiers are still bundler-generated `_0x…` names
+  (120 distinct in `background.js`, 371 in `pageContext.js`, 27 and 61 in the
+  two platform scripts) and they carry no comments. Treat them as *readable*,
+  not as hand-written source:
   - `background.js`
   - `content-scripts/pageContext.js`
   - `content-scripts/chesscomAnon.js`

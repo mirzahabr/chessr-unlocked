@@ -1,8 +1,11 @@
 # Chessr.io v3.4.0
 
-Current version. A fully deobfuscated, restructured copy of the Chessr.io Chrome
-extension (Manifest V3), plus a build with the account system removed and every premium
-feature unlocked.
+Current version. A restored copy of the Chessr.io Chrome extension (Manifest V3), plus a
+build with the account system removed and every premium feature unlocked. Obfuscator.io
+string arrays and control flow are recovered and the code is Prettier-formatted;
+`content.js` and the Stream Mode bundle still carry bundler-generated identifiers, because
+renaming ~80k symbols in a bundle that cannot be smoke-tested is riskier than documenting
+it instead (see PROJECT_REPORT.md §9).
 
 | Folder | Purpose | Account required? | Edit it? |
 |---|---|---|---|

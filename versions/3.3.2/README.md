@@ -1,7 +1,7 @@
 # Chessr.io v3.3.2
 
 Previous version, kept as the **diff baseline for v3.4.0**: every claim in the v3.4.0
-report is validated against these builds. A deobfuscated, restructured copy of the
+report is validated against these builds. A restored, reformatted copy of the
 Chessr.io Chrome extension (Manifest V3), plus a build with the account system removed
 and every premium feature unlocked.
 

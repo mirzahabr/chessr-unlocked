@@ -253,15 +253,16 @@
       "id": "link-account-effect-noop",
       "locate": {
         "anchors": [
-          "setNeedsLinking(true"
+          "displayName.toLowerCase()"
         ],
-        "role": "link-account nag (removal — verify by absence)"
+        "expected_count": 2,
+        "role": "link-account nag effect body — present twice pre-unlock (content.js + stream bundle), absent post-unlock (verify by absence)"
       },
-      "notes": "Removal at an OBFUSCATED, aliased call site (original calls the store setter via an obfuscated alias, not the readable name), so grep-anchoring is unreliable — the readable anchor is absent in BOTH builds, in every version processed so far. Detection must be confirmed by the model against the previous version's effect body (recovery-ladder step 2). Anchor reliability capped at medium.",
+      "notes": "Removal at an OBFUSCATED, aliased call site (original calls the store setter via an obfuscated alias, not the readable name), so grep-anchoring is unreliable — the readable anchor is absent in BOTH builds, in every version processed so far. Detection must be confirmed by the model against the previous version's effect body (recovery-ladder step 2). Anchor reliability capped at medium. Anchor rewritten to the effect-body string `displayName.toLowerCase()` (counted 2 in the 3.4.0 baseline, 0 in the unlocked build): the previous `setNeedsLinking(true` anchor was absent from the baseline as well, so it could never locate the target.",
       "status": "active",
       "transform": "Replace the effect body with an unconditional early return.",
       "verify": [
-        "grep 'setNeedsLinking(true'"
+        "grep -c 'displayName.toLowerCase()' — expect 2 in the baseline, 0 in the unlocked build"
       ],
       "version_introduced": "3.3.2",
       "version_last_verified": "3.4.0"

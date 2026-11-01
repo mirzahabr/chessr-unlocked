@@ -2,8 +2,19 @@
 
 Every version ships the same two builds with the same layout, so this map applies to
 `versions/<v>/chessr-original-restored/` and `versions/<v>/chessr-unlocked-all-features/`
-alike. Differences between the two are behavioral only (account system removed, limits
-lifted) and are catalogued in that version's `PROJECT_REPORT.md` §10 — never structural.
+alike.
+
+**The two builds differ in three ways, and only one of them is behavioral:**
+
+| Kind | Examples | Where documented |
+|---|---|---|
+| Behavioral | account system stubbed out, plan gates removed, ELO and search limits lifted | that version's `PROJECT_REPORT.md` §10 |
+| Cosmetic | 11 move-quality icons recolored `#81B64C` → `#3b83d9`; `content.css` and `assets/stream-*.css` tweaks | `PROJECT_REPORT.md` §10 "cosmetic deltas" |
+| Metadata | the unlocked build has its own `name`/`short_name`/`version` (`Chessr.io Unlocked`, `3.4.0.1`) and `minimum_chrome_version` | that version's README |
+
+Nothing else may differ: `engine/`, `rules.json` and the file layout must be identical, and
+`scripts/verify.py` checks exactly that. A diff that fits none of the three categories is a
+bug, not a variation.
 
 For architecture, data flow, and message protocols, read the version's
 `project-documentation/PROJECT_REPORT.md`. This page is the orientation map: what exists
@@ -28,10 +39,10 @@ and why, in one screen.
 
 | File | Responsibility |
 |---|---|
-| `manifest.json` | Permissions (`storage`, `activeTab`, `declarativeNetRequest`, `debugger`), host permissions for the three platforms plus `app.chessr.io`, the four content-script entries, the Stream Mode page, and web-accessible resources. |
+| `manifest.json` | Permissions (`storage`, `activeTab`, `declarativeNetRequest`, `debugger`), host permissions for the three platforms plus `app.chessr.io`, the three content-script entries, the Stream Mode page, and web-accessible resources. In the unlocked build the name, version (`<upstream>.1`) and `minimum_chrome_version` differ so the two installs stay distinguishable. |
 | `rules.json` | `declarativeNetRequest` rules that block specific chess.com telemetry / anti-cheat requests. |
 | `background.js` | Service worker: CDP synthetic mouse input, Stream Mode tab tracking, runtime message router, diagnostics log, welcome page. |
-| `stream.html` | Hosts Stream Mode; its `<script src>` / `<link href>` point at the hashed bundle names below. |
+| `stream.html` | Hosts Stream Mode; its `<script src>` / `<link href>` point at the hashed bundle names below. The bundle is loaded as a **deferred classic script, not `type="module"`** — see the comment in the file for why. |
 
 ## `content-scripts/` — three execution worlds
 

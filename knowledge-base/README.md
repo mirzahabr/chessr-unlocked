@@ -44,6 +44,33 @@ stored in `.regions.json` under a **repository-relative** key, for example
 stored value, a human edited it — treat the block as authoritative and do not overwrite
 it.
 
+## Status of this folder
+
+The structure is complete; the prose is not. As of the 2026-11 quality pass the eight
+topic files hold 74 lines in total — roughly one paragraph each — and every word of it sits
+inside an auto-generated fence, so no block has been hand-edited yet. Treat them as
+orientation, not as a substitute for the per-version report: `architecture.md`,
+`messaging.md`, `storage.md` and `ui.md` are `stub`-level; `authentication.md` and
+`engine.md` carry the most substance.
+
+## Anchor health
+
+`unlock-manifest.json` anchors are checked against the version's baseline by
+`scripts/verify.py --only anchors`. One anchor was broken (it also failed to match the
+baseline) and has been rewritten. Four remain *ambiguous* — they match many places, so they
+locate a subsystem rather than a site:
+
+| Entry | Anchor | Baseline occurrences |
+|---|---|---:|
+| `auth-store-initial-state` | `plan: "free"` | 10 |
+| `auth-store-initial-state` | `user: null` | 96 |
+| `auth-store-initial-state` | `session: null` | 84 |
+| `discord-store-stub` | `inGuild: null,` | 4 |
+
+The verifier reports these as warnings, not failures. Replacing them needs the surrounding
+`locate.role` to be narrowed first — do not "fix" them by adding a count and calling it a
+locator.
+
 ## Conventions
 
 - **Relative keys and paths only.** No absolute paths in any tracked file.

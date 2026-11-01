@@ -11,8 +11,12 @@ never ships and never drifts between the two copies.
 ```
 Chessr/
 ├── README.md                     Project index
-├── .gitattributes                Binary handling + vendored-engine language hints
+├── NOTICE.md                     Third-party components and their licence status
+├── .gitattributes                EOL policy, binary handling, vendored-engine hints
 ├── .gitignore                    OS junk, release archives, Chrome runtime cache
+├── .editorconfig                 Editor defaults (LF, final newline, 2 spaces)
+├── .github/workflows/            verify.yml (validation) + release.yml (tarballs + SHA-256)
+├── scripts/                      verify.py, make-patches.sh, build-unlocked.sh
 ├── docs/                         Repository documentation (this folder)
 ├── knowledge-base/               Canonical cross-version knowledge
 └── versions/
@@ -77,6 +81,33 @@ on Windows and any extracted tarball. The duplication is therefore intentional: 
 190 MB per build. Git stores identical blobs once, so the repository history does not
 grow four times; only the working tree does. Do not "optimise" this away.
 
+### 4a. Optional: storing the unlocked build as a patch series
+
+The unlocked build is ~190 MB, and almost all of that is `engine/`, which is
+byte-identical to the baseline's. A version may therefore store its unlocked build as a
+diff instead of a second copy:
+
+```bash
+scripts/make-patches.sh 3.4.0        # writes versions/3.4.0/patches/0000-unlocked.patch
+scripts/build-unlocked.sh 3.4.0      # baseline + patches -> dist/chessr-unlocked-all-features-3.4.0
+```
+
+`scripts/verify.py` proves the series round-trips: it applies the patches to a copy of the
+baseline and compares the result with the committed build. If the two diverge, the build
+is stale and the check fails.
+
+**Trade-off, stated plainly.** With a patch series committed, the repository no longer
+contains a folder you can point "Load unpacked" at — you must run `build-unlocked.sh`
+first, which breaks the "a clone is directly usable" property this repository otherwise
+guarantees. Pick one:
+
+- **Keep both copies** (current default): simple, directly loadable, ~1.2 GB working tree.
+- **Patch series only**: ~250 MB working tree, but `dist/` must be built before loading and
+  every edit to the unlocked build has to be followed by `make-patches.sh`.
+
+Do not keep both *and* edit only one of them — CI will fail on the mismatch, which is the
+point.
+
 ### 5. One canonical knowledge base
 
 `knowledge-base/` at the repository root is the single source of truth for cross-version
@@ -134,26 +165,48 @@ Keep the archive linear — one new folder per upstream release:
 
 ## Release packaging
 
-A release is a tarball of exactly one build, named after the build and the version:
+A release is a tarball of exactly one build, named `<build>-<version>.tar.gz` (no `v`
+prefix — that belongs to the git tag, `v3.4.0-unlocked`):
 
-```bash
-cd versions/3.4.0
-tar -czf ../../dist/chessr-unlocked-all-features-3.4.0.tar.gz chessr-unlocked-all-features
+```
+chessr-unlocked-all-features-3.4.0.tar.gz
+chessr-original-restored-3.4.0.tar.gz
+SHA256SUMS.txt
 ```
 
 Include `project-documentation/` (the report is part of the release's documentation);
 exclude nothing else — the folder is already clean by rule 3. `dist/` is git-ignored.
 
+Pushing a `v<version>-unlocked` tag triggers
+[`.github/workflows/release.yml`](../.github/workflows/release.yml), which validates the
+repository, builds both tarballs, writes `SHA256SUMS.txt` and publishes the release. Users
+can then verify a download before loading it into their browser:
+
+```bash
+shasum -a 256 -c SHA256SUMS.txt
+```
+
+Manual packaging still works, but a hand-made archive is exactly what checksums exist to
+rule out — prefer the workflow.
+
 ## Git hygiene
 
+- `* text=auto eol=lf` is set for the repository's own files, so LF is used in the index
+  and the working tree; `.editorconfig` mirrors this for editors. A Windows checkout does
+  not produce a whole-file diff.
 - `*.wasm`, `*.onnx`, `*.bin`, `*.data`, images and archives are declared binary in
-  `.gitattributes`; never force-add them as text.
+  `.gitattributes`; never force-add them as text. Engines carry `-text` so their bytes are
+  never normalized.
 - Engine trees are marked `linguist-vendored` so repository statistics reflect the
   project's own code.
 - Do not commit `.DS_Store`, `_metadata/`, `dist/`, `__pycache__/`, or `*.tar.gz`
   (all ignored).
 
 ## Validation checklist for a version
+
+Everything below that can be automated is automated: `python3 scripts/verify.py` runs the
+whole list and is what CI executes on every push. The commands are kept here so the checks
+stay readable and can be reproduced by hand.
 
 Run from the repository root, substituting the version under test:
 
@@ -171,6 +224,13 @@ done
 diff -rq --exclude=engine "$V/chessr-original-restored" "$V/chessr-unlocked-all-features"
 # 5. No live auth call left in the unlocked build
 grep -rn "auth\.signInWithPassword\|auth\.signUp(" "$V/chessr-unlocked-all-features" --include='*.js'
+```
+
+Automated pass (preferred):
+
+```bash
+python3 scripts/verify.py            # all checks, exit code 1 on failure
+python3 scripts/verify.py --only anchors,regions --verbose
 ```
 
 Manual pass:

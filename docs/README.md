@@ -8,6 +8,7 @@ internals; that lives one level down, closer to the code.
 |---|---|
 | [`repository-layout.md`](repository-layout.md) | Directory structure, naming rules, invariants, adding a version, release packaging, git hygiene |
 | [`code-map.md`](code-map.md) | What every file inside `chessr-original-restored/` and `chessr-unlocked-all-features/` is for |
+| [`quality-audit.md`](quality-audit.md) | One-off repository audit (2026-11): scores, P0–P2 findings, improvement plan. Historical snapshot — not maintained as a living document |
 
 ## Where documentation lives
 
@@ -21,6 +22,10 @@ will either rot or ship inside the extension.
 | What did we learn about the extension across versions? | [`../knowledge-base/`](../knowledge-base/README.md) |
 | What exactly changed in version *X*, and how was it unlocked? | `versions/<X>/…/project-documentation/PROJECT_REPORT.md` |
 | How do I explain this version in one page? | `versions/<X>/README.md` |
+
+Repository-level files that are not documentation have their own homes: third-party
+licensing in [`../NOTICE.md`](../NOTICE.md), automation in [`../scripts/`](../scripts) and
+[`../.github/workflows/`](../.github/workflows).
 
 Two hard rules:
 
