@@ -1,6 +1,6 @@
 name: release
 
-# Tags are named v<version>-unlocked, e.g. v3.4.0-unlocked.
+# Tags are named v<version>-unlocked, e.g. v3.7.2-unlocked.
 on:
   push:
     tags:

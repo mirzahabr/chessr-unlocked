@@ -1,24 +1,47 @@
-# Chessr.io — Reverse-Engineered Extension Repository
+# Chessr.io — reverse-engineered extension repository
 
-Restored copies of the **Chessr.io** Chrome extension (Manifest V3): obfuscator.io string
-arrays and control flow are recovered and the code is Prettier-formatted, but identifiers
-stay as the bundler generated them in the two large bundles. Plus a modified build with the
-account system removed and every premium feature unlocked.
+Source-recovered copies of the **Chessr.io** Chrome extension (Manifest V3), plus a patched
+build with the account system removed from the client. The current version is **3.7.2**;
+earlier versions were removed from the tree when 3.7.2 was processed and remain in git
+history.
 
-Each version is stored as a **baseline plus a patch series**, not as two copies:
+- `versions/3.7.2/chessr-original-restored/` — the shipped extension with obfuscator.io
+  string arrays decoded and the code Prettier-formatted. Behaviour unchanged; it is the
+  reference baseline.
+- `versions/3.7.2/patches/0000-unlocked.patch` — the unlock, as one reviewable diff.
+- `scripts/build-unlocked.sh 3.7.2` — applies the series → `dist/chessr-unlocked-all-features-3.7.2/`,
+  the folder you load.
 
-| Piece | Purpose | Account required? | Edit it? |
-|---|---|---|---|
-| [`chessr-original-restored/`](versions/3.4.0/chessr-original-restored/) | Frozen reference baseline — restored and reformatted with **zero behavior changes** | Yes | **No** — diff against it, never edit |
-| [`patches/`](versions/3.4.0/patches/) | 🟢 The unlock itself, as one reviewable diff: auth removed, all engines and limits unlocked | No | **Yes** — active development happens here |
-| `scripts/build-unlocked.sh` | Applies the series to the baseline → `dist/chessr-unlocked-all-features-<v>/`, the folder you actually load | — | — |
+Nothing here is affiliated with Chessr.io or with any chess platform.
 
-The patch is stored instead of a second 190 MB copy because 184 MB of every build is
-vendored engines that are byte-identical to the baseline. A build you can load is one
-command away, and the repository's own verifier proves the series still reproduces it.
+---
 
-[![Latest release](https://img.shields.io/github/v/release/mirzahabr/chessr-unlocked?label=latest%20release)](https://github.com/mirzahabr/chessr-unlocked/releases/latest)
-[![Manifest V3](https://img.shields.io/badge/manifest-v3-blue)](versions/3.4.0/chessr-original-restored/manifest.json)
+## Read this first: 3.7.2 moved the analysis to the server
+
+Through 3.4.0 the extension shipped ~184 MB of chess engines and computed everything
+locally, which is why the previous unlock could genuinely deliver full-strength analysis
+without an account.
+
+**3.7.2 ships no engine.** The only wasm files left are the AI-commentary engine and a
+157 KB Rust "sealed core" that seals the WebSocket protocol. Suggestions, evaluations,
+Maia 3, server personalities and Game Review are computed by `wss://api.chessr.io` and sent
+back over that socket. The client asks; the server answers.
+
+So the unlocked build gives you:
+
+- ✅ no login screen, permanent **Premium** UI state
+- ✅ every engine selectable, full ELO range (400–3500), no upgrade prompts
+- ✅ no "link your account" wall, no guidelines gate
+- ✅ the overlay, board adapters, anonymous mode and fake title badge, unchanged
+
+and it does not give you:
+
+- ❌ move suggestions, evaluations or Game Review — those need a real subscription session
+  on Chessr's server
+- ❌ AI move explanations beyond the server's 50/day quota
+
+Treat it as an unauthenticated **UI** unlock. This is much less than the 3.4.0 build
+delivered, and the difference is upstream's design change, not a gap in the patch.
 
 ---
 
@@ -26,147 +49,117 @@ command away, and the repository's own verifier proves the series still reproduc
 
 | Version | Status | Unlock patch | Technical report |
 |---|---|---|---|
-| **3.4.0** | 🟢 Current — builds `3.4.0.1` | [`patches/0000-unlocked.patch`](versions/3.4.0/patches/0000-unlocked.patch) | [PROJECT_REPORT.md](versions/3.4.0/chessr-original-restored/project-documentation/PROJECT_REPORT.md) |
-| 3.3.2 | 🗄 Previous — kept as the diff baseline for 3.4.0 | [`patches/0000-unlocked.patch`](versions/3.3.2/patches/0000-unlocked.patch) | [PROJECT_REPORT.md](versions/3.3.2/chessr-original-restored/project-documentation/PROJECT_REPORT.md) |
+| **3.7.2** | 🟢 Current — builds `3.7.2.1` | [`patches/0000-unlocked.patch`](versions/3.7.2/patches/0000-unlocked.patch) | [PROJECT_REPORT.md](versions/3.7.2/chessr-original-restored/project-documentation/PROJECT_REPORT.md) |
 
-Each version folder has its own [`README.md`](versions/3.4.0/README.md) with the install
-notes, the list of what was unlocked, and the known limitation that applies to it.
-
----
-
-## What the unlocked build changes
-
-- **No sign-in** — a permanent premium session is installed at startup; the login screen
-  never appears.
-- **Every engine available** — Stockfish, Dragon/Komodo, Rodent IV (all 39 personalities),
-  Maia 3, Torch, and the Explanation Engine, with no plan-based restriction.
-- **Full ELO range** (up to 3500) and **uncapped analysis** — search depth, node count,
-  and move time are no longer limited by the free tier.
-- **Stream Mode unlocked** — the same changes are mirrored in the separate Stream Mode
-  bundle.
-
-**Known limitation:** the AI move-explanation feature calls the real Chessr.io backend
-with a genuine auth token and cannot work without a real account. This is a server-side
-dependency, not a defect in this build.
-
-The unlocked build's own report — the one with the account-removal write-up — is generated
-with the build, from `patches/0000-unlocked.patch`.
-
----
-
-## Permissions — and what the build actually does on the page
-
-The extension asks for the heaviest permissions Manifest V3 offers. You should know what
-each one is for before installing it.
-
-| Permission | Why it is requested | What it means in practice |
-|---|---|---|
-| `storage` | overlay settings, widget layout, Stream Mode state | local only; cloud sync is stubbed out |
-| `activeTab` | attaches to the tab you are looking at | no background browsing of your tabs |
-| `declarativeNetRequest` + `rules.json` | blocks three chess.com requests: the **FairPlay service**, the **extension-detection monitor** (`play-monitor-browser-extensions`), and batched **UserActivity events** | the extension actively hides itself from chess.com's anti-cheat and extension detection. This is the part that breaks chess.com's rules most directly. |
-| `debugger` | Chrome DevTools Protocol, used to send synthetic mouse moves/clicks when an injected click is not accepted by the page | can drive input inside the tab it is attached to |
-| host permissions | `chess.com`, `lichess.org`, `worldchess.com`, `app.chessr.io` | reads and modifies the board and game state on those sites |
-| `web_accessible_resources` | engine files, icons, `content.css` (`use_dynamic_url` on the CSS) | page scripts can load these resources |
-
-`content-scripts/pageContext.js` runs in the page's **MAIN world**, i.e. with the same
-privileges as the site's own JavaScript. `content.js` runs isolated and renders the
-overlay.
-
-## What leaves your browser
-
-No telemetry is added by this build, but the upstream networking code is still inside the
-bundles — removing the login screen does not remove the endpoints:
-
-| Endpoint | Status in the unlocked build |
-|---|---|
-| `https://ratngdlkcvyfdmidtenx.supabase.co` | auth calls are stubbed; the Supabase client is still bundled |
-| `wss://api.chessr.io` | Game Review WebSocket, connects with `userId=anon` |
-| `/api/explain-move` | always fails without a real account |
-| `fingerprint.com`, `m1.openfpcdn.io` | device-fingerprinting library is bundled (`FingerprintJS`) |
-| `opens.chessr.io`, `download.chessr.io` | links used by the welcome/onboarding page |
-
-All of the above appear in both `content-scripts/content.js` and the Stream Mode bundle —
-removing the login screen did not remove the networking layer.
-
-If you care what a third party can see, this is the list to review.
+Each version folder has its own [`README.md`](versions/3.7.2/README.md) with install notes,
+the list of unlocked behaviour and the limitations that apply to it.
 
 ---
 
 ## Quick start
 
 ```bash
-git clone https://github.com/mirzahabr/chessr-unlocked.git
-cd chessr-unlocked
-scripts/build-unlocked.sh 3.4.0     # writes dist/chessr-unlocked-all-features-3.4.0/
+bash scripts/build-unlocked.sh 3.7.2
 ```
 
-Needs `bash` and `patch` — both are present on macOS, Linux and Git Bash on Windows. The
-folder is named after the **upstream** version (`3.4.0`); the build it produces reports its
-own version (`3.4.0.1`), which is what `chrome://extensions/` shows.
+Requires `bash` and `patch` (macOS, Linux, Git Bash). The build folder is named after the
+upstream version (`3.7.2`); the extension reports its own version (`3.7.2.1`), which is what
+`chrome://extensions/` shows.
 
-1. Open `chrome://extensions/` in Chrome.
-2. Enable **Developer mode** (top-right toggle).
-3. Click **Load unpacked** and select `dist/chessr-unlocked-all-features-3.4.0/`.
-4. Open chess.com, lichess.org, or worldchess.com — the overlay activates automatically.
+1. Open `chrome://extensions/`, enable **Developer mode**.
+2. **Load unpacked** → `dist/chessr-unlocked-all-features-3.7.2/`.
+3. Open chess.com, lichess.org or worldchess.com; the floating button appears bottom-right.
 
-> ⚠️ **Use at your own risk.** This is not an official build and it is not supported by
-> Chessr.io or by any chess platform. Using it in live games can get your accounts
-> banned — read the [Disclaimer](#disclaimer) before you install it.
+To see the stock behaviour, load `versions/3.7.2/chessr-original-restored/` instead — it
+asks you to sign in.
 
-Prefer a packaged copy? Download `chessr-unlocked-all-features-*.tar.gz` from
-[Releases](https://github.com/mirzahabr/chessr-unlocked/releases/latest), check it against
-`SHA256SUMS.txt`, and load the extracted folder — no clone, no tooling required.
+> **Risk.** This is an unofficial build. It blocks chess.com's FairPlay, extension-detection
+> and UserActivity reporting (see [Permissions](#permissions)). Using chess assistance in
+> live games breaks the rules of every platform it supports and can get accounts banned.
+> There is no safe account to test on.
+
+---
+
+## Permissions
+
+| Permission | Why it is requested | What it means |
+|---|---|---|
+| `storage` | overlay settings, widget layout, Stream Mode state | local only |
+| `activeTab` | attaches to the tab you are on | no background tab access |
+| `declarativeNetRequest` + `rules.json` | blocks chess.com's **FairPlay** service, the **extension-detection monitor**, batched **UserActivity** events, and `sentry.io` | the extension actively hides itself from chess.com anti-cheat |
+| `debugger` | Chrome DevTools Protocol, used for synthetic mouse moves when a click is rejected | can drive input inside the attached tab |
+| host permissions | chess.com, lichess.org, worldchess.com, app.chessr.io | reads and modifies board state on those sites |
+| `web_accessible_resources` | engine files, icons, `content.css` (`use_dynamic_url`) | page scripts can load these resources |
+
+`content-scripts/pageContext.js` and the two chess.com cosmetic scripts run in the page's
+**MAIN** world; `content.js` runs isolated and renders the overlay in a shadow root.
+
+## What leaves your browser
+
+The upstream networking layer is intact — removing the login screen does not remove the
+endpoints:
+
+| Endpoint | Status in the unlocked build |
+|---|---|
+| `https://ratngdlkcvyfdmidtenx.supabase.co` | auth calls are never made (initialize is stubbed); the client is still bundled |
+| `wss://api.chessr.io/ws` | connects and runs the sealed handshake; authenticates as nobody, so analysis answers are up to the server |
+| `https://api.chessr.io` | `/health` version gate, `/flags`, `/accounts/*`, `/guidelines/accept`, `/explain` |
+| `https://opens.chessr.io/game` | opening-book lookups |
+| `https://m1.openfpcdn.io/fingerprintjs/*` | FingerprintJS, only used by signup — unreachable here |
+| `https://download.chessr.io/` | update link in the "update required" screen |
+
+Expect 401s in the console from requests made with the placeholder session. They are the
+direct consequence of having no account, and the reason the panel works but analysis does
+not.
+
+---
+
+## Validation
+
+`scripts/verify.py` runs the repository checklist offline: JS syntax on every build, JSON
+validity, relative links and heading anchors, unlock anchors against the baseline, patch
+round-trip, schema versions, structural signatures, version/changelog agreement.
+
+```bash
+python3 scripts/verify.py            # full run
+python3 scripts/verify.py --verbose  # plus warning detail
+```
+
+Beyond static checks, the baseline and build were loaded in headless Chromium and driven
+over CDP: the baseline renders the sign-in form, the unlocked build renders the analysis
+panel badged Premium with no auth form. See
+[`docs/verification.md`](docs/verification.md) for the procedure and output.
 
 ---
 
 ## Troubleshooting
 
-**The overlay does not appear.** Check, in order: Chromium **111 or newer** (`world:
-"MAIN"` content scripts need it); the extension is enabled and not in error state on
-`chrome://extensions/`; you are on one of the three supported sites; reload the page after
-installing (content scripts only inject on load); the site's own layout may have changed
-upstream and broken an adapter.
+**The overlay does not appear.** Check that the extension is enabled, that you are on one of
+the three supported sites, and reload the page after installing — content scripts only
+inject on load. Chromium 111+ is required for MAIN-world content scripts.
 
-**Stream Mode (`stream.html`) opens blank.** This was a real bug in versions up to and
-including `3.4.0`: the bundle was loaded with `type="module"`, and a deobfuscation
-artifact made it throw `ReferenceError` under module strict mode. Fixed in `3.4.0.1` —
-make sure `chrome://extensions/` shows that version, then reload the page.
+**The panel says "Waiting for a game" forever.** Expected on a page with no recognisable
+chess board, and expected whenever the site's DOM has changed upstream.
 
-**"Explain move" always errors.** Expected. That feature calls the real backend with a
-genuine auth token; there is no server-side workaround from the client.
+**Nothing appears in Suggestions.** Expected without a subscription: the server has no
+authorised user to answer for. See the top of this file.
 
-**My settings disappeared.** Account and cloud sync are stubbed out, so configuration
-lives in `chrome.storage.local` under a per-extension ID. Removing or reinstalling the
-extension clears it.
+**Stream Mode opens blank.** `stream.html` loads its bundle as an ES module. The bundled copy
+parses as a module; if you edit it, keep it strict-mode clean.
 
-**Two extensions with the same name are installed.** Fixed in this revision: the unlocked
-build is now named `Chessr.io Unlocked` with version `3.4.0.1`, so it is distinguishable
-from the untouched `3.4.0` baseline.
+**Two extensions with the same name.** The unlocked build is named `Chessr.io Unlocked`
+(`3.7.2.1`); the baseline keeps the upstream name (`3.7.2`), so they are distinguishable.
 
-**Cloning is slow.** The engines are ~184 MB and cannot be deduplicated without breaking
-"load unpacked". Use a release archive instead of cloning.
+---
 
-## FAQ
+## Disclaimer
 
-**Will I get banned?** Possibly. The build blocks chess.com's FairPlay and
-extension-detection requests (see [Permissions](#permissions--and-what-the-build-actually-does-on-the-page)),
-which is exactly the behaviour those systems exist to catch. Lichess and worldchess have
-their own rules. There is no safe account to test on.
-
-**Is my data sent anywhere?** The endpoints above still exist in the bundle. Auth is
-stubbed, so nothing account-related is submitted, but the fingerprinting library and the
-Game Review WebSocket are still there.
-
-**Do I need an account?** No. That is the whole point of this build.
-
-**Does it work in Firefox / Safari?** No. It depends on Chromium MV3 features (MAIN-world
-content scripts, `declarativeNetRequest`, CDP via `debugger`). Chrome and other
-Chromium-based browsers, 111+.
-
-**Why is the repository still large?** Six chess engines (~184 MB) ship inside the
-baseline, and a build has to stay self-contained to remain loadable — they cannot be
-symlinked away. The unlock itself is an 800 KB patch on top. See
-[`docs/repository-layout.md`](docs/repository-layout.md) §4–5.
+This is an unofficial, unsupported modification. It is not affiliated with, endorsed by, or
+authorised by Chessr.io, chess.com, lichess.org or worldchess.com, and it gives no warranty
+of any kind. The extension hides itself from platform anti-cheat, and using chess assistance
+in live games breaks the rules of every platform it supports — accounts can be banned, and
+the person doing it carries that risk. Nothing in this repository claims that redistribution
+of the Chessr.io code is lawful; see [`NOTICE.md`](NOTICE.md).
 
 ---
 
@@ -175,115 +168,51 @@ symlinked away. The unlock itself is an 800 KB patch on top. See
 ```
 Chessr/
 ├── README.md                        Project index (this file)
-├── NOTICE.md                        Third-party components and their licence status
-├── LICENSE                          No rights granted; scope of the notices
-├── CHANGELOG.md                     What changed per version, and whether to reinstall
-├── .gitignore / .gitattributes / .editorconfig
-│                                    Repo hygiene (junk, binaries, LF everywhere)
-├── .github/workflows/verify.yml     CI: runs the validation checklist below
-├── scripts/                         Repo tooling (verify, region hashes, anchors)
-│
+├── CHANGELOG.md                     What changed, per build
+├── NOTICE.md / LICENSE              Third-party components; no rights granted
 ├── docs/                            Documentation about the repository itself
 │   ├── README.md                    Documentation index
 │   ├── repository-layout.md         Structure, conventions, release packaging
-│   └── code-map.md                  What every file inside a build does
-│
+│   ├── code-map.md                  What every file inside a build does
+│   ├── verification.md              How the builds were smoke-tested
+│   └── quality-audit.md             Historical audit of the previous layout
 ├── knowledge-base/                  Cross-version knowledge — canonical, curated
-│   ├── README.md                    Index and maintenance rules
-│   ├── architecture.md … ui.md      Per-subsystem notes (fenced auto-generated regions)
-│   ├── signatures/<version>.json    Extracted structural fingerprints
-│   ├── learning-log/<version>.md    What each version taught us
-│   ├── unlock-manifest.json         Every applied unlock, with anchors + evidence
+│   ├── architecture.md … ui.md      Per-subsystem notes
+│   ├── unlock-manifest.json         Every unlock, with anchors and evidence
+│   ├── signatures/3.7.2.json        Extracted structural fingerprint
+│   ├── learning-log/3.7.2.md        What this version taught us
 │   └── re-config.json / repo-meta.json / .regions.json
-│
+├── scripts/
+│   ├── build-unlocked.sh            baseline + patch series → dist/
+│   ├── make-patches.sh              build + baseline → patch series
+│   ├── unlock-3.7.2.py              the generator behind the patch
+│   └── verify.py                    the executable checklist
 └── versions/
-    ├── 3.3.2/
-    │   ├── README.md
-    │   ├── build.json               What the patch series produces (name, version)
-    │   ├── chessr-original-restored/
-    │   └── patches/0000-unlocked.patch
-    └── 3.4.0/
+    └── 3.7.2/
         ├── README.md
         ├── build.json
-        ├── chessr-original-restored/
-        └── patches/0000-unlocked.patch
+        ├── patches/0000-unlocked.patch
+        └── chessr-original-restored/    loadable baseline + PROJECT_REPORT.md
 ```
 
-The baseline contains **only what the browser loads** plus a `project-documentation/`
-report. Repository-level documentation lives in `docs/` and `knowledge-base/`, never
-inside a build. The unlocked build is not committed; `dist/` is generated and git-ignored.
+Design rules, invariants and the release checklist live in
+[`docs/repository-layout.md`](docs/repository-layout.md). What each file inside a build does
+is in [`docs/code-map.md`](docs/code-map.md).
 
 ---
 
-## Documentation
+## FAQ
 
-| Document | Answers |
-|---|---|
-| [`docs/repository-layout.md`](docs/repository-layout.md) | How the repo is organised, naming rules, how to add a version, how releases are packaged |
-| [`docs/code-map.md`](docs/code-map.md) | What each folder/file in a build is for |
-| [`NOTICE.md`](NOTICE.md) | Which third-party components ship here, under what licence, and what is still unresolved |
-| [`knowledge-base/README.md`](knowledge-base/README.md) | What we know about the extension across versions, and how that knowledge is maintained |
-| [`versions/<v>/…/project-documentation/PROJECT_REPORT.md`](versions/3.4.0/chessr-original-restored/project-documentation/PROJECT_REPORT.md) | Authoritative per-version technical reference (architecture, wiring, deobfuscation history, unlocks) |
+**Will I get banned?** Possibly. The build blocks the requests chess.com's FairPlay and
+extension-detection systems rely on, which is exactly the behaviour those systems exist to
+catch. Lichess and worldchess have their own rules.
 
----
+**Do I need an account?** No — for the UI. For analysis, yes, and the client cannot change
+that.
 
-## Working on the repository
+**Does it work in Firefox or Safari?** No. It needs Chromium MV3: MAIN-world content
+scripts, `declarativeNetRequest`, CDP through `debugger`.
 
-- **Edit `patches/`, not the generated build.** Change the baseline and run
-  `scripts/make-patches.sh 3.4.0`; `scripts/build-unlocked.sh 3.4.0` regenerates the folder.
-- **Do not change behaviour in `chessr-original-restored/`.** It is the behavior-preserving
-  baseline; every difference in the unlocked build must be explainable as a diff against
-  it. The one exception is a **restoration fix** — when the deobfuscation pass changed what
-  the shipped build did (see
-  [`docs/repository-layout.md` rule 2a](docs/repository-layout.md#2a-restoration-fixes-are-allowed-product-changes-are-not)).
-  Record it in the report and the changelog; never add features there.
-- **Never edit `engine/`.** It is third-party code, byte-identical to the shipped build.
-- **Keep documentation out of builds.** Add repository notes to `docs/`; add
-  product knowledge to `knowledge-base/`.
-- **Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before sending a patch.**
-- **Validate before committing** — run `python3 scripts/verify.py` (same checklist as
-  [`docs/repository-layout.md`](docs/repository-layout.md#validation-checklist-for-a-version));
-  CI runs it on every push and pull request.
-
----
-
-## License status
-
-- **The Chessr.io application code is not licensed to you.** It is proprietary and this
-  repository grants no rights to it. Nothing here may be redistributed, sublicensed or
-  sold.
-- **The bundled engines are third-party.** Stockfish is GPL-3.0 and ships here without the
-  GPL text or a source offer; Komodo Dragon is commercial; several other engines are
-  unverified. [`NOTICE.md`](NOTICE.md) lists every file and what still has to be resolved.
-- **There is no warranty of any kind**, express or implied, including fitness for a
-  particular purpose.
-
-[`LICENSE`](LICENSE) spells this out, and [`NOTICE.md`](NOTICE.md) is the file-by-file
-inventory. Short version: no licence is granted for anything in this repository, and it is
-a study archive rather than a distributable product.
-
-## Disclaimer
-
-> ⚠️ **Use at your own risk.**
->
-> This is an unofficial, reverse-engineered modification of a commercial product. It is
-> not affiliated with, endorsed by, or supported by Chessr.io or any chess platform.
-
-Installing it means you accept that:
-
-- **Your accounts can be banned.** The extension modifies what chess.com, lichess.org and
-  worldchess.com see, in live games. That breaks their terms of service, and enforcement
-  is entirely up to them. Rated accounts, paid memberships and titles can be lost.
-- **There is no warranty and no support.** No guarantee that it works on your Chrome
-  version, that an upstream update will not break it, or that an unlocked feature will
-  keep working. Fixes arrive when they arrive.
-- **Your local data is your problem.** The account/cloud sync path is stubbed out, so
-  settings live in `chrome.storage.local` and disappear if the extension is removed.
-- **You install it at your own risk.** The author is not liable for account loss, data
-  loss, or any consequence of using this software.
-
-The project is a reverse-engineering and modification exercise against a commercial
-browser extension you must have legitimately obtained. It is provided for
-research/educational purposes. You are responsible for complying with Chessr.io's terms
-of service, and the terms of service of any chess platform you use it on, in your
-jurisdiction.
+**Why did the repository shrink?** 3.7.2 ships 32.6 MB instead of ~190 MB because the
+engines left the package, so the whole build fits in git and the patch is 482 lines against a
+31 MB baseline.

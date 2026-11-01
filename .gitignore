@@ -28,3 +28,6 @@ __pycache__/
 
 # ── Scratch space and checkpoints ────────────────────────────────────────────
 .chessr-re/
+# Reverse-engineering scratch: extracted zip, webcrack output, npm caches,
+# downloaded Chromium and CDP profiles. Regenerated, never committed.
+work/

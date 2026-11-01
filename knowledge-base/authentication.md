@@ -1,32 +1,33 @@
-<!-- BEGIN AUTO-GENERATED: overview -->
-The account system is a four-part Supabase-backed stack (auth/plan store, plan-gating
-predicate `isPremium`, linked-accounts store, Discord store). The premium gate resolves
-true iff plan ∈ {premium, lifetime, beta, freetrial}. The hidden login switch is
-`if (!user) return <LoginScreen/>` — a non-null mock user disables it.
+# Authentication and premium gating
 
-**Unlock (3.3.2):** permanent premium anonymous session; all auth methods stubbed (no
-network); version + guidelines + link-account gates neutralized. See `unlock-manifest.json`.
+Four moving parts:
 
-> ⚠️ **Unknown** — server-side acceptance of the mock session for `/api/explain-move` and
-> the review WebSocket is not verifiable from client code. Confidence: low.
-<!-- END AUTO-GENERATED: overview -->
+1. **Supabase session.** Project `ratngdlkcvyfdmidtenx.supabase.co`, anon JWT inlined. The
+   client persists the session in `chrome.storage.local` under `chessr-auth` and refreshes
+   it automatically.
+2. **Plan.** `user_settings.plan` is one of `free`, `premium`, `lifetime`, `beta`,
+   `freetrial`. The premium predicate is membership in
+   `{"premium","lifetime","beta","freetrial"}`; a second predicate marks `plan === "free"`
+   as limited. `fetchPlan` also reads `plan_expiry`, `freetrial_used`,
+   `freetrial_ended_at` and `guidelines_accepted_at`, and demotes an expired `freetrial` to
+   `free` client-side.
+3. **Server flags.** `GET <api>/flags` with the access token returns
+   `{flags, gatedRegions}`; both land in the auth store and are re-read from `auth_ok`
+   frames on the analysis socket.
+4. **Linked accounts.** `linked_accounts` (platform, username, avatar, status) drives the
+   "link your account" screen; a site profile missing from that list opens it.
 
-<!-- BEGIN AUTO-GENERATED: v3.4.0-update -->
-**v3.4.0 update:** the account/premium architecture is confirmed structurally unchanged
-from v3.3.2 — all 7 previously-cataloged unlocks re-verified applicable at high confidence
-(occurrence counts identical to v3.3.2's untouched original). Two additional unlocks that
-were already applied in shipped builds but never formally cataloged were added to
-`unlock-manifest.json` this version: `accounts-store-stub` (linked-accounts store) and
-`discord-store-stub` (Discord integration store) — both were already documented in prose
-in `PROJECT_REPORT.md` §10.1.4/§10.1.5, just missing from the manifest's own bookkeeping.
+Additional gates: an `updateRequired` screen from `GET /health`, a guidelines modal that
+blocks the panel until `POST /guidelines/accept`, and a signup check
+(`POST /check-signup` + FingerprintJS) against banned or disposable addresses.
 
-**New feature discovered:** a "price increase" upsell (`FreeUpgradeModal.tsx` /
-`PriceIncreasePlans.tsx`, 12 new i18n keys) was added upstream. Confirmed gated by the same
-`isFree(plan, freetrialUsed, planLoading)` predicate already cataloged — no new unlock
-entry required; the existing `auth-store-initial-state` entry already covers it.
+## What the unlock does
 
-**Tooling correction:** `unlock-manifest.json`'s `locate.anchors` were found to be seeded
-with post-unlock strings for several entries, which cannot locate a target in a fresh,
-not-yet-unlocked build. Corrected to pre-unlock anchors, verified against both v3.3.2's
-original restoration and v3.4.0's fresh restoration. See `learning-log/3.4.0.md`.
-<!-- END AUTO-GENERATED: v3.4.0-update -->
+The 3.7.2 patch (see `unlock-manifest.json`) seeds the auth store with a permanent local
+session and `plan: "premium"`, stubs `initialize`, `fetchPlan` and `signOut`, forces the
+premium predicate true and the free predicate false, and stubs `setNeedsLinking`. The login
+screen, the plan-based settings limits, the upgrade prompts and the link wall disappear.
+
+It does **not** create a Supabase session. Anything the server authorises by token remains
+unauthorised: analysis, Game Review, AI explanations. This is a change from 3.4.0, where
+the engines were local and the unlock was functional.

@@ -1,0 +1,495 @@
+diff -ruN --exclude=.DS_Store a/chunks/stream-l1H6Qjn3.js b/chunks/stream-l1H6Qjn3.js
+--- a/chunks/stream-l1H6Qjn3.js	2026-11-02 00:38:50
++++ b/chunks/stream-l1H6Qjn3.js	2026-11-02 00:38:50
+@@ -41494,17 +41494,26 @@
+   }
+ }
+ var q = Ki((_0x5f2172, _0x6c6329) => ({
+-  user: null,
+-  session: null,
+-  plan: "free",
++  user: {
++    id: "anon",
++    email: "anonymous@chessr.local",
++    email_confirmed_at: new Date(0).toISOString(),
++    created_at: new Date(0).toISOString(),
++  },
++  session: {
++    access_token: "anon-token",
++    refresh_token: "anon-refresh",
++    user: { id: "anon" },
++  },
++  plan: "premium",
+   planExpiry: null,
+   freetrialEndedAt: null,
+-  guidelinesAcceptedAt: null,
++  guidelinesAcceptedAt: new Date(0),
+   freetrialUsed: false,
+   flags: [],
+   gatedRegions: [],
+-  planLoading: true,
+-  initializing: true,
++  planLoading: false,
++  initializing: false,
+   loading: false,
+   error: null,
+   recovering: false,
+@@ -41521,125 +41530,10 @@
+       flags: _0x13606c,
+     }),
+   initialize: async () => {
+-    try {
+-      await new Promise((_0x319012) => setTimeout(_0x319012, 100));
+-      tu.auth.onAuthStateChange((_0x2ecf07, _0x4d56f5) => {
+-        _0x5f2172({
+-          session: _0x4d56f5,
+-          user: _0x4d56f5?.user ?? null,
+-        });
+-      });
+-      let {
+-        data: { session: _0x470aa0 },
+-        error: _0x27b70b,
+-      } = await tu.auth.getSession();
+-      if (_0x27b70b) {
+-        throw _0x27b70b;
+-      }
+-      if (!_0x470aa0) {
+-        let _0x27cba1 = (await chrome.storage.local.get("chessr-auth"))[
+-          "chessr-auth"
+-        ];
+-        if (_0x27cba1) {
+-          try {
+-            let _0x4f4415 = JSON.parse(_0x27cba1);
+-            if (_0x4f4415?.access_token && _0x4f4415?.refresh_token) {
+-              let { data: _0x1f90ba } = await tu.auth.setSession({
+-                access_token: _0x4f4415.access_token,
+-                refresh_token: _0x4f4415.refresh_token,
+-              });
+-              if (_0x1f90ba.session) {
+-                await _0x6c6329().fetchPlan(_0x1f90ba.session.user.id);
+-                _0x5f2172({
+-                  session: _0x1f90ba.session,
+-                  user: _0x1f90ba.session.user,
+-                  initializing: false,
+-                });
+-                return;
+-              }
+-            }
+-          } catch {}
+-        }
+-      }
+-      if (_0x470aa0?.user) {
+-        await _0x6c6329().fetchPlan(_0x470aa0.user.id);
+-      }
+-      _0x5f2172({
+-        session: _0x470aa0,
+-        user: _0x470aa0?.user ?? null,
+-        initializing: false,
+-      });
+-    } catch {
+-      _0x5f2172({
+-        initializing: false,
+-        error: "Failed to initialize auth",
+-      });
+-    }
++    // Unlocked build: the session is permanent and never touches Supabase.
+   },
+   fetchPlan: async (_0x507466) => {
+-    _0x5f2172({
+-      planLoading: true,
+-    });
+-    try {
+-      let { data: _0x26a5ec, error: _0x1efe94 } = await tu
+-        .from("user_settings")
+-        .select(
+-          "plan, plan_expiry, freetrial_used, freetrial_ended_at, guidelines_accepted_at",
+-        )
+-        .eq("user_id", _0x507466)
+-        .single();
+-      if (_0x1efe94) {
+-        _0x5f2172({
+-          plan: "free",
+-          planExpiry: null,
+-          freetrialEndedAt: null,
+-          freetrialUsed: false,
+-          planLoading: false,
+-        });
+-        return;
+-      }
+-      let _0x1fef7f = _0x26a5ec?.plan ?? "free";
+-      let _0x1debb7 = _0x26a5ec?.plan_expiry
+-        ? new Date(_0x26a5ec.plan_expiry)
+-        : null;
+-      let _0x148888 =
+-        _0x1fef7f === "freetrial" &&
+-        _0x1debb7 &&
+-        _0x1debb7.getTime() <= Date.now()
+-          ? "free"
+-          : _0x1fef7f;
+-      _0x5f2172({
+-        plan: _0x148888,
+-        planExpiry: _0x148888 === _0x1fef7f ? _0x1debb7 : null,
+-        freetrialEndedAt: _0x26a5ec?.freetrial_ended_at
+-          ? new Date(_0x26a5ec.freetrial_ended_at)
+-          : null,
+-        guidelinesAcceptedAt: _0x26a5ec?.guidelines_accepted_at
+-          ? new Date(_0x26a5ec.guidelines_accepted_at)
+-          : null,
+-        freetrialUsed: !!_0x26a5ec?.freetrial_used,
+-        planLoading: false,
+-      });
+-      tu.auth.getSession().then(({ data: { session: _0x46954d } }) => {
+-        let _0x3941a8 = _0x46954d?.access_token;
+-        if (_0x3941a8) {
+-          Lp(_0x3941a8).then((_0x2d1475) =>
+-            _0x5f2172({
+-              flags: _0x2d1475.flags,
+-              gatedRegions: _0x2d1475.gatedRegions,
+-            }),
+-          );
+-        }
+-      });
+-    } catch {
+-      _0x5f2172({
+-        plan: "free",
+-        planExpiry: null,
+-        freetrialEndedAt: null,
+-        freetrialUsed: false,
+-        planLoading: false,
+-      });
+-    }
++    // Unlocked build: the premium plan cannot be downgraded.
+   },
+   signUp: async (_0x1b222b, _0x56efe5) => {
+     _0x5f2172({
+@@ -41855,31 +41749,7 @@
+     }
+   },
+   signOut: async () => {
+-    _0x5f2172({
+-      loading: true,
+-    });
+-    try {
+-      await tu.auth.signOut();
+-      _0x5f2172({
+-        user: null,
+-        session: null,
+-        plan: "free",
+-        planExpiry: null,
+-        freetrialEndedAt: null,
+-        guidelinesAcceptedAt: null,
+-        freetrialUsed: false,
+-        flags: [],
+-        gatedRegions: [],
+-        loading: false,
+-        recovering: false,
+-      });
+-    } catch (_0xb35080) {
+-      _0x5f2172({
+-        loading: false,
+-        error:
+-          _0xb35080 instanceof Error ? _0xb35080.message : "Sign out failed",
+-      });
+-    }
++    // Unlocked build: signing out is not a reachable state.
+   },
+   changePassword: async (_0x46d54d, _0x360f7e) => {
+     try {
+@@ -42550,10 +42420,7 @@
+     } catch {}
+   },
+   setNeedsLinking: (_0x2cbc70, _0x45bde7 = null) => {
+-    _0x33b4c7({
+-      needsLinking: _0x2cbc70,
+-      pendingProfile: _0x45bde7,
+-    });
++    // Unlocked build: no account can be linked, so never ask for one.
+   },
+ }));
+ function Xp() {
+@@ -42889,11 +42756,11 @@
+ }
+ var fm = new Set(["premium", "lifetime", "beta", "freetrial"]);
+ function pm(_0x79ce20) {
+-  return fm.has(_0x79ce20 ?? "");
++  return true;
+ }
+ var mm = pm;
+ function hm(_0x46074b, _0x43ef7f, _0x5a1bdd) {
+-  return _0x46074b === "free" && !_0x43ef7f && !_0x5a1bdd;
++  return false;
+ }
+ var gm = [
+   {
+@@ -50551,11 +50418,7 @@
+   }
+ }
+ function sg(_0x26edd8, _0x4d0f8a) {
+-  if (_0x26edd8 === "komodo" || _0x26edd8 === "stockfish") {
+-    return true;
+-  } else {
+-    return _0x26edd8 === "lc0" && _0x4d0f8a === "custom";
+-  }
++  return true;
+ }
+ function cg(_0x2c4b15, _0xa8ab95) {
+   if (_0xa8ab95.includes(_0x2c4b15)) {
+diff -ruN --exclude=.DS_Store a/content-scripts/content.js b/content-scripts/content.js
+--- a/content-scripts/content.js	2026-11-02 00:38:50
++++ b/content-scripts/content.js	2026-11-02 00:38:50
+@@ -43107,17 +43107,26 @@
+   }
+   _0x3acb80();
+   var _0x27684d = _0x1ee5e6((_0x4cea1f, _0x4ae48b) => ({
+-    user: null,
+-    session: null,
+-    plan: "free",
++    user: {
++      id: "anon",
++      email: "anonymous@chessr.local",
++      email_confirmed_at: new Date(0).toISOString(),
++      created_at: new Date(0).toISOString(),
++    },
++    session: {
++      access_token: "anon-token",
++      refresh_token: "anon-refresh",
++      user: { id: "anon" },
++    },
++    plan: "premium",
+     planExpiry: null,
+     freetrialEndedAt: null,
+-    guidelinesAcceptedAt: null,
++    guidelinesAcceptedAt: new Date(0),
+     freetrialUsed: false,
+     flags: [],
+     gatedRegions: [],
+-    planLoading: true,
+-    initializing: true,
++    planLoading: false,
++    initializing: false,
+     loading: false,
+     error: null,
+     recovering: false,
+@@ -43134,125 +43143,10 @@
+         flags: _0x473360,
+       }),
+     initialize: async () => {
+-      try {
+-        await new Promise((_0x32c7e3) => setTimeout(_0x32c7e3, 100));
+-        _0x112f67.auth.onAuthStateChange((_0x15e7d3, _0x2af764) => {
+-          _0x4cea1f({
+-            session: _0x2af764,
+-            user: _0x2af764?.user ?? null,
+-          });
+-        });
+-        let {
+-          data: { session: _0x2c4f28 },
+-          error: _0xba261c,
+-        } = await _0x112f67.auth.getSession();
+-        if (_0xba261c) {
+-          throw _0xba261c;
+-        }
+-        if (!_0x2c4f28) {
+-          let _0x57fc95 = (await chrome.storage.local.get("chessr-auth"))[
+-            "chessr-auth"
+-          ];
+-          if (_0x57fc95) {
+-            try {
+-              let _0x5ef519 = JSON.parse(_0x57fc95);
+-              if (_0x5ef519?.access_token && _0x5ef519?.refresh_token) {
+-                let { data: _0x418337 } = await _0x112f67.auth.setSession({
+-                  access_token: _0x5ef519.access_token,
+-                  refresh_token: _0x5ef519.refresh_token,
+-                });
+-                if (_0x418337.session) {
+-                  await _0x4ae48b().fetchPlan(_0x418337.session.user.id);
+-                  _0x4cea1f({
+-                    session: _0x418337.session,
+-                    user: _0x418337.session.user,
+-                    initializing: false,
+-                  });
+-                  return;
+-                }
+-              }
+-            } catch {}
+-          }
+-        }
+-        if (_0x2c4f28?.user) {
+-          await _0x4ae48b().fetchPlan(_0x2c4f28.user.id);
+-        }
+-        _0x4cea1f({
+-          session: _0x2c4f28,
+-          user: _0x2c4f28?.user ?? null,
+-          initializing: false,
+-        });
+-      } catch {
+-        _0x4cea1f({
+-          initializing: false,
+-          error: "Failed to initialize auth",
+-        });
+-      }
++      // Unlocked build: the session is permanent and never touches Supabase.
+     },
+     fetchPlan: async (_0xe5e558) => {
+-      _0x4cea1f({
+-        planLoading: true,
+-      });
+-      try {
+-        let { data: _0x465cb3, error: _0x939385 } = await _0x112f67
+-          .from("user_settings")
+-          .select(
+-            "plan, plan_expiry, freetrial_used, freetrial_ended_at, guidelines_accepted_at",
+-          )
+-          .eq("user_id", _0xe5e558)
+-          .single();
+-        if (_0x939385) {
+-          _0x4cea1f({
+-            plan: "free",
+-            planExpiry: null,
+-            freetrialEndedAt: null,
+-            freetrialUsed: false,
+-            planLoading: false,
+-          });
+-          return;
+-        }
+-        let _0x52809d = _0x465cb3?.plan ?? "free";
+-        let _0x172349 = _0x465cb3?.plan_expiry
+-          ? new Date(_0x465cb3.plan_expiry)
+-          : null;
+-        let _0x47eec7 =
+-          _0x52809d === "freetrial" &&
+-          _0x172349 &&
+-          _0x172349.getTime() <= Date.now()
+-            ? "free"
+-            : _0x52809d;
+-        _0x4cea1f({
+-          plan: _0x47eec7,
+-          planExpiry: _0x47eec7 === _0x52809d ? _0x172349 : null,
+-          freetrialEndedAt: _0x465cb3?.freetrial_ended_at
+-            ? new Date(_0x465cb3.freetrial_ended_at)
+-            : null,
+-          guidelinesAcceptedAt: _0x465cb3?.guidelines_accepted_at
+-            ? new Date(_0x465cb3.guidelines_accepted_at)
+-            : null,
+-          freetrialUsed: !!_0x465cb3?.freetrial_used,
+-          planLoading: false,
+-        });
+-        _0x112f67.auth.getSession().then(({ data: { session: _0x3884f0 } }) => {
+-          let _0x37b045 = _0x3884f0?.access_token;
+-          if (_0x37b045) {
+-            _0x473300(_0x37b045).then((_0x2dad5e) =>
+-              _0x4cea1f({
+-                flags: _0x2dad5e.flags,
+-                gatedRegions: _0x2dad5e.gatedRegions,
+-              }),
+-            );
+-          }
+-        });
+-      } catch {
+-        _0x4cea1f({
+-          plan: "free",
+-          planExpiry: null,
+-          freetrialEndedAt: null,
+-          freetrialUsed: false,
+-          planLoading: false,
+-        });
+-      }
++      // Unlocked build: the premium plan cannot be downgraded.
+     },
+     signUp: async (_0x28d3a2, _0xe0e5aa) => {
+       _0x4cea1f({
+@@ -43472,31 +43366,7 @@
+       }
+     },
+     signOut: async () => {
+-      _0x4cea1f({
+-        loading: true,
+-      });
+-      try {
+-        await _0x112f67.auth.signOut();
+-        _0x4cea1f({
+-          user: null,
+-          session: null,
+-          plan: "free",
+-          planExpiry: null,
+-          freetrialEndedAt: null,
+-          guidelinesAcceptedAt: null,
+-          freetrialUsed: false,
+-          flags: [],
+-          gatedRegions: [],
+-          loading: false,
+-          recovering: false,
+-        });
+-      } catch (_0x1145ff) {
+-        _0x4cea1f({
+-          loading: false,
+-          error:
+-            _0x1145ff instanceof Error ? _0x1145ff.message : "Sign out failed",
+-        });
+-      }
++      // Unlocked build: signing out is not a reachable state.
+     },
+     changePassword: async (_0x5779e4, _0x106bc5) => {
+       try {
+@@ -44170,10 +44040,7 @@
+       } catch {}
+     },
+     setNeedsLinking: (_0x5da653, _0x450307 = null) => {
+-      _0x2d391b({
+-        needsLinking: _0x5da653,
+-        pendingProfile: _0x450307,
+-      });
++      // Unlocked build: no account can be linked, so never ask for one.
+     },
+   }));
+   function _0x2786a8() {
+@@ -44520,11 +44387,11 @@
+   }
+   var _0x20b524 = new Set(["premium", "lifetime", "beta", "freetrial"]);
+   function _0x4f7201(_0x28d7f7) {
+-    return _0x20b524.has(_0x28d7f7 ?? "");
++    return true;
+   }
+   var _0x273b89 = _0x4f7201;
+   function _0xce14c6(_0x297072, _0x447dfa, _0x30f2d9) {
+-    return _0x297072 === "free" && !_0x447dfa && !_0x30f2d9;
++    return false;
+   }
+   var _0x51bbab = [
+     {
+@@ -52392,11 +52259,7 @@
+     }
+   }
+   function _0x31f2d3(_0x1cd310, _0x113391) {
+-    if (_0x1cd310 === "komodo" || _0x1cd310 === "stockfish") {
+-      return true;
+-    } else {
+-      return _0x1cd310 === "lc0" && _0x113391 === "custom";
+-    }
++    return true;
+   }
+   function _0x34c663(_0xfe8079, _0x15eda7) {
+     if (_0x15eda7.includes(_0xfe8079)) {
+diff -ruN --exclude=.DS_Store a/manifest.json b/manifest.json
+--- a/manifest.json	2026-11-02 00:38:50
++++ b/manifest.json	2026-11-02 00:38:50
+@@ -1,8 +1,8 @@
+ {
+   "manifest_version": 3,
+-  "name": "Chessr.io — Chess assist done right!",
+-  "description": "Chessr.io v3",
+-  "version": "3.7.2",
++  "name": "Chessr.io Unlocked",
++  "description": "Chessr.io 3.7.2 — unofficial build: account system removed, premium UI unlocked. Analysis is server-side and still needs a real subscription.",
++  "version": "3.7.2.1",
+   "icons": {
+     "16": "/icons/icon16.png",
+     "48": "/icons/icon48.png",
+@@ -112,5 +112,6 @@
+       ],
+       "world": "MAIN"
+     }
+-  ]
++  ],
++  "short_name": "Chessr Unlocked"
+ }

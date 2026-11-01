@@ -18,13 +18,14 @@ CI runs the same command and fails if the run modifies tracked files.
   code contradicts. Include the check you ran, not just the conclusion.
 - **Repository tooling** — `scripts/`, CI, packaging. Keep it dependency-free (stdlib
   Python, POSIX shell); this repository must stay buildable with nothing installed.
-- **A new version** — follow `docs/repository-layout.md` §"Adding a new version" exactly,
-  including the knowledge-base updates.
+- **A new version** — follow `docs/repository-layout.md` §1 and the release checklist in
+  §8, including the knowledge-base updates.
 
 ## What will be rejected
 
-- **`engine/` changes of any kind.** It is vendored third-party code, byte-identical to
-  the shipped build.
+- **`engine/` or `wasm/` changes of any kind.** They are vendored third-party code,
+  byte-identical to the shipped build — the explanation engine is 26 MB of wasm and the
+  sealed core is the protocol handshake.
 - **Feature work in the baseline.** `chessr-original-restored/` may only change to fix a
   restoration defect (rule 2a in `docs/repository-layout.md`).
 - **Anything that adds network calls, telemetry or new permissions** without saying so in
@@ -36,7 +37,7 @@ CI runs the same command and fails if the run modifies tracked files.
 
 Open an issue and include:
 
-1. the version from `chrome://extensions/` (`3.4.0.1`, not just "latest");
+1. the version from `chrome://extensions/` (`3.7.2.1`, not just "latest");
 2. your Chrome/Chromium version and OS;
 3. which site (chess.com / lichess / worldchess) and which page;
 4. console errors from the page **and** from the extension's service worker
