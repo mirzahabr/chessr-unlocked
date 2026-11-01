@@ -25,7 +25,7 @@ cp -R "$base/." "$out/"
 shopt -s nullglob
 for patch_file in "$patches"/*.patch; do
   echo "applying $(basename "$patch_file")"
-  patch -p1 --batch --forward --directory "$out" < "$patch_file"
+  patch -p1 --batch --forward -d "$out" < "$patch_file"
 done
 shopt -u nullglob
 

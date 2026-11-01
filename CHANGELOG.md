@@ -1,0 +1,46 @@
+# Changelog
+
+Notable changes to the repository and to the unlocked build. The per-version technical
+detail lives in `versions/<v>/…/PROJECT_REPORT.md`; this file answers "what changed and
+should I reinstall?".
+
+The extension version is `<upstream>.<patch>`, e.g. `3.4.0.1` — a modification of upstream
+3.4.0. Tags are `v<version>-unlocked`.
+
+## [3.4.0.1] — unreleased
+
+### Fixed
+- **Stream Mode opened blank.** `stream.html` loaded the bundle with `type="module"`, and a
+  deobfuscation artifact (block-scoped `function f(){}` replacing `var f; f = function(){}`)
+  made it throw `ReferenceError` under module strict mode, killing React's scheduler on
+  load. The bundle is now a deferred classic script, and the artifact is fixed at the
+  source in all four builds.
+- Two extensions named identically in `chrome://extensions` — the unlocked build is now
+  `Chessr.io Unlocked` / `3.4.0.1`.
+
+### Added
+- Floating-widget groups: stable ids, reconciliation against the pinned set, and a one-time
+  migration from the pre-groups flat `pinned` list.
+- `minimum_chrome_version: 111` — `world: "MAIN"` content scripts are ignored silently on
+  older Chrome.
+- Repository: `scripts/verify.py` + CI, `NOTICE.md`, `LICENSE`, `.editorconfig`, release
+  automation with `SHA256SUMS.txt`.
+
+### Changed
+- Move-quality icons recolored `#81B64C` → `#3b83d9`.
+- README documents permissions, network endpoints, troubleshooting, FAQ and the real ban
+  risk.
+- `unlock-manifest.json` schema 2 (`locate.expected_count`); one broken anchor fixed.
+- `structural-signature` schema 2 (`source_build`), so a signature declares what it
+  fingerprints.
+
+## [3.4.0] — 2026-07-11
+
+Upstream 3.4.0 restored and unlocked. Adds the "price increase" upsell upstream
+(`FreeUpgradeModal`, `PriceIncreasePlans`, 12 i18n keys), gated by the same `isFree`
+predicate and therefore needing no new unlock.
+
+## [3.3.2] — 2026-07-08
+
+First processed version: account system removed, premium session installed, engine and ELO
+limits lifted, Stream Mode mirrored.

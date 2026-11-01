@@ -34,6 +34,7 @@
     "engine/torch-4-lite.wasm"
   ],
   "extension_version": "3.4.0",
+  "source_build": "chessr-original-restored",
   "manifest": {
     "content_scripts_count": 3,
     "has_background": true,
@@ -60,7 +61,7 @@
       "version",
       "web_accessible_resources"
     ],
-    "name": "Chessr.io \u2014 Chess assist done right!",
+    "name": "Chessr.io — Chess assist done right!",
     "permissions": [
       "activeTab",
       "debugger",
@@ -100,7 +101,7 @@
       }
     ]
   },
-  "schema_version": 1,
+  "schema_version": 2,
   "surfaces": {
     "chrome_apis": [
       "chrome.storage.local"

@@ -4,7 +4,7 @@
     "knowledge-base": 1,
     "re-config": 1,
     "region-store": 1,
-    "structural-signature": 1,
+    "structural-signature": 2,
     "unlock-manifest": 2
   },
   "note": "bootstrapped from pre-schema repository; component versions track each file's schema_version",

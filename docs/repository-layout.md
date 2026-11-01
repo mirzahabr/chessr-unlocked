@@ -12,6 +12,8 @@ never ships and never drifts between the two copies.
 Chessr/
 ├── README.md                     Project index
 ├── NOTICE.md                     Third-party components and their licence status
+├── LICENSE                       Licence status: no rights granted
+├── CHANGELOG.md                  Per-version "what changed / reinstall?"
 ├── .gitattributes                EOL policy, binary handling, vendored-engine hints
 ├── .gitignore                    OS junk, release archives, Chrome runtime cache
 ├── .editorconfig                 Editor defaults (LF, final newline, 2 spaces)
@@ -81,7 +83,7 @@ on Windows and any extracted tarball. The duplication is therefore intentional: 
 190 MB per build. Git stores identical blobs once, so the repository history does not
 grow four times; only the working tree does. Do not "optimise" this away.
 
-### 4a. Optional: storing the unlocked build as a patch series
+### 5. Optional: storing the unlocked build as a patch series
 
 The unlocked build is ~190 MB, and almost all of that is `engine/`, which is
 byte-identical to the baseline's. A version may therefore store its unlocked build as a
@@ -108,7 +110,7 @@ guarantees. Pick one:
 Do not keep both *and* edit only one of them — CI will fail on the mismatch, which is the
 point.
 
-### 5. One canonical knowledge base
+### 6. One canonical knowledge base
 
 `knowledge-base/` at the repository root is the single source of truth for cross-version
 knowledge. It is not copied into version folders — a snapshot inside a build is a second
@@ -127,7 +129,7 @@ Text outside those fences is manual and is never overwritten. Region hashes used
 drift detection live in `knowledge-base/.regions.json`, keyed by **repo-relative** path
 (`knowledge-base/architecture.md#overview`) so the file survives clones and moves.
 
-### 6. Relative paths everywhere
+### 7. Relative paths everywhere
 
 Tracked files must not contain absolute paths (`/Users/…`, `C:\…`). They break on any
 other machine and leak local directory names. This applies to `.regions.json`, scripts,

@@ -46,6 +46,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh release create "$GITHUB_REF_NAME" dist/* \
-            --title "Chessr.io ${GITHUB_REF_NAME#v}" \
-            --notes "Verify the download against SHA256SUMS.txt before loading the extension. **Use at your own risk** — see the disclaimer in the README."
+          notes="Verify the download against SHA256SUMS.txt before loading the extension. **Use at your own risk** — see the disclaimer in the README."
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" dist/* \
+              --title "Chessr.io ${GITHUB_REF_NAME#v}" \
+              --notes "$notes"
+          fi

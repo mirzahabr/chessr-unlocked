@@ -21,7 +21,7 @@ corrected as part of the release process, never copied forward from an old repor
 | `storage.md` | `chrome.storage.local`, `localStorage`, and `sessionStorage` usage. |
 | `ui.md` | Overlay surface and the 11 move-quality classifications. |
 | `unlock-manifest.json` | Every applied unlock: anchors, transform, verification, confidence, version introduced/last verified, known limitations. |
-| `signatures/<version>.json` | Mechanically extracted structural fingerprint (message types, storage keys, endpoints, APIs) per version. |
+| `signatures/<version>.json` | Mechanically extracted structural fingerprint (message types, storage keys, endpoints, APIs) per version. `source_build` says which of the two builds it describes — currently always the baseline, since the unlocked build intentionally differs. |
 | `learning-log/<version>.md` | One file per version: discoveries, confirmed/disproven assumptions, tooling fixes. |
 | `re-config.json` | Run configuration: default mode, approval thresholds, fidelity policy. |
 | `repo-meta.json` | Repository schema version + component schema versions (drives migration). |

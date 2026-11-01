@@ -24,7 +24,8 @@ will either rot or ship inside the extension.
 | How do I explain this version in one page? | `versions/<X>/README.md` |
 
 Repository-level files that are not documentation have their own homes: third-party
-licensing in [`../NOTICE.md`](../NOTICE.md), automation in [`../scripts/`](../scripts) and
+licensing in [`../NOTICE.md`](../NOTICE.md) and [`../LICENSE`](../LICENSE), release history
+in [`../CHANGELOG.md`](../CHANGELOG.md), automation in [`../scripts/`](../scripts) and
 [`../.github/workflows/`](../.github/workflows).
 
 Two hard rules:

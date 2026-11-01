@@ -376,6 +376,36 @@ def check_schema_versions() -> None:
         record(PASS, "schemas", f"{checked} documents agree with repo-meta.json")
 
 
+def check_signatures() -> None:
+    """A structural signature must still describe the baseline it claims to describe."""
+    sigs = sorted(glob.glob(os.path.join(ROOT, "knowledge-base", "signatures", "*.json")))
+    if not sigs:
+        record(SKIP, "signatures", "no signatures/")
+        return
+    problems, checked = [], 0
+    for sig_path in sigs:
+        sig = json.load(open(sig_path, encoding="utf-8"))
+        version = sig.get("extension_version")
+        source = sig.get("source_build")
+        if not version or not source:
+            problems.append(f"{rel(sig_path)}: missing extension_version/source_build")
+            continue
+        manifest_path = os.path.join(ROOT, "versions", version, source, "manifest.json")
+        if not os.path.isfile(manifest_path):
+            problems.append(f"{rel(sig_path)}: no {version}/{source}/manifest.json")
+            continue
+        manifest = json.load(open(manifest_path, encoding="utf-8"))
+        checked += 1
+        if sig.get("manifest", {}).get("name") != manifest.get("name"):
+            problems.append(f"{rel(sig_path)}: name does not match {source}")
+        if str(manifest.get("version")) != str(version):
+            problems.append(f"{rel(sig_path)}: version {manifest.get('version')} != {version}")
+    if problems:
+        record(FAIL, "signatures", "; ".join(problems[:5]))
+    else:
+        record(PASS, "signatures", f"{checked} signature(s) match their baseline")
+
+
 CHECKS = {
     "js-syntax": check_js_syntax,
     "json": check_json,
@@ -387,6 +417,7 @@ CHECKS = {
     "absolute-paths": check_absolute_paths,
     "patches": check_patches,
     "schemas": check_schema_versions,
+    "signatures": check_signatures,
 }
 
 

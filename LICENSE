@@ -1,0 +1,39 @@
+# Licence status
+
+This repository contains almost no code its author wrote. Read this before you copy,
+mirror, redistribute or sell anything from it.
+
+## 1. No licence is granted
+
+Nothing in this repository grants you a licence — not to the Chessr.io application code,
+not to the bundled engines, not to the images and fonts that ship with them.
+
+- **Chessr.io application code** (`background.js`, `content-scripts/`, `chunks/`,
+  `assets/`, `manifest.json`, `rules.json`) is proprietary. It is included for study and
+  modification only. Its authors grant no redistribution right here, and this repository
+  is in no position to grant one.
+- **Bundled chess engines** are third-party and remain under their own terms, several of
+  which are unresolved: Stockfish is GPL-3.0 and ships here without the licence text or a
+  source offer; Komodo Dragon is commercial; others are unverified. The full inventory is
+  in [`NOTICE.md`](NOTICE.md).
+
+In plain terms: **the repository is a study archive, not a distributable product.** Treat
+"all rights reserved" as the default for everything in it.
+
+## 2. Repository-authored material
+
+The documentation (`README.md`, `docs/`, `knowledge-base/`, `NOTICE.md`, this file), the
+scripts in [`scripts/`](scripts) and the CI workflows are written for this project. They
+are provided **as is, with no warranty of any kind**, and no permission is granted to
+reuse them commercially. Ask the maintainer if you need something more specific.
+
+## 3. Warranty
+
+There is no warranty, express or implied, including merchantability or fitness for a
+particular purpose. Nothing here is legal advice either — the licence statuses in
+[`NOTICE.md`](NOTICE.md) are observations, not conclusions.
+
+## 4. Using it is your risk
+
+Installing the extension can get your accounts banned and breaks the terms of service of
+every platform it runs on. See the [README's Disclaimer](README.md#disclaimer).

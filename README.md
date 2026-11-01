@@ -161,6 +161,8 @@ build has to stay self-contained to remain loadable. See
 Chessr/
 ├── README.md                        Project index (this file)
 ├── NOTICE.md                        Third-party components and their licence status
+├── LICENSE                          No rights granted; scope of the notices
+├── CHANGELOG.md                     What changed per version, and whether to reinstall
 ├── .gitignore / .gitattributes / .editorconfig
 │                                    Repo hygiene (junk, binaries, LF everywhere)
 ├── .github/workflows/verify.yml     CI: runs the validation checklist below
@@ -231,6 +233,10 @@ inside a build.
   unverified. [`NOTICE.md`](NOTICE.md) lists every file and what still has to be resolved.
 - **There is no warranty of any kind**, express or implied, including fitness for a
   particular purpose.
+
+[`LICENSE`](LICENSE) spells this out, and [`NOTICE.md`](NOTICE.md) is the file-by-file
+inventory. Short version: no licence is granted for anything in this repository, and it is
+a study archive rather than a distributable product.
 
 ## Disclaimer
 
