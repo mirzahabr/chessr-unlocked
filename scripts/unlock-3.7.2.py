@@ -63,7 +63,14 @@ FACTORY_NEW = """  async function _0xa804b4(_0x404a4b) {
     if (_0x1f0d5c) {
       try {
         let _0x2d8f41 = new _0x1f0d5c();
-        await _0x2d8f41.init();
+        // A local engine that hangs must not hang the panel: give init 20 s and
+        // fall through to the server path on timeout.
+        await Promise.race([
+          _0x2d8f41.init(),
+          new Promise((_0x2f0b11, _0x4c9c7a) =>
+            setTimeout(() => _0x4c9c7a(Error("local engine init timeout")), 20000),
+          ),
+        ]);
         _0x2c7423({
           slot: "suggestion",
           engineId: _0x404a4b,

@@ -1,6 +1,6 @@
 diff -ruN --exclude=.DS_Store a/chunks/stream-l1H6Qjn3.js b/chunks/stream-l1H6Qjn3.js
---- a/chunks/stream-l1H6Qjn3.js	2026-11-02 01:29:58
-+++ b/chunks/stream-l1H6Qjn3.js	2026-11-02 01:29:58
+--- a/chunks/stream-l1H6Qjn3.js	2026-11-02 22:11:04
++++ b/chunks/stream-l1H6Qjn3.js	2026-11-02 22:11:04
 @@ -41494,17 +41494,26 @@
    }
  }
@@ -235,8 +235,8 @@ diff -ruN --exclude=.DS_Store a/chunks/stream-l1H6Qjn3.js b/chunks/stream-l1H6Qj
  function cg(_0x2c4b15, _0xa8ab95) {
    if (_0xa8ab95.includes(_0x2c4b15)) {
 diff -ruN --exclude=.DS_Store a/content-scripts/content.js b/content-scripts/content.js
---- a/content-scripts/content.js	2026-11-02 01:29:58
-+++ b/content-scripts/content.js	2026-11-02 01:29:58
+--- a/content-scripts/content.js	2026-11-02 22:11:04
++++ b/content-scripts/content.js	2026-11-02 22:11:04
 @@ -43107,17 +43107,26 @@
    }
    _0x3acb80();
@@ -1678,7 +1678,7 @@ diff -ruN --exclude=.DS_Store a/content-scripts/content.js b/content-scripts/con
    var _0x3f7f66 = class {
      id;
      _ready = false;
-@@ -79540,6 +80604,31 @@
+@@ -79540,6 +80604,38 @@
      }
    }
    async function _0xa804b4(_0x404a4b) {
@@ -1688,7 +1688,14 @@ diff -ruN --exclude=.DS_Store a/content-scripts/content.js b/content-scripts/con
 +    if (_0x1f0d5c) {
 +      try {
 +        let _0x2d8f41 = new _0x1f0d5c();
-+        await _0x2d8f41.init();
++        // A local engine that hangs must not hang the panel: give init 20 s and
++        // fall through to the server path on timeout.
++        await Promise.race([
++          _0x2d8f41.init(),
++          new Promise((_0x2f0b11, _0x4c9c7a) =>
++            setTimeout(() => _0x4c9c7a(Error("local engine init timeout")), 20000),
++          ),
++        ]);
 +        _0x2c7423({
 +          slot: "suggestion",
 +          engineId: _0x404a4b,
@@ -1711,8 +1718,8 @@ diff -ruN --exclude=.DS_Store a/content-scripts/content.js b/content-scripts/con
      await _0x507fbb.init();
      _0x2c7423({
 diff -ruN --exclude=.DS_Store a/manifest.json b/manifest.json
---- a/manifest.json	2026-11-02 01:29:58
-+++ b/manifest.json	2026-11-02 01:29:58
+--- a/manifest.json	2026-11-02 22:11:04
++++ b/manifest.json	2026-11-02 22:11:04
 @@ -1,8 +1,8 @@
  {
    "manifest_version": 3,

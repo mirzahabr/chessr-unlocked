@@ -73,6 +73,45 @@ removes the sign-in gate. The 401s are the expected consequence of the fake sess
 the runtime evidence for the limitation described in the README — the panel works, the
 server-authorised analysis does not.
 
+## 3. Local engine harness (3.7.2 graft)
+
+The transplanted engines are driven directly from the same instrumented build: a temporary
+`document.addEventListener("chessr-local-test")` hook constructs each class from
+`_0x4c1d1e`, calls `init()` and `search()` on the start position (depth 14, MultiPV 3) and
+writes the rows to `document.documentElement.dataset.localTest`. Observed:
+
+| Engine | Init | Search | Rows (MultiPV, move, cp, depth) |
+|---|---|---|---|
+| Komodo | 200 ms | 164 ms | 1 e2e4 +0.54 d14 · 2 d2d4 +0.28 d14 · 3 g1f3 +0.28 d14 |
+| Stockfish | 228 ms | 143 ms | 1 e2e4 +0.42 d14 · 2 e2e3 +0.20 d14 · 3 g1f3 +0.19 d14 |
+| Maia 3 | 398 ms | 84 ms | 1 e2e4 · 2 d2d4 · 3 c2c4 (model probabilities, position eval +0.14) |
+
+The factory wraps `init()` in a 20 s timeout, so a local engine that hangs falls through to
+the server path instead of freezing the panel.
+
+### Rodent IV: why it is not in the build
+
+The 3.4.0 Rodent class was transplanted and exercised. The engine is an Emscripten build
+whose UCI input is a `FS.init` device callback that returns `null` when its buffer is empty.
+Measured behaviour in the harness:
+
+1. The engine performs its **first stdin read before any command can arrive**, so the read
+   returns `null` on a fresh worker;
+2. `null` from the device callback is a sticky EOF for C stdio — after it, `uci` is answered
+   (it was already buffered) but `setoption`/`isready` never are, and a second `uci` is
+   ignored;
+3. suspending instead of returning `null` via `Asyncify.handleSleep` unwinds and then traps
+   at `unreachable`, because the build's async imports are not instrumented for it;
+4. pre-seeding the worker with the whole UCI script plus newline padding produces a
+   `bestmove` once (2.7 s at depth 6) but is unstable — larger pads or repeated runs abort
+   at depth 4 with `memory access out of bounds`, because the search loop polls stdin and
+   either exhausts the pad (EOF) or overflows on a continuous filler.
+
+A reliable fix needs the engine recompiled with an async stdin loop (for example
+`emscripten_sleep` while the command queue is empty), which is a different artifact from the
+shipped wasm. Until then Rodent, like Leela, is server-only, and the factory falls back to
+the server when it is selected.
+
 ### What it does not prove
 
 - The site adapters: the test page has no chess.com board API, so `pageContext.js` finds no
