@@ -107,6 +107,12 @@ Measured behaviour in the harness:
    at depth 4 with `memory access out of bounds`, because the search loop polls stdin and
    either exhausts the pad (EOF) or overflows on a continuous filler.
 
+The same failure was reproduced with an independent driver that takes the other obvious
+route — batching `uci` and `isready` before awaiting either reply, then sending
+`position`/`go` together — and with the byte-identical `rodent.js`/`.wasm`/`.data` (md5
+`a8b82ebafbd479c0e3e4b63220f117c4`): handshake succeeds, every option is enumerated, and
+the first search times out. batching fixes the handshake, not the search.
+
 A reliable fix needs the engine recompiled with an async stdin loop (for example
 `emscripten_sleep` while the command queue is empty), which is a different artifact from the
 shipped wasm. Until then Rodent, like Leela, is server-only, and the factory falls back to
